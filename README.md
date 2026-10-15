@@ -1,0 +1,36 @@
+# Crime Board Cloud-Native
+
+## 1. Descripción del Dominio y Casos de Uso
+Plataforma interactiva para resolver misterios lógicos...
+
+## 2. Justificación NIST SP 800-145
+- **Autoservicio bajo demanda:** ...
+- **Acceso amplio a la red:** ...
+- **Asignación común de recursos:** ...
+- **Rápida elasticidad:** ...
+- **Servicio medido:** ...
+
+## 3. Mapeo de Actores NIST SP 500-292
+- **Consumidor:** ...
+- **Proveedor:** ...
+- **Intermediario:** ...
+- **Auditor:** ...
+- **Operador:** ...
+
+## 4. Arquitectura de Microservicios
+(Añadir diagrama de la arquitectura)
+
+## 5. Especificación API REST
+
+### Level Management Service
+- `POST /api/levels/`
+  - **Descripción:** Publica un nuevo nivel de la comunidad.
+  - **Payload:** JSON con `title`, `creator_id`, `clues` y `correct_connections`.
+- `GET /api/levels/{level_id}`
+  - **Descripción:** Obtiene los datos de un misterio para renderizar el tablero en HTML/JS.
+
+### Playground Engine Service
+- `POST /api/engine/validate`
+  - **Descripción:** Evalúa el estado actual del tablero del jugador.
+  - **Payload:** JSON con `level_id` y `current_connections` (los hilos trazados por el usuario).
+  - **Respuesta:** JSON con `{"solved": boolean, "feedback_message": string}`
