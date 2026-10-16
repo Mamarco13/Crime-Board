@@ -367,3 +367,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Diagrama de arquitectura: solo se versiona el PNG que muestra el README.
+# Las fuentes (script generador, render y SVG) no son necesarias para visualizarlo.
+docs/gen_architecture.py
+docs/render.js
+docs/architecture.svg
