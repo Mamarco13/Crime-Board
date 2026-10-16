@@ -15,13 +15,29 @@ Plataforma interactiva *cloud-native* para **crear, compartir y resolver misteri
   - [1.1 Problema de Negocio](#11-problema-de-negocio)
   - [1.2 Casos de Uso Principales](#12-casos-de-uso-principales)
 - [2. Justificación NIST SP 800-145](#2-justificación-nist-sp-800-145)
+  - [2.1 Autoservicio bajo demanda (*On-demand self-service*)](#21-autoservicio-bajo-demanda-on-demand-self-service)
+  - [2.2 Acceso amplio a la red (*Broad network access*)](#22-acceso-amplio-a-la-red-broad-network-access)
+  - [2.3 Asignación común de recursos (*Resource pooling*)](#23-asignación-común-de-recursos-resource-pooling)
+  - [2.4 Rápida elasticidad (*Rapid elasticity*)](#24-rápida-elasticidad-rapid-elasticity)
+  - [2.5 Servicio medido (*Measured service*)](#25-servicio-medido-measured-service)
+  - [2.6 Síntesis](#26-síntesis)
 - [3. Mapeo de Actores NIST SP 500-292](#3-mapeo-de-actores-nist-sp-500-292)
+  - [3.1 Consumidor (*Cloud Consumer*)](#31-consumidor-cloud-consumer)
+  - [3.2 Proveedor (*Cloud Provider*)](#32-proveedor-cloud-provider)
+  - [3.3 Intermediario (*Cloud Broker*)](#33-intermediario-cloud-broker)
+  - [3.4 Auditor (*Cloud Auditor*)](#34-auditor-cloud-auditor)
+  - [3.5 Operador (*Cloud Operator / Cloud Carrier*)](#35-operador-cloud-operator--cloud-carrier)
+  - [3.6 Síntesis del impacto económico](#36-síntesis-del-impacto-económico)
 - [4. Arquitectura de Microservicios](#4-arquitectura-de-microservicios)
   - [4.1 Diagrama de arquitectura](#41-diagrama-de-arquitectura)
   - [4.2 Componentes](#42-componentes)
   - [4.3 Protocolos de comunicación](#43-protocolos-de-comunicación)
   - [4.4 Almacenamiento y persistencia](#44-almacenamiento-y-persistencia)
 - [5. Especificación API REST](#5-especificación-api-rest)
+  - [5.1 Convenciones](#51-convenciones)
+  - [5.2 Level Management Service](#52-level-management-service)
+  - [5.3 Playground Engine Service](#53-playground-engine-service)
+  - [5.4 Errores](#54-errores)
 
 ## 1. Descripción del Dominio y Casos de Uso
 
@@ -93,7 +109,7 @@ Los sistemas cloud controlan y optimizan automáticamente el uso de recursos med
 
 - Cada petición a la API (publicar un nivel, recuperarlo, validar un tablero) es **medible**: número de niveles publicados, número de partidas iniciadas, número de validaciones, tiempo de cómputo del motor.
 - El backend registra estos intentos y métricas de dificultad (CU-05, [sección 1](#1-descripción-del-dominio-y-casos-de-uso)) para puntuar niveles, alimentar clasificaciones y recomendar misterios.
-- Las métricas de uso (**peticiones, CPU, memoria, almacenamiento**) permiten facturar y optimizar recursos, y sirven de base para el autoescalado definido en [2.4](#24-rápida-elasticidad).
+- Las métricas de uso (**peticiones, CPU, memoria, almacenamiento**) permiten facturar y optimizar recursos, y sirven de base para el autoescalado definido en [2.4](#24-rápida-elasticidad-rapid-elasticity).
 
 ### 2.6 Síntesis
 
@@ -135,9 +151,9 @@ Es el equipo/propietario que crea, despliega y mantiene los servicios: el **Leve
 
 **Impacto económico:**
 - El proveedor convierte **costes fijos (CAPEX)** de servidores propios en **costes operativos variables (OPEX)** ligados al consumo real de la nube.
-- La arquitectura de microservicios escalable ([sección 2.4](#24-rápida-elasticidad)) permite **maximizar el margen** al no dimensionar la infraestructura para el pico permanente.
+- La arquitectura de microservicios escalable ([sección 2.4](#24-rápida-elasticidad-rapid-elasticity)) permite **maximizar el margen** al no dimensionar la infraestructura para el pico permanente.
 - El contenido de la comunidad **reduce el coste de producción de niveles** (cada autor financia con su tiempo parte del catálogo), mejorando la relación entre catálogo ofrecido y coste de creación.
-- El servicio medido ([sección 2.5](#25-servicio-medido)) habilita **fuentes de ingreso diversificadas**: suscripción, niveles premium/destacados, publicidad o venta de datos agregados de dificultad.
+- El servicio medido ([sección 2.5](#25-servicio-medido-measured-service)) habilita **fuentes de ingreso diversificadas**: suscripción, niveles premium/destacados, publicidad o venta de datos agregados de dificultad.
 
 ### 3.3 Intermediario (*Cloud Broker*)
 
@@ -153,8 +169,8 @@ Intermedia entre el consumidor y el proveedor de servicios cloud. En este proyec
 Evaluador independiente del rendimiento, la seguridad y el cumplimiento. En Crime Board corresponde al **equipo de seguridad/cumplimiento** (interno o externo) que verifica:
 
 - Que la validación de soluciones ocurre en el servidor (`POST /api/engine/validate`) y no es manipulable por el cliente.
-- El correcto aislamiento de datos entre autores y jugadores (*multi-tenant*, [sección 2.3](#23-asignación-común-de-recursos)).
-- La exactitud de las métricas usadas para facturación ([sección 2.5](#25-servicio-medido)).
+- El correcto aislamiento de datos entre autores y jugadores (*multi-tenant*, [sección 2.3](#23-asignación-común-de-recursos-resource-pooling)).
+- La exactitud de las métricas usadas para facturación ([sección 2.5](#25-servicio-medido-measured-service)).
 
 **Impacto económico:**
 - Una auditoría favorable reduce el **riesgo financiero** asociado a incidentes de seguridad, sanciones por incumplimiento (p. ej. RGPD) e interrupciones del servicio.
@@ -163,7 +179,7 @@ Evaluador independiente del rendimiento, la seguridad y el cumplimiento. En Crim
 
 ### 3.5 Operador (*Cloud Operator / Cloud Carrier*)
 
-Gestiona la infraestructura y transporta la red. Correspondría al **equipo DevOps** de la plataforma y a los **proveedores de red/CDN** que distribuyen el tráfico hacia los clientes ([sección 2.2](#22-acceso-amplio-a-la-red)).
+Gestiona la infraestructura y transporta la red. Correspondría al **equipo DevOps** de la plataforma y a los **proveedores de red/CDN** que distribuyen el tráfico hacia los clientes ([sección 2.2](#22-acceso-amplio-a-la-red-broad-network-access)).
 
 **Impacto económico:**
 - La automatización operativa (despliegue continuo, autoescalado, observabilidad) **reduce el coste humano** de mantener el servicio y los errores que generan caídas costosas.
@@ -224,7 +240,7 @@ Se combinan por tanto **dos estilos de comunicación**: síncrona (REST para pet
 - **Kafka (log de eventos, retención configurable):** buffer duradero que desacopla productores y consumidores.
 - **Observabilidad (series temporales):** conserva las métricas de uso para dificultad, facturación y autoescalado.
 
-Cada microservicio es dueño de sus propios datos (*database per service*): el `Level Management Service` usa PostgreSQL y Object Storage, mientras que el `Playground Engine Service` usa Redis para el estado de juego, lo que permite escalarlos y desplegarlos de forma independiente ([sección 2.4](#24-rápida-elasticidad)).
+Cada microservicio es dueño de sus propios datos (*database per service*): el `Level Management Service` usa PostgreSQL y Object Storage, mientras que el `Playground Engine Service` usa Redis para el estado de juego, lo que permite escalarlos y desplegarlos de forma independiente ([sección 2.4](#24-rápida-elasticidad-rapid-elasticity)).
 
 ## 5. Especificación API REST
 
@@ -346,7 +362,7 @@ Respuesta `200 OK`:
 }
 ```
 
-**`GET /api/engine/levels/{level_id}/stats`** — métricas agregadas para el servicio medido ([sección 2.5](#25-servicio-medido)).
+**`GET /api/engine/levels/{level_id}/stats`** — métricas agregadas para el servicio medido ([sección 2.5](#25-servicio-medido-measured-service)).
 
 Respuesta `200 OK`:
 
