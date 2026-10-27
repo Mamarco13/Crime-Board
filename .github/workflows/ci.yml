@@ -1,0 +1,175 @@
+# =============================================================================
+# Crime Board — Integración Continua (CI)
+# Hito 2 · Fase 3
+# =============================================================================
+# Pipeline:
+#   1. lint-and-test  → Hadolint + Ruff + pytest  (push y pull_request)
+#   2. build-and-push → imágenes en GHCR          (solo push a main/master)
+#
+# Imágenes publicadas:
+#   ghcr.io/<owner>/<repo>/level-management-service:<sha-corto|latest>
+#   ghcr.io/<owner>/<repo>/playground-engine-service:<sha-corto|latest>
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+# Permiso mínimo por defecto. El job de publicación lo amplía explícitamente
+# con `packages: write`; el resto de jobs solo necesitan leer el código.
+permissions:
+  contents: read
+
+# Si llega un commit nuevo a la misma rama/PR, cancela la ejecución anterior
+# para no malgastar minutos de runner.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1 — Calidad: Dockerfiles, estilo de código y tests
+  # ---------------------------------------------------------------------------
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      # Modo recursivo: busca todos los archivos llamados `Dockerfile` desde la
+      # raíz del repositorio, lo que cubre `services/**/Dockerfile`.
+      - name: Lint de Dockerfiles (Hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          recursive: true
+          failure-threshold: warning
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/*/requirements.txt
+
+      - name: Instalar dependencias de desarrollo y de los servicios
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff pytest
+          for requirements in services/*/requirements.txt; do
+            echo "::group::pip install -r ${requirements}"
+            python -m pip install -r "${requirements}"
+            echo "::endgroup::"
+          done
+
+      - name: Lint de código Python (Ruff)
+        run: ruff check --output-format=github services
+
+      # pytest devuelve código 5 cuando no recolecta tests. Como el proyecto
+      # aún puede no tenerlos, se ejecuta únicamente en los servicios que
+      # contengan archivos test_*.py o *_test.py.
+      - name: Tests unitarios/integrados (pytest, si existen)
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          for service_dir in services/*/; do
+            [ -d "${service_dir}" ] || continue
+            if find "${service_dir}" -type f \
+                 \( -name 'test_*.py' -o -name '*_test.py' \) \
+                 -print -quit | grep -q .; then
+              echo "::group::pytest ${service_dir}"
+              (cd "${service_dir}" && python -m pytest -q)
+              echo "::endgroup::"
+              found=1
+            fi
+          done
+          if [ "${found}" -eq 0 ]; then
+            echo "No se encontraron tests en services/*/; se omite pytest."
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Job 2 — Construcción y publicación de cada imagen en GHCR
+  # ---------------------------------------------------------------------------
+  build-and-push:
+    name: "Build & Push (${{ matrix.service }})"
+    needs: lint-and-test
+    # Solo en push directo a la rama principal, nunca en pull_request
+    # (incluidas las PRs externas desde forks).
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      # Si falla un servicio, el otro sigue construyéndose.
+      fail-fast: false
+      matrix:
+        service:
+          - level-management-service
+          - playground-engine-service
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Autenticar en GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # GHCR exige nombres de imagen en minúsculas y `github.repository`
+      # conserva las mayúsculas originales del propietario/repositorio.
+      - name: Calcular nombre de la imagen
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.service }}" >> "${GITHUB_OUTPUT}"
+
+      - name: Extraer metadatos (tags y labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=sha,format=short,prefix=sha-
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=${{ matrix.service }}
+            org.opencontainers.image.description=Crime Board — ${{ matrix.service }}
+            org.opencontainers.image.vendor=Crime Board
+
+      - name: Construir y publicar imagen
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/${{ matrix.service }}
+          file: ./services/${{ matrix.service }}/Dockerfile
+          target: runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Caché de capas en GitHub Actions, aislada por servicio para que
+          # las dos imágenes no compartan un mismo scope de caché.
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
