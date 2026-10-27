@@ -1,13 +1,15 @@
 # =============================================================================
-# Level Management Service — dependencias mínimas para el build de la imagen
+# Level Management Service — dependencias de la lógica de negocio (MVP)
 # =============================================================================
-# Plantilla mínima: solo lo imprescindible para arrancar FastAPI/Uvicorn y
-# exponer /health. Añadir aquí las dependencias reales del servicio
-# (SQLAlchemy, asyncpg, alembic, boto3, aiokafka, etc.) cuando se implemente
-# la lógica de negocio.
+# Catálogo persistido en PostgreSQL mediante SQLAlchemy 2.x asíncrono.
+# SQLAlchemy[asyncio] instala greenlet, necesario para el puente async/sync.
 #
-# Versiones fijadas para builds reproducibles.
+# Versiones fijadas para builds reproducibles. Al actualizar una versión,
+# reconstruye la imagen y ejecuta los tests/smoke tests del servicio.
 # =============================================================================
 
 fastapi==0.162.0
 uvicorn[standard]==0.54.0
+pydantic==2.14.1
+sqlalchemy[asyncio]==2.1.6
+asyncpg==0.32.0
