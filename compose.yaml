@@ -1,0 +1,234 @@
+# =============================================================================
+# Crime Board — Orquestación del entorno local reproducible
+# Hito 2 · Fase 2
+# =============================================================================
+# Topología:
+#
+#   host :8000 ──> level-management-service ──┐
+#                                             ├── backend-net (inter-servicios)
+#   host :8001 ──> playground-engine-service ─┘
+#
+#   level-management-service ── db-net (internal) ──> postgres
+#   playground-engine-service ─ cache-net (internal) ──> redis
+#
+# Uso:
+#   cp .env.example .env
+#   docker compose up --build -d
+#   docker compose ps
+#   docker compose logs -f
+#   docker compose down          # conserva los volúmenes
+#   docker compose down -v       # elimina también los datos
+#
+# Compose carga automáticamente el archivo .env del directorio del proyecto.
+# =============================================================================
+
+name: ${COMPOSE_PROJECT_NAME:-crime-board}
+
+# -----------------------------------------------------------------------------
+# Extensiones reutilizables (anclas YAML)
+# -----------------------------------------------------------------------------
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Endurecimiento común de los microservicios. No se aplica a PostgreSQL/Redis
+# porque sus entrypoints oficiales necesitan privilegios para hacer chown y
+# cambiar de usuario al arrancar.
+x-app-hardening: &app-hardening
+  init: true
+  restart: unless-stopped
+  stop_grace_period: 30s
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging: *default-logging
+
+# Mismo criterio que el HEALTHCHECK del Dockerfile, pero declarado aquí para
+# que la orquestación sea autocontenida. Ajusta /health si cambia la ruta.
+x-app-healthcheck: &app-healthcheck
+  test:
+    - CMD
+    - python
+    - -c
+    - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+  interval: 30s
+  timeout: 5s
+  start_period: 30s
+  retries: 3
+
+services:
+  # ---------------------------------------------------------------------------
+  # Microservicio de catálogo y publicación de niveles
+  # ---------------------------------------------------------------------------
+  level-management-service:
+    <<: *app-hardening
+    build:
+      context: ./services/level-management-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: crime-board/level-management-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: level-management-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      # Componentes de conexión (útiles si la app los lee por separado)
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # URL canónica construida a partir de las variables anteriores.
+      # Usa una contraseña con caracteres seguros para URL ([A-Za-z0-9_-]).
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
+      PLAYGROUND_ENGINE_SERVICE_URL: ${PLAYGROUND_ENGINE_SERVICE_URL:-http://playground-engine-service:8000}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}
+    ports:
+      # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
+      # En producción, elimina este mapeo y expón el servicio vía Ingress/API Gateway.
+      - "${BIND_ADDRESS:-127.0.0.1}:${LEVEL_MANAGEMENT_HOST_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - db-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # Motor de validación del tablero
+  # ---------------------------------------------------------------------------
+  playground-engine-service:
+    <<: *app-hardening
+    build:
+      context: ./services/playground-engine-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: crime-board/playground-engine-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: playground-engine-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD no definido en .env}
+      # URL canónica construida a partir de las variables anteriores.
+      REDIS_URL: "redis://:${REDIS_PASSWORD:?}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/${REDIS_DB:-0}"
+      LEVEL_MANAGEMENT_SERVICE_URL: ${LEVEL_MANAGEMENT_SERVICE_URL:-http://level-management-service:8000}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PLAYGROUND_ENGINE_HOST_PORT:-8001}:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - cache-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — persistencia de Level Management
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # Subdirectorio dentro del volumen: evita problemas si algún día se
+      # sustituye el volumen nombrado por un bind mount.
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - db-net
+    healthcheck:
+      # -h 127.0.0.1 fuerza TCP: durante la inicialización el entrypoint
+      # levanta un servidor temporal solo por socket Unix y no debe contarse
+      # como "listo".
+      test: ["CMD-SHELL", 'pg_isready -h 127.0.0.1 -p 5432 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    shm_size: 256mb
+    logging: *default-logging
+    # La BD no se publica al host por defecto: solo es alcanzable desde db-net.
+    # Para depurar con un cliente local, descomenta y mantén el bind en loopback:
+    # ports:
+    #   - "${BIND_ADDRESS:-127.0.0.1}:${POSTGRES_HOST_PORT:-5432}:5432"
+
+  # ---------------------------------------------------------------------------
+  # Redis — caché / estado efímero de Playground Engine
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    stop_grace_period: 15s
+    environment:
+      # Necesaria para que el healthcheck se autentique sin exponer la clave
+      # en la línea de comandos de `redis-cli`.
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD no definido en .env}
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD no definido en .env}
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-256mb}
+      - --maxmemory-policy
+      - allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - cache-net
+    healthcheck:
+      test: ["CMD-SHELL", 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    logging: *default-logging
+    # Igual que PostgreSQL: sin publicación al host por defecto.
+    # ports:
+    #   - "${BIND_ADDRESS:-127.0.0.1}:${REDIS_HOST_PORT:-6379}:6379"
+
+# -----------------------------------------------------------------------------
+# Redes
+# -----------------------------------------------------------------------------
+networks:
+  # Plano de comunicación entre microservicios. No es `internal` para permitir
+  # salida a Internet si en el futuro se integran S3/Kafka u otras APIs.
+  backend-net:
+    driver: bridge
+
+  # Aísla PostgreSQL: solo level-management-service puede alcanzarlo.
+  # `internal: true` elimina la puerta de enlace por defecto (sin egress).
+  db-net:
+    driver: bridge
+    internal: true
+
+  # Aísla Redis: solo playground-engine-service puede alcanzarlo.
+  cache-net:
+    driver: bridge
+    internal: true
+
+# -----------------------------------------------------------------------------
+# Volúmenes persistentes gestionados por Docker
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+  redis_data:

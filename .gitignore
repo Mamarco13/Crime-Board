@@ -370,3 +370,6 @@ __marimo__/
 
 # Nota de trabajo local: análisis y artefactos de la Fase 1 del Hito 2.
 docs/hito2-fase1-docker.md
+
+# Nota de trabajo local: orquestación de la Fase 2 del Hito 2.
+docs/hito2-fase2-compose.md
