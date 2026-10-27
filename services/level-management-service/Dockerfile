@@ -19,6 +19,12 @@ WORKDIR /build
 
 # Dependencias de compilación para wheels con extensiones nativas
 # (psycopg2, uvloop, etc.). No llegan a la imagen final.
+#
+# DL3008 se silencia a propósito: fijar la versión exacta de paquetes Debian
+# ata el build a una revisión concreta de bookworm y lo rompe en cada
+# actualización de seguridad. La reproducibilidad se controla con la imagen
+# base y con requirements.txt; las actualizaciones llegan al reconstruir.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
@@ -31,8 +37,10 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Capa de dependencias: solo se invalida si cambia requirements.txt
 COPY requirements.txt ./
-RUN python -m pip install --upgrade pip \
-    && python -m pip install -r requirements.txt
+# pip se fija a una versión concreta (DL3013) para que el build sea
+# reproducible y no dependa del pip que traiga la imagen base.
+RUN python -m pip install --no-cache-dir --upgrade "pip==26.2.2" \
+    && python -m pip install --no-cache-dir -r requirements.txt
 
 # -----------------------------------------------------------------------------
 # Etapa 2: runtime
@@ -51,6 +59,10 @@ LABEL org.opencontainers.image.title="crime-board-level-management-service" \
       org.opencontainers.image.vendor="Crime Board"
 
 # Solo librerías de sistema necesarias en ejecución (cliente libpq para PostgreSQL)
+#
+# Mismo criterio que en el builder: DL3008 se silencia para no atar el build a
+# una versión concreta de paquete Debian y poder recibir parches de seguridad.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/* \
@@ -70,9 +82,10 @@ USER 10001:10001
 
 EXPOSE 8000
 
-# Ajusta /health si tu endpoint de salud usa otra ruta
+# Ajusta /health si tu endpoint de salud usa otra ruta.
+# Forma exec (JSON) para que la señal se entregue directamente a Python (DL3025).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
 
 STOPSIGNAL SIGTERM
 

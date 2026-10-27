@@ -1,0 +1,12 @@
+# =============================================================================
+# Playground Engine Service — dependencias mínimas para el build de la imagen
+# =============================================================================
+# Plantilla mínima: solo lo imprescindible para arrancar FastAPI/Uvicorn y
+# exponer /health. Añadir aquí las dependencias reales del servicio
+# (redis[hiredis], aiokafka, etc.) cuando se implemente la lógica de negocio.
+#
+# Versiones fijadas para builds reproducibles.
+# =============================================================================
+
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
