@@ -367,3 +367,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Nota de trabajo local: análisis y artefactos de la Fase 1 del Hito 2.
+docs/hito2-fase1-docker.md

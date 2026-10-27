@@ -1,0 +1,128 @@
+# =============================================================================
+# .dockerignore — Level Management Service
+# Contexto de build: services/level-management-service
+# =============================================================================
+
+# --- Control de versiones y CI ------------------------------------------------
+.git
+.gitignore
+.gitattributes
+.github/
+.gitlab-ci.yml
+.azure-pipelines.yml
+Jenkinsfile
+
+# --- Docker / orquestación ----------------------------------------------------
+Dockerfile
+Dockerfile.*
+.dockerignore
+docker-compose*.yml
+compose*.yml
+.docker/
+k8s/
+kubernetes/
+helm/
+terraform/
+ansible/
+infra/
+
+# --- Documentación ------------------------------------------------------------
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+LICENSE
+docs/
+*.md
+
+# --- Entornos virtuales y cachés de Python -----------------------------------
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+.python-version
+.pip/
+.pip-tmp/
+.mypy_cache/
+.dmypy.json
+.ruff_cache/
+.pytest_cache/
+.tox/
+.nox/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.egg-info/
+.eggs/
+build/
+dist/
+wheels/
+pip-wheel-metadata/
+
+# --- Tests y herramientas de calidad (no necesarios en runtime) --------------
+tests/
+test/
+__tests__/
+spec/
+conftest.py
+pytest.ini
+tox.ini
+noxfile.py
+.mypy.ini
+.ruff.toml
+ruff.toml
+.pre-commit-config.yaml
+.editorconfig
+
+# --- Variables de entorno y secretos -----------------------------------------
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets/
+
+# --- Datos locales, backups y artefactos -------------------------------------
+data/
+datasets/
+backups/
+uploads/
+media/
+*.sqlite3
+*.db
+*.dump
+*.bak
+*.log
+logs/
+*.rdb
+*.aof
+
+# --- Notebooks y experimentos ------------------------------------------------
+notebooks/
+.ipynb_checkpoints/
+*.ipynb
+
+# --- IDE / sistema operativo -------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Dependencias de otros ecosistemas (no aplican a este servicio) ----------
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
