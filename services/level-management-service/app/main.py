@@ -20,6 +20,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from .config import Settings
@@ -95,6 +96,16 @@ app = FastAPI(
     ),
     version="0.2.0",
     lifespan=lifespan,
+)
+
+# El tablero es una SPA estática que puede servirse desde otro origen (o
+# abrirse como file://). Los orígenes se configuran con CORS_ALLOW_ORIGINS.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(Settings.from_env().cors_allow_origins),
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

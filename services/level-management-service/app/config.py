@@ -18,6 +18,19 @@ def _as_bool(raw: str | None, *, default: bool) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _as_origins(raw: str | None) -> tuple[str, ...]:
+    """Convierte ``CORS_ALLOW_ORIGINS`` en una tupla de orígenes.
+
+    Sin valor se permite cualquier origen (útil para abrir el tablero desde
+    ``file://`` o un servidor estático local). En producción conviene fijar la
+    lista separada por comas con los orígenes reales del frontend.
+    """
+    if raw is None or not raw.strip():
+        return ("*",)
+    origins = tuple(item.strip() for item in raw.split(",") if item.strip())
+    return origins or ("*",)
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     """Parámetros de ejecución del servicio."""
@@ -31,6 +44,8 @@ class Settings:
     internal_api_key: str | None
     # Carga el nivel de demostración al arrancar si el catálogo está vacío.
     seed_demo_data: bool
+    # Orígenes autorizados para el frontend (CORS).
+    cors_allow_origins: tuple[str, ...]
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -42,4 +57,5 @@ class Settings:
             or os.getenv("APP_SECRET_KEY")
             or None,
             seed_demo_data=_as_bool(os.getenv("SEED_DEMO_DATA"), default=True),
+            cors_allow_origins=_as_origins(os.getenv("CORS_ALLOW_ORIGINS")),
         )

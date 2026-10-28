@@ -28,6 +28,19 @@ def _as_float(raw: str | None, *, default: float) -> float:
         return default
 
 
+def _as_origins(raw: str | None) -> tuple[str, ...]:
+    """Convierte ``CORS_ALLOW_ORIGINS`` en una tupla de orígenes.
+
+    Sin valor se permite cualquier origen (útil para abrir el tablero desde
+    ``file://`` o un servidor estático local). En producción conviene fijar la
+    lista separada por comas con los orígenes reales del frontend.
+    """
+    if raw is None or not raw.strip():
+        return ("*",)
+    origins = tuple(item.strip() for item in raw.split(",") if item.strip())
+    return origins or ("*",)
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     """Parámetros de ejecución del motor de juego."""
@@ -42,6 +55,8 @@ class Settings:
     level_cache_ttl_seconds: int
     interrogation_ttl_seconds: int
     level_service_timeout_seconds: float
+    # Orígenes autorizados para el frontend (CORS).
+    cors_allow_origins: tuple[str, ...]
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -68,4 +83,5 @@ class Settings:
                 os.getenv("LEVEL_SERVICE_TIMEOUT_SECONDS"),
                 default=3.0,
             ),
+            cors_allow_origins=_as_origins(os.getenv("CORS_ALLOW_ORIGINS")),
         )

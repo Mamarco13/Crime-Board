@@ -86,6 +86,8 @@ services:
       DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
       PLAYGROUND_ENGINE_SERVICE_URL: ${PLAYGROUND_ENGINE_SERVICE_URL:-http://playground-engine-service:8000}
       APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
     ports:
       # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
       # En producción, elimina este mapeo y expón el servicio vía Ingress/API Gateway.
@@ -122,6 +124,8 @@ services:
       REDIS_URL: "redis://:${REDIS_PASSWORD:?}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/${REDIS_DB:-0}"
       LEVEL_MANAGEMENT_SERVICE_URL: ${LEVEL_MANAGEMENT_SERVICE_URL:-http://level-management-service:8000}
       APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${PLAYGROUND_ENGINE_HOST_PORT:-8001}:8000"
     depends_on:

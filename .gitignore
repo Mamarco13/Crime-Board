@@ -382,3 +382,6 @@ docs/hito2-task-1.1-dockerfiles.md
 
 # Recomendaciones Generales.
 docs/recomendaciones.txt
+
+# Nota de trabajo local: análisis y validación de la SPA del tablero.
+docs/analisis-frontend-crime-board.md
