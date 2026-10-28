@@ -3,9 +3,11 @@
 Flujo de una partida:
 
 1. ``POST /api/engine/interrogate``: el jugador interroga a un sospechoso y
-   desbloquea una pista. El estado se guarda por ``session_id`` en Redis (o en
-   memoria si Redis no está disponible).
-2. ``POST /api/engine/validate``: el jugador envía su acusación. El motor pide
+   recibe su declaración. Si el nivel usa el archivador, no se desbloquea
+   ninguna tarjeta aquí: el jugador debe buscar el término en el archivador.
+2. ``POST /api/engine/archive``: el jugador teclea un código, una dirección o
+   una palabra y recupera la ficha oculta que coincida.
+3. ``POST /api/engine/validate``: el jugador envía su acusación. El motor pide
    la solución al catálogo interno, la compara y devuelve veredicto + feedback.
 
 La solución nunca se expone en las respuestas de este servicio.
@@ -22,6 +24,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from .archive import match_archive
 from .catalog import (
     CatalogUnavailableError,
     LevelCatalog,
@@ -36,6 +39,9 @@ from .engine import (
 from .schemas import (
     AccusationRequest,
     AccusationResponse,
+    ArchiveRequest,
+    ArchiveResponse,
+    Card,
     CardType,
     InterrogationRequest,
     InterrogationResponse,
@@ -224,7 +230,7 @@ async def interrogate(
 
     await store.set(
         state_key,
-        {"text": text, "clue_card_id": clue.id},
+        {"text": text, "clue_card_id": clue.id if clue else None},
         settings.interrogation_ttl_seconds,
     )
     logger.info(
@@ -232,13 +238,95 @@ async def interrogate(
         level.level_id,
         payload.session_id,
         suspect.id,
-        clue.id,
+        clue.id if clue else "-",
     )
 
     return InterrogationResponse(
         suspect_card_id=suspect.id,
         unlocked_clue_text=text,
         new_card_unlocked=clue,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Archivador
+# ---------------------------------------------------------------------------
+@app.post(
+    "/api/engine/archive",
+    response_model=ArchiveResponse,
+    tags=["engine"],
+    summary="Busca un código, dirección o palabra en el archivador",
+)
+async def archive(
+    payload: ArchiveRequest,
+    catalog: CatalogDep,
+    store: StoreDep,
+    settings: SettingsDep,
+) -> ArchiveResponse:
+    """Recupera la ficha oculta cuyo alias coincide con la consulta.
+
+    El estado se guarda por sesión: una ficha ya recuperada se devuelve con
+    ``already_unlocked=true`` para que el cliente pueda reconstruir el tablero
+    tras una recarga sin volver a concederla como nueva. Las tarjetas visibles
+    que coincidan también responden así, sin añadirse dos veces.
+    """
+    level = await catalog.get_level(payload.level_id)
+    result = match_archive(level, payload.query)
+
+    if not result.matched or result.card is None:
+        logger.info(
+            "Archivador sin resultados: nivel=%s sesión=%s consulta=%r",
+            level.level_id,
+            payload.session_id,
+            payload.query,
+        )
+        return ArchiveResponse(
+            found=False,
+            card=None,
+            already_unlocked=False,
+            message=(
+                "Registro no encontrado. Revisa el código, la dirección o la "
+                "palabra y vuelve a intentarlo."
+            ),
+            score=None,
+        )
+
+    card = result.card
+    state_key = (
+        f"{STATE_PREFIX}archive:"
+        f"{level.level_id}:{payload.session_id}:{card.id}"
+    )
+    previous = await store.get(state_key)
+    already_unlocked = previous is not None or not card.hidden
+
+    if card.hidden and previous is None:
+        await store.set(
+            state_key,
+            {"card": card.model_dump(mode="json")},
+            settings.interrogation_ttl_seconds,
+        )
+
+    if already_unlocked:
+        message = "Esa ficha ya está sobre el tablero."
+    else:
+        message = f"Registro recuperado: {card.title}."
+
+    logger.info(
+        "Archivador: nivel=%s sesión=%s ficha=%s ya_recuperada=%s "
+        "puntuación=%.3f",
+        level.level_id,
+        payload.session_id,
+        card.id,
+        already_unlocked,
+        result.score,
+    )
+
+    return ArchiveResponse(
+        found=True,
+        card=Card.model_validate(card.model_dump()),
+        already_unlocked=already_unlocked,
+        message=message,
+        score=result.score,
     )
 
 

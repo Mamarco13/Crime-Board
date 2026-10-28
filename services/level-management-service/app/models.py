@@ -6,8 +6,13 @@ El módulo reúne dos capas relacionadas:
    del caso se guarda en ``levels.solution_card_ids`` y nunca se expone en los
    endpoints públicos.
 2. **API** (Pydantic): esquemas de entrada/salida. ``LevelDetail`` omite la
-   solución a propósito; ``LevelAdmin`` la incluye y solo se usa en el endpoint
-   interno protegido por clave.
+   solución y las tarjetas ocultas; ``LevelAdmin`` lo incluye todo y solo se usa
+   en el endpoint interno protegido por clave.
+
+**Archivador**: una tarjeta puede nacer oculta (``hidden=True``) y declarar
+``aliases`` (códigos, direcciones o palabras). El jugador la recupera desde el
+archivador del motor escribiendo uno de esos términos. Las tarjetas ocultas no
+viajan al cliente hasta que se recuperan.
 
 Las tarjetas usan clave primaria compuesta ``(level_id, id)`` para permitir que
 un mismo identificador de tarjeta (por ejemplo ``weapon-copa``) se reutilice en
@@ -17,6 +22,8 @@ distintos niveles sin colisiones.
 from __future__ import annotations
 
 import enum
+import re
+import unicodedata
 from datetime import datetime
 
 from pydantic import (
@@ -27,6 +34,7 @@ from pydantic import (
     model_validator,
 )
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Enum,
     ForeignKey,
@@ -142,10 +150,32 @@ class CardModel(Base):
     title: Mapped[str] = mapped_column(String(120), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False, default="")
     image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    # Tarjetas que empiezan fuera del tablón y se recuperan desde el archivador.
+    hidden: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Términos aceptados por el archivador. Se guardan normalizados para que la
+    # comparación no dependa de acentos, mayúsculas ni puntuación.
+    aliases: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     # Orden estable con el que el cliente pinta las tarjetas del tablero.
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     level: Mapped[LevelModel] = relationship(back_populates="cards")
+
+
+# ---------------------------------------------------------------------------
+# Normalización de alias (compartida por validación y comparación)
+# ---------------------------------------------------------------------------
+_ALIAS_PUNCTUATION = re.compile(r"[^a-z0-9ñ\s]")
+
+
+def normalize_alias(value: str) -> str:
+    """Minúsculas, sin acentos, sin puntuación y con espacios colapsados."""
+    value = unicodedata.normalize("NFKD", value)
+    value = "".join(
+        character for character in value if not unicodedata.combining(character)
+    )
+    value = value.lower()
+    value = _ALIAS_PUNCTUATION.sub(" ", value)
+    return " ".join(value.split())
 
 
 # ---------------------------------------------------------------------------
@@ -191,15 +221,56 @@ class CardBase(BaseModel):
 class CardCreate(CardBase):
     """Tarjeta enviada al publicar un nivel."""
 
+    hidden: bool = Field(
+        default=False,
+        description=(
+            "Si es ``true``, la tarjeta no aparece en el tablón hasta que el "
+            "jugador la recupera desde el archivador."
+        ),
+    )
+    aliases: list[str] = Field(
+        default_factory=list,
+        max_length=20,
+        description=(
+            "Códigos, direcciones o palabras que recuperan la tarjeta desde el "
+            "archivador. Solo se usan en el motor; no se publican al cliente."
+        ),
+        examples=[["copa", "copa de champán", "champán"]],
+    )
+
+    @field_validator("aliases")
+    @classmethod
+    def _validate_aliases(cls, value: list[str]) -> list[str]:
+        cleaned = [" ".join(alias.split()) for alias in value if alias.strip()]
+        if any(len(alias) < 2 for alias in cleaned):
+            raise ValueError("Cada alias debe tener al menos 2 caracteres")
+        normalized = [normalize_alias(alias) for alias in cleaned]
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("aliases no puede contener duplicados")
+        return cleaned
+
 
 class Card(CardBase):
-    """Tarjeta devuelta al cliente."""
+    """Tarjeta visible devuelta al cliente."""
 
     model_config = ConfigDict(
         from_attributes=True,
         extra="forbid",
         str_strip_whitespace=True,
     )
+
+
+class CardAdmin(CardBase):
+    """Tarjeta completa, con su estado de archivo, solo para uso interno."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
+
+    hidden: bool = False
+    aliases: list[str] = Field(default_factory=list)
 
 
 class LevelCreate(BaseModel):
@@ -246,11 +317,35 @@ class LevelCreate(BaseModel):
         if len(set(card_ids)) != len(card_ids):
             raise ValueError("Los ids de las tarjetas deben ser únicos en el nivel")
 
-        card_id_set = set(card_ids)
+        if not any(not card.hidden for card in self.cards):
+            raise ValueError(
+                "El nivel necesita al menos una tarjeta visible para abrir el tablón"
+            )
+
+        alias_owner: dict[str, str] = {}
+        for card in self.cards:
+            if card.hidden and not card.aliases:
+                raise ValueError(
+                    f"La tarjeta oculta '{card.id}' necesita al menos un alias "
+                    "para poder recuperarla del archivador"
+                )
+            for alias in card.aliases:
+                normalized = normalize_alias(alias)
+                if not normalized:
+                    raise ValueError(
+                        f"El alias '{alias}' de la tarjeta '{card.id}' no es válido"
+                    )
+                if normalized in alias_owner:
+                    raise ValueError(
+                        f"El alias '{alias}' está repetido entre las tarjetas "
+                        f"'{alias_owner[normalized]}' y '{card.id}'"
+                    )
+                alias_owner[normalized] = card.id
+
         unknown = [
             card_id
             for card_id in self.solution_card_ids
-            if card_id not in card_id_set
+            if card_id not in card_ids
         ]
         if unknown:
             raise ValueError(
@@ -274,9 +369,9 @@ class LevelSummary(BaseModel):
 class LevelDetail(BaseModel):
     """Nivel listo para renderizar el tablero.
 
-    Deliberadamente **no** incluye ``solution_card_ids``. Los clientes solo
-    reciben esta representación; la solución viaja por ``LevelAdmin`` en el
-    canal interno entre microservicios.
+    Deliberadamente **no** incluye ``solution_card_ids`` ni las tarjetas
+    ocultas. ``card_count`` sí publica el total de fichas del expediente para
+    que el cliente pueda mostrar el progreso sin revelar su contenido.
     """
 
     level_id: str
@@ -284,12 +379,14 @@ class LevelDetail(BaseModel):
     description: str
     difficulty: Difficulty
     cards: list[Card]
+    card_count: int = Field(ge=0)
     created_at: datetime
 
 
 class LevelAdmin(LevelDetail):
-    """Vista administrativa/interna que sí contiene la solución."""
+    """Vista administrativa/interna que sí contiene la solución y el archivo."""
 
+    cards: list[CardAdmin]
     solution_card_ids: list[str] = Field(
         description="Combinación ganadora. Uso exclusivo interno.",
     )

@@ -5,10 +5,11 @@ determinista y reutilizarla si mañana se añade otro transporte (CLI, worker).
 
 Diseño del MVP
 --------------
-* Cada sospechoso se asocia de forma determinista a una pista: se ordenan
-  sospechosos y pistas por id y se reparten en round-robin. Es suficiente para
-  el tutorial y no requiere columnas nuevas en el catálogo. En una versión
-  posterior, el autor del nivel podrá definir diálogos y desbloqueos explícitos.
+* **Archivador**: la declaración del sospechoso se muestra tal cual y las
+  fichas ocultas se recuperan escribiendo códigos, direcciones o palabras en el
+  archivador del motor. El interrogatorio no entrega tarjetas por sí mismo.
+* **Compatibilidad legada**: los niveles sin tarjetas ocultas conservan el
+  reparto round-robin entre sospechosos y pistas.
 * La acusación se compara como conjunto: el orden de las tarjetas no importa,
   pero deben coincidir exactamente con ``solution_card_ids``.
 """
@@ -36,6 +37,11 @@ class AccusationOutcome:
     feedback_message: str
 
 
+def has_archive(level: LevelSnapshot) -> bool:
+    """Indica si el nivel usa el archivador (tiene alguna ficha oculta)."""
+    return any(card.hidden for card in level.cards)
+
+
 def _cards_of_type(level: LevelSnapshot, card_type: CardType) -> list[Card]:
     """Tarjetas filtradas y ordenadas por id para un reparto estable."""
     return sorted(
@@ -47,12 +53,28 @@ def _cards_of_type(level: LevelSnapshot, card_type: CardType) -> list[Card]:
 def build_interrogation(
     level: LevelSnapshot,
     suspect: Card,
-) -> tuple[str, Card]:
+) -> tuple[str, Card | None]:
     """Genera la declaración del sospechoso y la pista que desbloquea.
 
     Devuelve ``(texto_para_el_jugador, tarjeta_de_pista)``. La función asume
     que ``suspect`` ya fue validado como tarjeta del nivel y de tipo SUSPECT.
+
+    Con el archivador, la declaración es el texto que el jugador debe leer y
+    ``tarjeta_de_pista`` es ``None``: las fichas se recuperan escribiendo en el
+    archivador, no al interrogar. Los niveles antiguos sin fichas ocultas
+    conservan el reparto automático como compatibilidad.
     """
+    statement = suspect.description.strip() or suspect.title
+
+    if has_archive(level):
+        text = (
+            f"{suspect.title} respira hondo antes de responder:\n"
+            f"«{statement}»\n"
+            "Anota lo que te haya llamado la atención: un código, una "
+            "dirección o una palabra pueden abrir una ficha en el archivador."
+        )
+        return text, None
+
     clues = _cards_of_type(level, CardType.CLUE)
     if not clues:
         raise MissingClueError(level.level_id)
@@ -66,10 +88,9 @@ def build_interrogation(
 
     # Las pistas pueden no tener descripción; en ese caso se usa el título para
     # que el interrogatorio nunca devuelva un texto vacío.
-    statement = clue.description.strip() or clue.title
     text = (
         f"{suspect.title} respira hondo antes de responder:\n"
-        f"«{statement}»\n"
+        f"«{clue.description.strip() or clue.title}»\n"
         "Anota la declaración en el tablón: puede confirmar o descartar "
         "una hipótesis."
     )

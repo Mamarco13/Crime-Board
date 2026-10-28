@@ -740,18 +740,6 @@
       position: absolute; inset: 4px; pointer-events: none;
       border: 1px solid rgba(120, 91, 43, .16);
     }
-    .card-wrap.locked .evidence-card {
-      --stripe: transparent;
-      background:
-        repeating-linear-gradient(135deg, rgba(60, 42, 20, .07) 0 8px, transparent 8px 16px),
-        linear-gradient(150deg, #c2a977 0%, #b39762 55%, #9e8252 100%);
-      border: 1px dashed rgba(60, 42, 20, .55);
-      color: #3d2f1c;
-      cursor: pointer;
-    }
-    .card-wrap.locked .pin { opacity: .6; }
-    .card-wrap.locked:hover .evidence-card { transform: rotate(0) translateY(-2px); }
-
     .card-wrap.selected .evidence-card {
       outline: 2px solid var(--gold);
       outline-offset: 2px;
@@ -783,7 +771,6 @@
     .type-weapon .type-chip { color: #d5e1eb; }
     .type-location .type-chip { color: #e0b787; }
     .type-clue .type-chip { color: #5a4526; border-color: rgba(90, 69, 38, .32); background: rgba(255, 255, 255, .18); }
-    .type-clue.locked .type-chip { color: #4a3720; border-color: rgba(74, 55, 32, .38); }
     .card-no {
       font-family: var(--font-type); font-size: 7.5px; letter-spacing: .08em;
       color: rgba(255, 255, 255, .42); white-space: nowrap;
@@ -851,35 +838,6 @@
     }
     .card-action.is-loading .i { display: none; }
     .card-action .i { width: 10px; height: 10px; }
-
-    .clue-source {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-family: var(--font-type); font-size: 7px; letter-spacing: .05em;
-      color: rgba(36, 28, 19, .58);
-      max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .clue-source .i { width: 9px; height: 9px; }
-
-    .lock-seal {
-      width: 38px; height: 38px; margin: 5px 0 7px;
-      display: grid; place-items: center;
-      border: 1px dashed rgba(61, 47, 28, .55);
-      border-radius: 50%;
-      background: rgba(255, 255, 255, .13);
-      color: #4f3a20;
-      position: relative; z-index: 2;
-    }
-    .lock-seal .i { width: 17px; height: 17px; }
-    .locked-tag {
-      display: inline-flex; align-items: center; gap: 4px;
-      margin-top: auto; padding-top: 7px;
-      font-family: var(--font-type); font-size: 7px; font-weight: 700; letter-spacing: .14em;
-      color: rgba(61, 47, 28, .75);
-      border-top: 1px dashed rgba(61, 47, 28, .3);
-      position: relative; z-index: 2;
-      width: 100%;
-    }
-    .locked-tag .i { width: 9px; height: 9px; }
 
     .selected-marker {
       position: absolute; right: -7px; bottom: -7px; z-index: 8;
@@ -1353,13 +1311,15 @@
     .editor-row[data-type="LOCATION"] { --row-color: #b87b42; }
     .editor-row[data-type="CLUE"] { --row-color: var(--gold); }
     .editor-grid {
-      display: grid; grid-template-columns: 116px minmax(0, 1fr) auto auto;
+      display: grid; grid-template-columns: 116px minmax(0, 1fr) auto;
       gap: 7px; align-items: center;
     }
     .editor-grid .select, .editor-grid .input { padding-top: 7px; padding-bottom: 7px; font-size: 11px; }
     .editor-grid .select { padding-right: 26px; background-position: calc(100% - 12px) 13px, calc(100% - 7px) 13px; }
     .editor-row textarea { margin-top: 7px; min-height: 46px; padding: 7px 9px; font-size: 10.5px; }
-    .editor-solution {
+    .editor-flags { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 7px; }
+    .editor-aliases { flex: 1 1 200px; min-width: 120px; padding: 6px 8px !important; font-size: 10px !important; }
+    .editor-solution, .editor-hidden {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 5px 7px;
       border: 1px solid rgba(212, 175, 55, .22);
@@ -1370,14 +1330,16 @@
       transition: .18s;
       user-select: none;
     }
+    .editor-hidden { border-color: rgba(230, 57, 70, .22); }
     .editor-solution:has(input:checked) { color: var(--gold); border-color: rgba(212, 175, 55, .5); background: rgba(212, 175, 55, .07); }
-    .editor-solution input {
+    .editor-hidden:has(input:checked) { color: var(--red); border-color: rgba(230, 57, 70, .5); background: rgba(230, 57, 70, .06); }
+    .editor-solution input, .editor-hidden input {
       appearance: none; width: 11px; height: 11px; margin: 0;
       border: 1px solid currentColor; border-radius: 1px; background: transparent;
       display: inline-grid; place-items: center; cursor: pointer;
     }
-    .editor-solution input:checked::after {
-      content: '✓'; font-size: 9px; line-height: 1; color: var(--gold);
+    .editor-solution input:checked::after, .editor-hidden input:checked::after {
+      content: '✓'; font-size: 9px; line-height: 1; color: currentColor;
     }
     .editor-remove {
       width: 27px; height: 27px; display: grid; place-items: center;
@@ -1612,6 +1574,92 @@
     .statement-clue p { font-family: var(--font-type); font-size: 10px; line-height: 1.5; color: rgba(43, 33, 23, .74); }
     .statement-clue.dupe { border-style: dashed; opacity: .82; }
 
+    /* Archivador */
+    .archive-form {
+      padding: 12px;
+      border: 1px solid rgba(200, 177, 131, .26);
+      background: rgba(0, 0, 0, .18);
+    }
+    .archive-form .field-label {
+      display: block;
+      margin-bottom: 7px;
+      font-family: var(--font-type);
+      font-size: 9px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .archive-row { display: flex; gap: 8px; align-items: stretch; }
+    .archive-row .input { flex: 1 1 auto; min-width: 0; }
+    .archive-row .btn { flex: 0 0 auto; min-width: 96px; }
+    .archive-progress {
+      display: flex; align-items: center; gap: 9px;
+      margin-top: 12px;
+      font-family: var(--font-type); font-size: 8px; letter-spacing: .08em;
+      color: var(--muted-2); text-transform: uppercase;
+    }
+    .archive-progress .progress-track { flex: 1 1 auto; margin: 0; }
+    .archive-result { margin-top: 11px; min-height: 20px; }
+    .archive-result .archive-empty {
+      padding: 12px;
+      border: 1px dashed rgba(200, 177, 131, .24);
+      font-family: var(--font-type); font-size: 10px; line-height: 1.5;
+      color: var(--muted-2);
+    }
+    .archive-card {
+      padding: 11px 12px;
+      border: 1px solid rgba(159, 216, 166, .34);
+      background: rgba(159, 216, 166, .05);
+    }
+    .archive-card .tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-type); font-size: 7px; font-weight: 700;
+      letter-spacing: .14em; text-transform: uppercase; color: #9fd8a6;
+    }
+    .archive-card .tag .i { width: 10px; height: 10px; }
+    .archive-card h4 { margin: 5px 0 3px; font-family: var(--font-type); font-size: 15px; color: var(--paper); }
+    .archive-card p { font-family: var(--font-type); font-size: 10.5px; line-height: 1.55; color: var(--muted); }
+    .archive-card .archive-meta {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 7px;
+      font-family: var(--font-type); font-size: 8px; letter-spacing: .06em;
+      color: var(--muted-2); text-transform: uppercase;
+    }
+    .archive-card.dupe { border-style: dashed; border-color: rgba(200, 177, 131, .34); background: rgba(200, 177, 131, .05); }
+    .archive-card.dupe .tag { color: var(--gold); }
+    .archive-miss {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 11px 12px;
+      border: 1px solid rgba(230, 57, 70, .34);
+      background: rgba(230, 57, 70, .06);
+      font-family: var(--font-type); font-size: 10.5px; line-height: 1.5;
+      color: #f0a3a8;
+    }
+    .archive-miss .i { width: 13px; height: 13px; flex: 0 0 auto; margin-top: 1px; }
+    .archive-miss strong { display: block; color: #ffc4c8; letter-spacing: .02em; }
+    .archive-history-wrap { margin-top: 14px; }
+    .archive-history-wrap .field-label {
+      display: block; margin-bottom: 6px;
+      font-family: var(--font-type); font-size: 8px; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--muted-2);
+    }
+    .archive-history { display: flex; flex-direction: column; gap: 5px; }
+    .archive-history button {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      width: 100%; padding: 6px 8px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .02);
+      font-family: var(--font-type); font-size: 9.5px; color: var(--muted);
+      text-align: left; transition: .18s;
+    }
+    .archive-history button:hover { border-color: rgba(200, 177, 131, .36); color: var(--paper-2); }
+    .archive-history .hit { color: #9fd8a6; }
+    .archive-history .miss { color: #f0a3a8; }
+    .log-entry.archive .log-icon { color: var(--gold); border-color: rgba(200, 177, 131, .34); }
+    @media (max-width: 560px) {
+      .archive-row { flex-direction: column; }
+      .archive-row .btn { width: 100%; }
+    }
+
     /* Menú de hilo */
     .thread-menu {
       position: fixed; z-index: 300;
@@ -1741,7 +1789,7 @@
       .app-footer { padding: 6px 14px 11px; font-size: 7px; gap: 8px; flex-wrap: wrap; }
       .modal-layer { padding: 12px; }
       .modal-panel { max-height: 94vh; }
-      .editor-grid { grid-template-columns: 1fr auto auto; }
+      .editor-grid { grid-template-columns: 1fr auto; }
       .editor-grid .editor-index { display: none; }
       .editor-grid .select { grid-column: 1 / -1; }
       .mode-options { grid-template-columns: 1fr; }
@@ -1890,7 +1938,8 @@
 
       <nav class="actions" aria-label="Acciones del caso">
         <button class="btn" id="newCaseBtn" type="button"><i data-lucide="folder-plus"></i><span>Nuevo Caso</span></button>
-        <button class="btn" id="viewCluesBtn" type="button"><i data-lucide="book-open"></i><span>Ver Pistas</span><span class="btn-badge" id="clueCountBadge" hidden>0</span></button>
+        <button class="btn" id="archiveBtn" type="button"><svg class="i"><use href="#i-search"></use></svg><span>Archivador</span><span class="btn-badge" id="archiveBadge" hidden>0</span></button>
+        <button class="btn" id="viewCluesBtn" type="button"><i data-lucide="book-open"></i><span>Ver Archivo</span><span class="btn-badge" id="clueCountBadge" hidden>0</span></button>
         <button class="btn" id="connectBtn" type="button" aria-pressed="false"><i data-lucide="link-2"></i><span>Conectar Hilo</span></button>
         <button class="btn primary" id="accuseBtn" type="button"><i data-lucide="gavel"></i><span>Realizar Acusación</span><span class="btn-badge" id="accuseCount" hidden>0</span></button>
       </nav>
@@ -1972,15 +2021,15 @@
             <h2 id="caseMetaTitle">Sin expediente abierto</h2>
             <p id="caseMetaDescription">El archivo espera la llegada de un nuevo caso. Revisa el catálogo o publica un misterio.</p>
             <div class="case-stats">
-              <span><b id="caseCardCount">0</b> tarjetas</span>
-              <span><b id="caseClueCount">0</b> pistas</span>
+              <span><b id="caseCardCount">0</b> en el tablero</span>
+              <span><b id="caseClueCount">0</b> archivadas</span>
               <span><b id="caseThreadCount">0</b> hilos</span>
             </div>
           </div>
 
           <div class="tabs" role="tablist" aria-label="Secciones del cuaderno">
             <button class="tab active" id="tabClues" type="button" role="tab" aria-selected="true" data-tab="clues">
-              Pistas <span class="tab-count" id="tabClueCount">0</span>
+              Archivo <span class="tab-count" id="tabClueCount">0</span>
             </button>
             <button class="tab" id="tabLog" type="button" role="tab" aria-selected="false" data-tab="log">
               Registro <span class="tab-count" id="tabLogCount">0</span>
@@ -1992,7 +2041,7 @@
           <div class="notebook-foot">
             <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="clueProgressFill"></div></div>
             <div class="foot-label">
-              <span id="clueProgressLabel">0 de 0 pistas desbloqueadas</span>
+              <span id="clueProgressLabel">0 de 0 fichas sobre el tablero</span>
               <span id="footThreads">0 hilos</span>
             </div>
           </div>
@@ -2141,7 +2190,7 @@
                 <svg class="i"><use href="#i-plus"></use></svg> Añadir tarjeta
               </button>
             </div>
-            <p class="hint">Marca con <b>“En la solución”</b> la combinación exacta que el jugador deberá acusar. Necesitas al menos una tarjeta de cada tipo para jugar.</p>
+                <p class="hint">Marca con <b>“En la solución”</b> la combinación exacta que el jugador deberá acusar. Las tarjetas ocultas se recuperan desde el archivador tecleando uno de sus alias. Necesitas al menos una tarjeta de cada tipo y una visible.</p>
           </div>
 
           <div class="form-error" id="newCaseError" hidden>
@@ -2159,21 +2208,21 @@
     </div>
   </div>
 
-  <!-- Pistas desbloqueadas -->
+  <!-- Archivo de fichas recuperadas -->
   <div class="modal-layer" id="cluesModal" role="dialog" aria-modal="true" aria-labelledby="cluesModalTitle" hidden>
     <div class="modal-panel">
       <div class="modal-head">
         <div>
-          <span class="modal-kicker"><svg class="i"><use href="#i-book"></use></svg> Expediente de pistas</span>
-          <h2 class="modal-title" id="cluesModalTitle">Pistas desbloqueadas</h2>
-          <p class="modal-sub" id="cluesModalSub">Las declaraciones que has arrancado a los sospechosos.</p>
+          <span class="modal-kicker"><svg class="i"><use href="#i-book"></use></svg> Archivo recuperado</span>
+          <h2 class="modal-title" id="cluesModalTitle">Fichas recuperadas</h2>
+          <p class="modal-sub" id="cluesModalSub">Las fichas que has sacado del archivador.</p>
         </div>
-        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar pistas"><svg class="i"><use href="#i-x"></use></svg></button>
+        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar archivo"><svg class="i"><use href="#i-x"></use></svg></button>
       </div>
       <div class="modal-body" id="cluesModalBody"></div>
       <div class="modal-foot">
         <button class="btn ghost" type="button" data-close-modal>Volver al tablón</button>
-        <button class="btn gold" type="button" id="cluesGoInterrogateBtn"><svg class="i"><use href="#i-search"></use></svg> Interrogar sospechosos</button>
+        <button class="btn gold" type="button" id="cluesGoInterrogateBtn"><svg class="i"><use href="#i-search"></use></svg> Abrir archivador</button>
       </div>
     </div>
   </div>
@@ -2222,13 +2271,49 @@
     <div class="modal-panel">
       <div class="modal-head">
         <div>
-          <span class="modal-kicker"><svg class="i"><use href="#i-quote"></use></svg> Transcripción</span>
+          <span class="modal-kicker" id="statementKicker"><svg class="i"><use href="#i-quote"></use></svg> Transcripción</span>
           <h2 class="modal-title" id="statementTitle">Declaración del sospechoso</h2>
-          <p class="modal-sub">La grabadora seguía encendida. Esto es lo que quedó en la cinta.</p>
+          <p class="modal-sub" id="statementSub">La grabadora seguía encendida. Esto es lo que quedó en la cinta.</p>
         </div>
         <button class="modal-close" type="button" data-close-modal aria-label="Cerrar declaración"><svg class="i"><use href="#i-x"></use></svg></button>
       </div>
       <div class="modal-body" id="statementContent"></div>
+    </div>
+  </div>
+
+  <!-- Archivador: búsqueda por código, dirección o palabra -->
+  <div class="modal-layer" id="archiveModal" role="dialog" aria-modal="true" aria-labelledby="archiveTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <div>
+          <span class="modal-kicker"><svg class="i"><use href="#i-search"></use></svg> Base de datos del expediente</span>
+          <h2 class="modal-title" id="archiveTitle">Archivador</h2>
+          <p class="modal-sub">Teclea un código, una dirección o una palabra que hayas leído en una declaración. Si coincide con una ficha sellada, aparecerá en el tablero.</p>
+        </div>
+        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar archivador"><svg class="i"><use href="#i-x"></use></svg></button>
+      </div>
+      <div class="modal-body">
+        <form class="archive-form" id="archiveForm" novalidate>
+          <label class="field-label" for="archiveQuery">Término de búsqueda</label>
+          <div class="archive-row">
+            <input class="input" id="archiveQuery" name="query" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Calle Falsa 123, copa, invernadero…" data-autofocus />
+            <button class="btn primary" id="archiveSubmitBtn" type="submit"><svg class="i"><use href="#i-search"></use></svg><span>Buscar</span></button>
+          </div>
+          <p class="hint">No distingue mayúsculas, acentos ni puntuación. Los términos aparecen en las declaraciones y en las descripciones ya reveladas.</p>
+        </form>
+
+        <div class="archive-progress" id="archiveProgress"></div>
+        <div class="archive-result" id="archiveResult" role="status" aria-live="polite"></div>
+
+        <div class="archive-history-wrap">
+          <span class="field-label">Últimas búsquedas</span>
+          <div class="archive-history" id="archiveHistory"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span class="danger-note" id="archiveFootNote">Cada acierto clava una ficha nueva en el tablón.</span>
+        <button class="btn ghost" type="button" data-close-modal>Volver al tablón</button>
+      </div>
     </div>
   </div>
 
@@ -2278,6 +2363,10 @@
   const COLUMN_X = [0.006, 0.254, 0.502, 0.75];
   const ROW_HEIGHT = 210;
   const BOARD_MIN_HEIGHT = 780;
+  // Altura conservadora para detectar solapes al insertar recompensas. Las
+  // tarjetas tienen 172px de alto mínimo y crecen con descripciones largas.
+  const CARD_COLLISION_HEIGHT = 230;
+  const CARD_COLLISION_GAP = 14;
 
   const DIFFICULTY = {
     tutorial: { label: 'Tutorial', order: 0 },
@@ -2292,23 +2381,88 @@
     'tutorial-001': {
       level_id: 'tutorial-001',
       title: 'El último brindis en Villa Aurora',
-      description: 'Durante la cena de fin de año, el anfitrión brindó y cayó sin vida. El reloj de la biblioteca se detuvo a las 23:15. Reconstruye la escena con las tarjetas del tablón y formula una acusación.',
+      description: 'Durante la cena de fin de año, el anfitrión brindó y cayó sin vida. El reloj de la biblioteca se detuvo a las 23:15. Interroga a los sospechosos, busca los términos que mencionan en el archivador y reconstruye la escena antes de acusar.',
       difficulty: 'tutorial',
       created_at: '2026-01-12T21:15:00Z',
+      card_count: 16,
       cards: [
-        { id: 'suspect-mayordomo', type: 'SUSPECT', title: 'Alfredo Vázquez', description: 'Mayordomo de la familia desde hace treinta años. Conoce cada rincón de la casa y preparó las copas del brindis.' },
-        { id: 'suspect-sobrina', type: 'SUSPECT', title: 'Lucía Ferrer', description: 'Sobrina y única heredera. Discutió con la víctima por el testamento esa misma tarde.' },
-        { id: 'suspect-socio', type: 'SUSPECT', title: 'Mauricio Salas', description: 'Socio comercial. Llegó tarde a la cena con barro en los zapatos y una carpeta que nunca soltó.' },
-        { id: 'weapon-copa', type: 'WEAPON', title: 'Copa de cristal tallado', description: 'La copa del anfitrión, aún con restos de vino tinto.' },
-        { id: 'weapon-pistola', type: 'WEAPON', title: 'Revólver de colección', description: 'Arma de salón expuesta en la vitrina, sin proyectiles.' },
-        { id: 'weapon-atizador', type: 'WEAPON', title: 'Atizador de latón', description: 'Pesado atizador de la chimenea, limpio y en su sitio.' },
-        { id: 'location-despacho', type: 'LOCATION', title: 'Despacho privado', description: 'Habitación cerrada con llave donde la víctima guardaba los documentos del testamento.' },
-        { id: 'location-biblioteca', type: 'LOCATION', title: 'Biblioteca', description: 'Sala principal de la cena, con un reloj de pared.' },
-        { id: 'location-invernadero', type: 'LOCATION', title: 'Invernadero', description: 'Anexo acristalado, húmedo y lleno de macetas con tierra reciente.' },
-        { id: 'clue-reloj', type: 'CLUE', title: 'Reloj detenido', description: 'Las agujas del reloj de pared marcan las 23:15, pero nadie recuerda haberlo oído dar la hora.' },
-        { id: 'clue-copa', type: 'CLUE', title: 'Residuo en la copa', description: 'En el fondo de la copa del anfitrión quedó un polvo blanco que no es azúcar.' },
-        { id: 'clue-huella', type: 'CLUE', title: 'Huella de barro', description: 'Una huella de barro seco cruza el pasillo desde el invernadero hasta el despacho.' },
-        { id: 'clue-coartada', type: 'CLUE', title: 'Coartada quebrada', description: 'El socio afirma que llegó a las 23:30, pero el taxi lo dejó a las 22:50.' }
+        {
+          id: 'suspect-mayordomo', type: 'SUSPECT', title: 'Alfredo Vázquez',
+          description: '«Serví el champán a las 23:00 y dejé la copa de cristal junto a la biblioteca. Cuando volví, el anfitrión ya no respiraba. El despacho privado estaba cerrado con llave; nadie entró hasta que forzamos la puerta.»'
+        },
+        {
+          id: 'suspect-sobrina', type: 'SUSPECT', title: 'Lucía Ferrer',
+          description: '«Discutimos por el testamento, sí. Pero esa tarde yo estaba en el invernadero, entre las macetas. La receta que encontraron es del Dr. Sáenz: su consultorio está en Calle Falsa 123, y el vial era para mi migraña.»'
+        },
+        {
+          id: 'suspect-socio', type: 'SUSPECT', title: 'Mauricio Salas',
+          description: '«Llegué en taxi a las 22:50, no a las 23:30. Traía barro en los zapatos porque el taxi se quedó atascado junto al invernadero. El reloj de pared ya marcaba las 23:15 cuando entré; nadie lo oyó dar la hora.»'
+        },
+        {
+          id: 'weapon-copa', type: 'WEAPON', title: 'Copa de cristal tallado',
+          description: 'La copa del anfitrión, aún con restos de vino tinto y una leve película blanquecina en el fondo.',
+          hidden: true, aliases: ['copa', 'copa de cristal', 'copa de champán', 'champán']
+        },
+        {
+          id: 'weapon-pistola', type: 'WEAPON', title: 'Revólver de colección',
+          description: 'Arma de salón expuesta en la vitrina, sin proyectiles y con la culata cubierta de polvo.',
+          hidden: true, aliases: ['revólver', 'pistola', 'vitrina']
+        },
+        {
+          id: 'weapon-atizador', type: 'WEAPON', title: 'Atizador de latón',
+          description: 'Pesado atizador de la chimenea, limpio y en su sitio. Demasiado limpio para la ceniza acumulada alrededor.',
+          hidden: true, aliases: ['atizador', 'chimenea', 'latón']
+        },
+        {
+          id: 'location-despacho', type: 'LOCATION', title: 'Despacho privado',
+          description: 'Habitación cerrada con llave donde la víctima guardaba los documentos del testamento. La cerradura no presenta fuerza.',
+          hidden: true, aliases: ['despacho', 'despacho privado', 'documentos', 'testamento']
+        },
+        {
+          id: 'location-biblioteca', type: 'LOCATION', title: 'Biblioteca',
+          description: 'Sala principal de la cena, presidida por un reloj de pared detenido a las 23:15.',
+          hidden: true, aliases: ['biblioteca', 'reloj de pared']
+        },
+        {
+          id: 'location-invernadero', type: 'LOCATION', title: 'Invernadero',
+          description: 'Anexo acristalado, húmedo y lleno de macetas con tierra reciente. Una de ellas está volcada.',
+          hidden: true, aliases: ['invernadero', 'macetas', 'turba']
+        },
+        {
+          id: 'location-casa-dentista', type: 'LOCATION', title: 'Casa del dentista',
+          description: 'Chalet en el 123 de Calle Falsa. El Dr. Sáenz atiende allí fuera del horario de consulta y guarda muestras en el sótano.',
+          hidden: true, aliases: ['calle falsa 123', 'casa del dentista', 'consultorio', 'dr saenz', 'dentista']
+        },
+        {
+          id: 'clue-reloj', type: 'CLUE', title: 'Reloj detenido',
+          description: 'Las agujas del reloj de pared marcan las 23:15, pero nadie recuerda haberlo oído dar la hora.',
+          hidden: true, aliases: ['reloj', 'reloj detenido', '23:15']
+        },
+        {
+          id: 'clue-copa', type: 'CLUE', title: 'Residuo en la copa',
+          description: 'En el fondo de la copa del anfitrión quedó un polvo blanco que no es azúcar. El laboratorio detecta un sedante.',
+          hidden: true, aliases: ['residuo', 'polvo blanco', 'veneno', 'sedante']
+        },
+        {
+          id: 'clue-huella', type: 'CLUE', title: 'Huella de barro',
+          description: 'Una huella de barro seco cruza el pasillo desde el invernadero hasta el despacho.',
+          hidden: true, aliases: ['huella', 'barro', 'huella de barro']
+        },
+        {
+          id: 'clue-coartada', type: 'CLUE', title: 'Coartada quebrada',
+          description: 'El socio afirma que llegó a las 23:30, pero el taxi lo dejó a las 22:50 según el registro de la verja.',
+          hidden: true, aliases: ['coartada', 'taxi', '22:50']
+        },
+        {
+          id: 'clue-receta', type: 'CLUE', title: 'Receta médica',
+          description: 'Una receta firmada por el Dr. Sáenz, dentista, con consulta en Calle Falsa 123. El vial está medio vacío.',
+          hidden: true, aliases: ['receta', 'receta médica', 'vial', 'membrete']
+        },
+        {
+          id: 'clue-tierra', type: 'CLUE', title: 'Tierra de invernadero',
+          description: 'La huella contiene turba y perlita, la misma mezcla de las macetas del invernadero.',
+          hidden: true, aliases: ['tierra', 'perlita', 'tierra de invernadero']
+        }
       ],
       solution_card_ids: ['suspect-mayordomo', 'weapon-copa', 'location-despacho', 'clue-copa']
     },
@@ -2318,20 +2472,70 @@
       description: 'El farero no acudió al cambio de guardia. En la linterna solo quedaron una radio abierta, sal y una cuerda cortada. La marea ha borrado parte de la escena, pero no todas las mentiras.',
       difficulty: 'medium',
       created_at: '2026-02-03T18:40:00Z',
+      card_count: 13,
       cards: [
-        { id: 'suspect-farero', type: 'SUSPECT', title: 'Tomás Iriarte', description: 'Farero sustituto. Conoce el mecanismo de la linterna y afirma que pasó la noche en el muelle.' },
-        { id: 'suspect-biologa', type: 'SUSPECT', title: 'Dra. Elena Sáenz', description: 'Oceanógrafa de la estación cercana. Discutió con la víctima por el acceso a la reserva.' },
-        { id: 'suspect-pescador', type: 'SUSPECT', title: 'Nicolás Rey', description: 'Pescador local. Su barca fue vista cerca de las rocas a una hora que él niega.' },
-        { id: 'weapon-cuerda', type: 'WEAPON', title: 'Cuerda de amarre', description: 'Cuerda náutica cortada a navaja. Conserva arena húmeda entre las fibras.' },
-        { id: 'weapon-farol', type: 'WEAPON', title: 'Farol de queroseno', description: 'Farol portátil con la mecha recién recortada y el depósito casi vacío.' },
-        { id: 'weapon-anzuelo', type: 'WEAPON', title: 'Anzuelo de acero', description: 'Anzuelo de gran tamaño, todavía atado a un sedal de alta resistencia.' },
-        { id: 'location-linterna', type: 'LOCATION', title: 'Linterna del faro', description: 'Sala superior acristalada. El suelo está cubierto de fragmentos de sal y una radio encendida.' },
-        { id: 'location-muelle', type: 'LOCATION', title: 'Muelle viejo', description: 'Embarcadero de madera carcomida donde atracan las barcas de los pescadores.' },
-        { id: 'location-cueva', type: 'LOCATION', title: 'Cueva de las mareas', description: 'Galería inundable bajo el acantilado. Solo es accesible con marea baja.' },
-        { id: 'clue-marea', type: 'CLUE', title: 'Tabla de mareas', description: 'La tabla del faro marca la bajamar a las 02:10. Alguien anotó una hora anterior con otra letra.' },
-        { id: 'clue-radio', type: 'CLUE', title: 'Radio abierta', description: 'La radio de la linterna quedó sintonizada en el canal de pescadores. La última llamada fue a las 01:45.' },
-        { id: 'clue-botas', type: 'CLUE', title: 'Botas húmedas', description: 'Unas botas de talla grande secándose junto a la estufa. La suela conserva arena de la cueva.' },
-        { id: 'clue-cuaderno', type: 'CLUE', title: 'Cuaderno de bitácora', description: 'La última página arrancada dejó marcas de presión: se habla de una carga no declarada.' }
+        {
+          id: 'suspect-farero', type: 'SUSPECT', title: 'Tomás Iriarte',
+          description: '«Pasé la noche en el muelle hasta la bajamar. Subí a la linterna a las 02:10, encendí el farol y bajé la escalera. La cuerda del amarre ya estaba cortada cuando llegué.»'
+        },
+        {
+          id: 'suspect-biologa', type: 'SUSPECT', title: 'Dra. Elena Sáenz',
+          description: '«Estudiaba la marea en la cueva. Encontré unas botas con arena húmeda y la radio sintonizada en el canal de pescadores. La última llamada fue a las 01:45.»'
+        },
+        {
+          id: 'suspect-pescador', type: 'SUSPECT', title: 'Nicolás Rey',
+          description: '«Mi anzuelo y mi sedal aparecieron junto a la cuerda. El cuaderno de bitácora habla de una carga no declarada, pero yo solo salí a faenar cerca del embarcadero.»'
+        },
+        {
+          id: 'weapon-cuerda', type: 'WEAPON', title: 'Cuerda de amarre',
+          description: 'Cuerda náutica cortada a navaja. Conserva arena húmeda entre las fibras.',
+          hidden: true, aliases: ['cuerda', 'amarre', 'navaja']
+        },
+        {
+          id: 'weapon-farol', type: 'WEAPON', title: 'Farol de queroseno',
+          description: 'Farol portátil con la mecha recién recortada y el depósito casi vacío.',
+          hidden: true, aliases: ['farol', 'queroseno', 'mecha']
+        },
+        {
+          id: 'weapon-anzuelo', type: 'WEAPON', title: 'Anzuelo de acero',
+          description: 'Anzuelo de gran tamaño, todavía atado a un sedal de alta resistencia.',
+          hidden: true, aliases: ['anzuelo', 'sedal']
+        },
+        {
+          id: 'location-linterna', type: 'LOCATION', title: 'Linterna del faro',
+          description: 'Sala superior acristalada. El suelo está cubierto de fragmentos de sal y una radio encendida.',
+          hidden: true, aliases: ['linterna', 'sala de la linterna', 'faro']
+        },
+        {
+          id: 'location-muelle', type: 'LOCATION', title: 'Muelle viejo',
+          description: 'Embarcadero de madera carcomida donde atracan las barcas de los pescadores.',
+          hidden: true, aliases: ['muelle', 'embarcadero']
+        },
+        {
+          id: 'location-cueva', type: 'LOCATION', title: 'Cueva de las mareas',
+          description: 'Galería inundable bajo el acantilado. Solo es accesible con marea baja.',
+          hidden: true, aliases: ['cueva', 'cueva de las mareas', 'galería']
+        },
+        {
+          id: 'clue-marea', type: 'CLUE', title: 'Tabla de mareas',
+          description: 'La tabla del faro marca la bajamar a las 02:10. Alguien anotó una hora anterior con otra letra.',
+          hidden: true, aliases: ['tabla de mareas', 'bajamar', '02:10']
+        },
+        {
+          id: 'clue-radio', type: 'CLUE', title: 'Radio abierta',
+          description: 'La radio de la linterna quedó sintonizada en el canal de pescadores. La última llamada fue a las 01:45.',
+          hidden: true, aliases: ['radio', 'canal de pescadores', '01:45']
+        },
+        {
+          id: 'clue-botas', type: 'CLUE', title: 'Botas húmedas',
+          description: 'Unas botas de talla grande secándose junto a la estufa. La suela conserva arena de la cueva.',
+          hidden: true, aliases: ['botas', 'suela', 'arena']
+        },
+        {
+          id: 'clue-cuaderno', type: 'CLUE', title: 'Cuaderno de bitácora',
+          description: 'La última página arrancada dejó marcas de presión: se habla de una carga no declarada.',
+          hidden: true, aliases: ['cuaderno', 'bitácora', 'carga no declarada']
+        }
       ],
       solution_card_ids: ['suspect-pescador', 'weapon-cuerda', 'location-cueva', 'clue-marea']
     }
@@ -2471,7 +2675,7 @@
         title: level.title,
         description: level.description,
         difficulty: level.difficulty,
-        card_count: Array.isArray(level.cards) ? level.cards.length : 0,
+        card_count: Number(level.card_count) || (Array.isArray(level.cards) ? level.cards.length : 0),
         created_at: level.created_at || nowISO(),
         __local: true
       }))
@@ -2489,7 +2693,7 @@
       title: level.title,
       description: level.description || '',
       difficulty: level.difficulty,
-      card_count: Array.isArray(level.cards) ? level.cards.length : 0,
+      card_count: Number(level.card_count) || (Array.isArray(level.cards) ? level.cards.length : 0),
       created_at: level.created_at || nowISO()
     };
     const index = state.levels.findIndex((item) => item.level_id === level.level_id);
@@ -2515,12 +2719,19 @@
     selected: new Set(),
     unlocked: {},
     interrogations: [],
+    searches: [],
+    archiveDefinitions: [],
+    archiveMode: false,
+    legacyClues: {},
+    visibleIds: new Set(),
+    archiveResult: null,
+    examined: {},
     attempts: [],
     solved: false,
     activeTab: 'clues',
     connectMode: false,
     connectSource: null,
-    freshClueId: null,
+    freshCardId: null,
     animatedThreadId: null,
     loading: false,
     catalogFallback: false,
@@ -2531,6 +2742,7 @@
     catalogToken: 0,
     dragSuppressClickUntil: 0,
     busyInterrogation: false,
+    busyArchive: false,
     busyAccusation: false,
     editorRows: [],
     openModals: [],
@@ -2559,6 +2771,8 @@
     levelSelect: $('#levelSelect'),
     refreshCatalogBtn: $('#refreshCatalogBtn'),
     newCaseBtn: $('#newCaseBtn'),
+    archiveBtn: $('#archiveBtn'),
+    archiveBadge: $('#archiveBadge'),
     viewCluesBtn: $('#viewCluesBtn'),
     connectBtn: $('#connectBtn'),
     accuseBtn: $('#accuseBtn'),
@@ -2635,6 +2849,14 @@
     cluesModalBody: $('#cluesModalBody'),
     cluesModalSub: $('#cluesModalSub'),
     cluesGoInterrogateBtn: $('#cluesGoInterrogateBtn'),
+    archiveModal: $('#archiveModal'),
+    archiveForm: $('#archiveForm'),
+    archiveQuery: $('#archiveQuery'),
+    archiveSubmitBtn: $('#archiveSubmitBtn'),
+    archiveProgress: $('#archiveProgress'),
+    archiveResult: $('#archiveResult'),
+    archiveHistory: $('#archiveHistory'),
+    archiveFootNote: $('#archiveFootNote'),
     accusationModal: $('#accusationModal'),
     accusationChips: $('#accusationChips'),
     accusationCount: $('#accusationCount'),
@@ -2646,6 +2868,9 @@
     resultPanel: $('#resultPanel'),
     resultContent: $('#resultContent'),
     statementModal: $('#statementModal'),
+    statementKicker: $('#statementKicker'),
+    statementTitle: $('#statementTitle'),
+    statementSub: $('#statementSub'),
     statementContent: $('#statementContent')
   };
 
@@ -2748,6 +2973,16 @@
     async interrogate(payload) {
       try {
         const data = await requestJson(`${state.api.engine}/api/engine/interrogate`, { method: 'POST', body: payload, timeout: 9000 });
+        setHealth('engine', 'online');
+        return data;
+      } catch (error) {
+        if (isAvailabilityError(error)) setHealth('engine', 'offline');
+        throw error;
+      }
+    },
+    async archive(payload) {
+      try {
+        const data = await requestJson(`${state.api.engine}/api/engine/archive`, { method: 'POST', body: payload, timeout: 9000 });
         setHealth('engine', 'online');
         return data;
       } catch (error) {
@@ -2982,13 +3217,28 @@
     state.unlocked = {};
     if (saved.unlocked && typeof saved.unlocked === 'object') {
       Object.entries(saved.unlocked).forEach(([cardId, entry]) => {
-        const card = cardMap.get(cardId);
-        if (!card || card.type !== 'CLUE') return;
         if (!entry || typeof entry !== 'object') return;
+        let card = cardMap.get(cardId);
+        if (!card && state.legacyClues[cardId]) {
+          card = { ...state.legacyClues[cardId] };
+          cards.push(card);
+          cardMap.set(cardId, card);
+        }
+        if (!card && entry.card && entry.card.id === cardId) {
+          // Ficha oculta recuperada en una partida anterior: no venía en el
+          // nivel público, pero quedó guardada en el progreso local.
+          card = { ...entry.card };
+          cards.push(card);
+          cardMap.set(cardId, card);
+        }
+        if (!card) return;
         state.unlocked[cardId] = {
           statement: String(entry.statement || ''),
           suspectId: entry.suspectId || null,
-          suspectName: entry.suspectName || 'Sospechoso',
+          suspectName: entry.suspectName || '',
+          sourceId: entry.sourceId || null,
+          source: entry.source || 'archive',
+          card: entry.card || null,
           at: entry.at || nowISO()
         };
       });
@@ -3016,9 +3266,11 @@
     }
 
     state.interrogations = Array.isArray(saved.interrogations) ? saved.interrogations.filter(Boolean).slice(0, 80) : [];
+    state.searches = Array.isArray(saved.searches) ? saved.searches.filter(Boolean).slice(0, 80) : [];
+    state.examined = saved.examined && typeof saved.examined === 'object' ? saved.examined : {};
     state.attempts = Array.isArray(saved.attempts) ? saved.attempts.filter(Boolean).slice(0, 80) : [];
     state.solved = Boolean(saved.solved);
-    state.freshClueId = null;
+    state.freshCardId = null;
     state.connectMode = false;
     state.connectSource = null;
   }
@@ -3030,6 +3282,9 @@
       threads: state.threads,
       unlocked: state.unlocked,
       interrogations: state.interrogations.slice(0, 80),
+      searches: state.searches.slice(0, 80),
+      examined: state.examined,
+      boardHeight: state.boardHeight,
       attempts: state.attempts.slice(0, 80),
       solved: state.solved,
       updatedAt: nowISO()
@@ -3039,7 +3294,46 @@
 
   function activateLevel(level, source, options = {}) {
     if (!level || !Array.isArray(level.cards)) throw new Error('El expediente no contiene tarjetas válidas.');
-    state.level = clone(level);
+    const prepared = clone(level);
+    let visible = [];
+    const hidden = {};
+    const hiddenEntries = [];
+    prepared.cards.forEach((card, order) => {
+      if (card.hidden) {
+        hidden[card.id] = card;
+        hiddenEntries.push({ card, order });
+      } else {
+        visible.push(card);
+      }
+    });
+    const archiveMode = hiddenEntries.length > 0
+      || (Number(prepared.card_count) || 0) > visible.length;
+    state.legacyClues = {};
+    if (!archiveMode) {
+      // Niveles antiguos sin archivador: las pistas siguen desbloqueándose al
+      // interrogar, así que no se colocan en el tablón hasta ese momento.
+      visible = visible.filter((card) => {
+        if (card.type !== 'CLUE') return true;
+        state.legacyClues[card.id] = card;
+        return false;
+      });
+    }
+    prepared.cards = visible;
+    prepared.card_count = Math.max(
+      Number(prepared.card_count) || 0,
+      visible.length + Object.keys(hidden).length + Object.keys(state.legacyClues).length
+    );
+    state.archiveMode = archiveMode;
+    state.archiveDefinitions = hiddenEntries.map(({ card, order }) => ({
+      card,
+      order,
+      aliases: (Array.isArray(card.aliases) ? card.aliases : [])
+        .map((alias) => ({ raw: String(alias), norm: normalizeArchiveText(alias) }))
+        .filter((alias) => alias.norm)
+    }));
+    state.visibleIds = new Set(visible.map((card) => card.id));
+
+    state.level = prepared;
     state.levelSource = source;
     state.lastLevel = state.level.level_id;
     const solution = options.solution || level.solution_card_ids || state.knownSolutions[state.level.level_id] || null;
@@ -3047,6 +3341,10 @@
     if (state.solution) state.knownSolutions[state.level.level_id] = state.solution.slice();
 
     applyProgress(state.level);
+    const savedHeight = Number((PROGRESS[state.level.level_id] || {}).boardHeight);
+    state.boardHeight = Number.isFinite(savedHeight) && savedHeight >= BOARD_MIN_HEIGHT
+      ? savedHeight
+      : 0;
     state.selected.clear();
     state.connectMode = false;
     state.connectSource = null;
@@ -3142,10 +3440,54 @@
 
   function ensurePositions(cards) {
     const layout = buildLayout(cards);
-    state.boardHeight = layout.height;
+    const previousHeight = state.boardHeight || layout.height;
+    let height = Math.max(previousHeight, layout.height);
+
+    // Las posiciones se guardan en porcentaje. Si el tablón crece, se reescalan
+    // para conservar la posición en píxeles: de lo contrario las tarjetas ya
+    // colocadas se separarían y la recompensa nueva podría solaparse con ellas.
+    if (height !== previousHeight) {
+      const ratio = previousHeight / height;
+      Object.values(state.positions).forEach((position) => {
+        position.y *= ratio;
+      });
+    }
+
     cards.forEach((card) => {
-      if (!state.positions[card.id]) state.positions[card.id] = layout.positions[card.id];
+      if (state.positions[card.id]) return;
+
+      const layoutPosition = layout.positions[card.id]
+        || { x: COLUMN_X[0], y: 20 / layout.height };
+      const sameColumn = cards.filter((item) => {
+        const position = state.positions[item.id];
+        return position && Math.abs(position.x - layoutPosition.x) < 0.02;
+      });
+
+      let top = layoutPosition.y * layout.height;
+      if (sameColumn.length) {
+        // Coloca la tarjeta nueva debajo de la última de su columna.
+        top = Math.max(
+          ...sameColumn.map((item) => state.positions[item.id].y * height + CARD_COLLISION_HEIGHT)
+        ) + CARD_COLLISION_GAP;
+      }
+
+      if (top + CARD_COLLISION_HEIGHT + CARD_COLLISION_GAP > height) {
+        const needed = top + CARD_COLLISION_HEIGHT + CARD_COLLISION_GAP;
+        const grown = Math.ceil(needed / ROW_HEIGHT) * ROW_HEIGHT;
+        const ratio = height / grown;
+        Object.values(state.positions).forEach((position) => {
+          position.y *= ratio;
+        });
+        height = grown;
+      }
+
+      state.positions[card.id] = {
+        x: layoutPosition.x,
+        y: top / height
+      };
     });
+
+    state.boardHeight = height;
     return layout;
   }
 
@@ -3159,21 +3501,25 @@
 
   function renderChrome() {
     const level = state.level;
-    const cardCount = level ? level.cards.length : 0;
-    const clueCards = level ? level.cards.filter((card) => card.type === 'CLUE') : [];
-    const unlockedCount = clueCards.filter((card) => state.unlocked[card.id]).length;
-    const totalClues = clueCards.length;
+    const onBoard = level ? level.cards.length : 0;
+    const totalCards = level
+      ? Math.max(Number(level.card_count) || 0, onBoard)
+      : 0;
+    const recovered = level && state.visibleIds
+      ? level.cards.filter((card) => !state.visibleIds.has(card.id)).length
+      : 0;
+    const searches = state.searches.length;
 
     if (level) {
-      els.caseSubtitle.innerHTML = `UNIDAD DE CASOS SIN RESOLVER · <span class="case-ref">EXP. ${esc(level.level_id.toUpperCase())}</span> · ${cardCount} EVIDENCIAS`;
+      els.caseSubtitle.innerHTML = `UNIDAD DE CASOS SIN RESOLVER · <span class="case-ref">EXP. ${esc(level.level_id.toUpperCase())}</span> · ${onBoard} / ${totalCards} EVIDENCIAS`;
       els.boardPlaque.textContent = `EXP. ${level.level_id.toUpperCase()}`;
-      els.boardStats.innerHTML = `<b>${cardCount}</b> EVIDENCIAS`;
+      els.boardStats.innerHTML = `<b>${onBoard}</b> / ${totalCards} EVIDENCIAS`;
       els.caseMetaTitle.textContent = level.title;
       els.caseMetaDescription.textContent = level.description || 'Sin descripción en el expediente.';
       els.caseDifficulty.className = `diff-stamp ${level.difficulty || ''}`;
       els.caseDifficulty.textContent = difficultyMeta(level.difficulty).label;
-      els.caseCardCount.textContent = cardCount;
-      els.caseClueCount.textContent = unlockedCount;
+      els.caseCardCount.textContent = onBoard;
+      els.caseClueCount.textContent = recovered;
       els.caseThreadCount.textContent = state.threads.length;
       els.caseSolvedTag.hidden = !state.solved;
       els.accuseBtn.disabled = state.solved;
@@ -3196,18 +3542,20 @@
     els.threadsCount.textContent = state.threads.length;
     els.footThreads.textContent = plural(state.threads.length, 'hilo', 'hilos');
     els.footerThreads.textContent = state.threads.length;
-    els.footerEvidence.textContent = cardCount;
-    els.clueCountBadge.hidden = unlockedCount === 0;
-    els.clueCountBadge.textContent = unlockedCount;
-    els.tabClueCount.textContent = unlockedCount;
-    els.tabLogCount.textContent = state.attempts.length + state.interrogations.length;
+    els.footerEvidence.textContent = onBoard;
+    els.clueCountBadge.hidden = recovered === 0;
+    els.clueCountBadge.textContent = recovered;
+    els.archiveBadge.hidden = searches === 0;
+    els.archiveBadge.textContent = searches;
+    els.tabClueCount.textContent = recovered;
+    els.tabLogCount.textContent = state.attempts.length + state.interrogations.length + searches;
     els.sessionTag.textContent = `#${sessionId.slice(-8).toUpperCase()}`;
 
-    const percent = totalClues ? Math.round((unlockedCount / totalClues) * 100) : 0;
+    const percent = totalCards ? Math.round((onBoard / totalCards) * 100) : 0;
     els.clueProgressFill.style.width = `${percent}%`;
-    els.clueProgressLabel.textContent = totalClues
-      ? `${unlockedCount} de ${totalClues} pistas desbloqueadas`
-      : 'Sin pistas en el expediente';
+    els.clueProgressLabel.textContent = totalCards
+      ? `${onBoard} de ${totalCards} fichas sobre el tablero`
+      : 'Sin fichas en el expediente';
 
     els.boardEmpty.hidden = Boolean(level) || state.loading;
     els.solvedStamp.hidden = !state.solved;
@@ -3221,53 +3569,35 @@
     const meta = typeMeta(card.type);
     const position = state.positions[card.id] || { x: .01, y: .02 };
     const tilt = tiltFor(card.id);
-    const isClue = card.type === 'CLUE';
-    const unlocked = state.unlocked[card.id];
-    const locked = isClue && !unlocked;
     const selected = state.selected.has(card.id);
     const isSource = state.connectSource === card.id;
-    const interrogated = card.type === 'SUSPECT' && state.interrogations.some((entry) => entry.suspectId === card.id);
-    const fresh = state.freshClueId === card.id;
+    const examined = Boolean(state.examined[card.id]);
+    const suspected = card.type === 'SUSPECT'
+      && (examined || state.interrogations.some((entry) => entry.suspectId === card.id));
+    const fresh = state.freshCardId === card.id;
     const serial = `E-${String(index + 1).padStart(2, '0')}`;
     const classes = [
       `type-${card.type.toLowerCase()}`,
-      locked ? 'locked' : '',
       selected ? 'selected' : '',
       isSource ? 'connect-source' : '',
       fresh ? 'fresh' : ''
     ].filter(Boolean).join(' ');
     const style = `left:${(position.x * 100).toFixed(3)}%;top:${(position.y * 100).toFixed(3)}%;`;
-    const common = `class="card-wrap ${classes}" data-card-id="${esc(card.id)}" data-type="${esc(card.type)}" style="${style}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${esc(meta.label)}: ${locked ? 'pista bloqueada' : esc(card.title)}${selected ? '. Seleccionada para la acusación' : ''}"`;
+    const common = `class="card-wrap ${classes}" data-card-id="${esc(card.id)}" data-type="${esc(card.type)}" style="${style}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${esc(meta.label)}: ${esc(card.title)}${selected ? '. Seleccionada para la acusación' : ''}"`;
 
-    if (locked) {
-      return `
-        <article ${common}>
-          <span class="pin" aria-hidden="true"></span>
-          <div class="evidence-card" style="--tilt:${tilt}deg">
-            <div class="card-eyebrow">
-              <span class="type-chip">${ICON('lock')} CLASIFICADO</span>
-              <span class="card-no">${serial}</span>
-            </div>
-            <div class="lock-seal">${ICON('lock')}</div>
-            <h3 class="card-title">Evidencia sellada</h3>
-            <p class="card-desc">Interroga a un sospechoso para romper el sello y revelar esta pista.</p>
-            <span class="locked-tag">${ICON('lock')} PISTA BLOQUEADA</span>
-            ${ICON(meta.icon, 'card-watermark')}
-          </div>
-        </article>`;
-    }
-
-    let footer = `<span class="evidence-code">${esc(meta.kicker)}</span>`;
+    let footer;
     if (card.type === 'SUSPECT') {
       footer = `
         <span class="evidence-code">${esc(meta.kicker)}</span>
-        <button class="card-action ${interrogated ? 'taken' : ''}" type="button" data-action="interrogate" data-card-id="${esc(card.id)}">
-          ${ICON(interrogated ? 'refresh' : 'search')}<span>${interrogated ? 'Reinterrogar' : 'Interrogar'}</span>
+        <button class="card-action ${suspected ? 'taken' : ''}" type="button" data-action="interrogate" data-card-id="${esc(card.id)}">
+          ${ICON(suspected ? 'refresh' : 'search')}<span>${suspected ? 'Reinterrogar' : 'Interrogar'}</span>
         </button>`;
-    } else if (isClue && unlocked) {
+    } else {
       footer = `
         <span class="evidence-code">${serial}</span>
-        <span class="clue-source">${ICON('user')} ${esc(unlocked.suspectName || 'Sospechoso')}</span>`;
+        <button class="card-action ${examined ? 'taken' : ''}" type="button" data-action="examine" data-card-id="${esc(card.id)}">
+          ${ICON(examined ? 'refresh' : 'file-text')}<span>${examined ? 'Releer' : 'Leer'}</span>
+        </button>`;
     }
 
     return `
@@ -3314,11 +3644,11 @@
       clampCardPositions();
       renderThreads();
       syncSelectionUI();
-      if (state.freshClueId) {
-        const fresh = els.cardsLayer.querySelector(`[data-card-id="${state.freshClueId}"]`);
+      if (state.freshCardId) {
+        const fresh = els.cardsLayer.querySelector(`[data-card-id="${state.freshCardId}"]`);
         setTimeout(() => {
           fresh?.classList.remove('fresh');
-          state.freshClueId = null;
+          state.freshCardId = null;
         }, 4200);
       }
     });
@@ -3422,11 +3752,19 @@
   /* =======================================================================
      06. CUADERNO LATERAL
      ======================================================================= */
-  function unlockedClueEntries() {
+  function recoveredEntries() {
     if (!state.level) return [];
     return state.level.cards
-      .filter((card) => card.type === 'CLUE' && state.unlocked[card.id])
-      .map((card) => ({ card, ...state.unlocked[card.id] }))
+      .filter((card) => !state.visibleIds.has(card.id))
+      .map((card) => {
+        const entry = state.unlocked[card.id] || {};
+        return {
+          card,
+          at: entry.at || state.level.created_at || nowISO(),
+          sourceName: entry.suspectName || 'Archivador',
+          statement: entry.statement || ''
+        };
+      })
       .sort((a, b) => new Date(b.at) - new Date(a.at));
   }
 
@@ -3446,10 +3784,11 @@
       return;
     }
 
-    const clueEntries = unlockedClueEntries();
+    const clueEntries = recoveredEntries();
     const logEntries = [
       ...state.attempts.map((attempt) => ({ ...attempt, kind: 'attempt' })),
-      ...state.interrogations.map((entry) => ({ ...entry, kind: 'interrogation' }))
+      ...state.interrogations.map((entry) => ({ ...entry, kind: 'interrogation' })),
+      ...state.searches.map((entry) => ({ ...entry, kind: 'archive' }))
     ].sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
 
     els.tabClues.classList.toggle('active', state.activeTab === 'clues');
@@ -3460,26 +3799,25 @@
 
     if (state.activeTab === 'clues') {
       if (!clueEntries.length) {
-        const lockedCount = state.level.cards.filter((card) => card.type === 'CLUE').length;
         els.sidebarBody.innerHTML = `
           <div class="empty-state">
-            ${ICON('lock')}
-            <h4>Ninguna pista revelada</h4>
-            <p>${lockedCount ? `Hay ${lockedCount} pistas selladas en el tablón. Interroga a los sospechosos para romper los sellos.` : 'Este expediente no contiene tarjetas de pista.'}</p>
-            ${state.level.cards.some((card) => card.type === 'SUSPECT') ? `<button class="btn ghost" type="button" data-action="focus-suspects">${ICON('search')} Ver sospechosos</button>` : ''}
+            ${ICON('search')}
+            <h4>Archivo sin abrir</h4>
+            <p>Todavía no has recuperado ninguna ficha. Abre el archivador y teclea un código, una dirección o una palabra que hayas leído en una declaración.</p>
+            <button class="btn ghost" type="button" data-action="open-archive">${ICON('search')} Abrir archivador</button>
           </div>`;
         return;
       }
       els.sidebarBody.innerHTML = clueEntries.map((entry, index) => `
         <article class="note-paper" style="--note-tilt:${index % 2 ? '.5deg' : '-.45deg'}">
           <div class="note-top">
-            <span>Pista ${String(clueEntries.length - index).padStart(2, '0')}</span>
+            <span>Ficha ${String(clueEntries.length - index).padStart(2, '0')}</span>
             <span>${esc(formatTime(entry.at))}</span>
           </div>
           <h4>${esc(entry.card.title)}</h4>
           <p>${esc(entry.card.description || 'Sin descripción archivada.')}</p>
           <div class="note-source">
-            <span>${ICON('user')} ${esc(entry.suspectName || 'Sospechoso')}</span>
+            <span>${ICON('search')} ${esc(entry.sourceName)}</span>
             <span>${ICON('clock')} ${esc(formatDateTime(entry.at))}</span>
           </div>
         </article>`).join('');
@@ -3491,7 +3829,7 @@
         <div class="empty-state">
           ${ICON('clock')}
           <h4>Registro en blanco</h4>
-          <p>Los interrogatorios y las acusaciones quedarán grabados aquí con su veredicto.</p>
+          <p>Los interrogatorios, las búsquedas en el archivador y las acusaciones quedarán grabados aquí con su veredicto.</p>
         </div>`;
       return;
     }
@@ -3512,6 +3850,19 @@
             </div>
           </div>`;
       }
+      if (entry.kind === 'archive') {
+        return `
+          <div class="log-entry archive">
+            <span class="log-icon">${ICON(entry.found ? 'check-circle' : 'alert')}</span>
+            <div class="log-copy">
+              <p class="log-title">Archivador · «${esc(entry.query || '')}»
+                <span class="log-mode">${entry.source === 'real' ? 'REAL' : 'SIM'}</span>
+              </p>
+              <p class="log-detail">${esc(entry.message || (entry.found ? 'Ficha recuperada.' : 'Registro no encontrado.'))}</p>
+              <p class="log-time">${esc(formatDateTime(entry.at))}${entry.cardTitle ? ` · ${esc(entry.cardTitle)}` : ''}</p>
+            </div>
+          </div>`;
+      }
       return `
         <div class="log-entry interrogation">
           <span class="log-icon">${ICON('quote')}</span>
@@ -3519,7 +3870,7 @@
             <p class="log-title">Interrogatorio · ${esc(entry.suspectName || 'Sospechoso')}
               <span class="log-mode">${entry.source === 'real' ? 'REAL' : 'SIM'}</span>
             </p>
-            <p class="log-detail">${entry.clueTitle ? `Pista desbloqueada: ${esc(entry.clueTitle)}` : 'Declaración registrada; la pista ya estaba archivada.'}</p>
+            <p class="log-detail">${entry.clueTitle ? `Pista desbloqueada: ${esc(entry.clueTitle)}` : 'Declaración registrada en el expediente.'}</p>
             <p class="log-time">${esc(formatDateTime(entry.at))}</p>
           </div>
         </div>`;
@@ -3648,15 +3999,6 @@
     const card = state.level.cards.find((item) => item.id === cardId);
     if (!card) return;
 
-    if (card.type === 'CLUE' && !state.unlocked[card.id]) {
-      toast({
-        type: 'warn',
-        title: 'Pista sellada',
-        message: 'Necesitas interrogar a un sospechoso para desbloquear esta evidencia.'
-      });
-      return;
-    }
-
     if (state.connectMode) {
       if (!state.connectSource) {
         state.connectSource = card.id;
@@ -3768,22 +4110,6 @@
     dragState = null;
   }
 
-  function highlightSuspects() {
-    const suspects = $$('.card-wrap.type-suspect', els.cardsLayer);
-    if (!suspects.length) return;
-    suspects.forEach((card) => {
-      card.classList.add('fresh');
-      setTimeout(() => card.classList.remove('fresh'), 3200);
-    });
-    suspects[0].focus({ preventScroll: true });
-    els.corkScroll.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
-    toast({
-      type: 'info',
-      title: 'Personas de interés',
-      message: 'Los sospechosos están en la primera columna. Pulsa “Interrogar” para tomar declaración.'
-    });
-  }
-
   function openThreadMenu(threadId, clientX, clientY) {
     const thread = state.threads.find((item) => item.id === threadId);
     if (!thread || !state.level) return;
@@ -3830,9 +4156,9 @@
 
     els.cardsLayer.addEventListener('click', (event) => {
       const action = event.target.closest('[data-action]');
-      if (action && action.dataset.action === 'interrogate') {
+      if (action && ['interrogate', 'examine'].includes(action.dataset.action)) {
         event.stopPropagation();
-        handleInterrogate(action.dataset.cardId, action);
+        openObservation(action.dataset.cardId, action);
         return;
       }
       const wrap = event.target.closest('.card-wrap');
@@ -3870,8 +4196,9 @@
     });
 
     els.sidebarBody.addEventListener('click', (event) => {
-      const action = event.target.closest('[data-action="focus-suspects"]');
-      if (action) highlightSuspects();
+      if (event.target.closest('[data-action="open-archive"]')) {
+        openArchiveModal();
+      }
     });
 
     els.connectBtn.addEventListener('click', () => setConnectMode(!state.connectMode));
@@ -3893,12 +4220,21 @@
     const suspects = level.cards
       .filter((card) => card.type === 'SUSPECT')
       .sort((a, b) => a.id.localeCompare(b.id));
-    const clues = level.cards
-      .filter((card) => card.type === 'CLUE')
+    const clues = Object.values(state.legacyClues || {})
       .sort((a, b) => a.id.localeCompare(b.id));
     const suspect = level.cards.find((card) => card.id === suspectId);
     if (!suspect) throw new ApiError('El sospechoso no pertenece a este expediente.', 404);
     if (suspect.type !== 'SUSPECT') throw new ApiError('Solo se puede interrogar a sospechosos.', 422);
+
+    if (state.archiveMode) {
+      const statement = (suspect.description || suspect.title || '').trim() || suspect.title;
+      return {
+        suspect_card_id: suspect.id,
+        unlocked_clue_text: `${suspect.title} respira hondo antes de responder:\n«${statement}»\nAnota lo que te haya llamado la atención: un código, una dirección o una palabra pueden abrir una ficha en el archivador.`,
+        new_card_unlocked: null
+      };
+    }
+
     if (!clues.length) {
       throw new ApiError('El expediente no contiene pistas; no es posible desbloquear nuevas tarjetas.', 409);
     }
@@ -3911,6 +4247,367 @@
       unlocked_clue_text: text,
       new_card_unlocked: clue
     };
+  }
+
+  /* =======================================================================
+     08.b ARCHIVADOR: TÉRMINO LIBRE → FICHA OCULTA → TABLERO
+     ======================================================================= */
+  function normalizeArchiveText(value) {
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9ñ\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Ratio equivalente a difflib.SequenceMatcher: 2 * caracteres comunes / total.
+  // Se calcula con la subsecuencia común más larga para que el resultado sea el
+  // mismo en Python y en el modo simulación.
+  function sequenceRatio(left, right) {
+    if (!left.length && !right.length) return 1;
+    if (!left.length || !right.length) return 0;
+    let previous = new Array(right.length + 1).fill(0);
+    for (let i = 1; i <= left.length; i += 1) {
+      const current = new Array(right.length + 1).fill(0);
+      for (let j = 1; j <= right.length; j += 1) {
+        current[j] = left[i - 1] === right[j - 1]
+          ? previous[j - 1] + 1
+          : Math.max(previous[j], current[j - 1]);
+      }
+      previous = current;
+    }
+    return (2 * previous[right.length]) / (left.length + right.length);
+  }
+
+  function containsArchivePhrase(haystack, needle) {
+    if (!needle) return false;
+    return ` ${haystack} `.includes(` ${needle} `);
+  }
+
+  function scoreArchiveAlias(queryNorm, aliasNorm) {
+    if (!queryNorm || !aliasNorm) return 0;
+    if (queryNorm === aliasNorm) return 1;
+    if (containsArchivePhrase(queryNorm, aliasNorm)) return .95;
+    if (containsArchivePhrase(aliasNorm, queryNorm)) return .85;
+    if (Math.min(queryNorm.length, aliasNorm.length) < 4) return 0;
+    const ratio = sequenceRatio(queryNorm, aliasNorm);
+    return ratio >= .82 ? ratio : 0;
+  }
+
+  function matchLocalArchive(query) {
+    const queryNorm = normalizeArchiveText(query);
+    if (queryNorm.length < 2) return null;
+
+    let best = null;
+    state.archiveDefinitions.forEach((definition) => {
+      definition.aliases.forEach((alias) => {
+        const score = scoreArchiveAlias(queryNorm, alias.norm);
+        if (score <= 0) return;
+        if (!best
+          || score > best.score
+          || (score === best.score && alias.norm.length > best.aliasLength)
+          || (score === best.score && alias.norm.length === best.aliasLength && definition.order < best.order)) {
+          best = {
+            card: definition.card,
+            score,
+            aliasLength: alias.norm.length,
+            order: definition.order
+          };
+        }
+      });
+    });
+    return best;
+  }
+
+  function publicCard(card) {
+    return {
+      id: card.id,
+      type: card.type,
+      title: card.title,
+      description: card.description || '',
+      image_url: card.image_url || null
+    };
+  }
+
+  function localArchive(query) {
+    if (!state.archiveDefinitions.length) {
+      throw new ApiError('Este expediente no incluye las fichas ocultas para buscar sin conexión.', 503);
+    }
+    const match = matchLocalArchive(query);
+    if (!match) {
+      return {
+        found: false,
+        card: null,
+        already_unlocked: false,
+        message: 'Registro no encontrado. Revisa el código, la dirección o la palabra y vuelve a intentarlo.',
+        score: null
+      };
+    }
+
+    const card = publicCard(match.card);
+    const already = state.level.cards.some((item) => item.id === card.id);
+    return {
+      found: true,
+      card,
+      already_unlocked: already,
+      message: already
+        ? 'Esa ficha ya está sobre el tablero.'
+        : `Registro recuperado: ${card.title}.`,
+      score: Math.round(match.score * 1000) / 1000
+    };
+  }
+
+  function archiveProgressHtml() {
+    const onBoard = state.level ? state.level.cards.length : 0;
+    const total = state.level
+      ? Math.max(Number(state.level.card_count) || 0, onBoard)
+      : 0;
+    const percent = total ? Math.round((onBoard / total) * 100) : 0;
+    return `
+      <strong>${onBoard} / ${total}</strong>
+      <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>`;
+  }
+
+  function archiveResultHtml() {
+    const result = state.archiveResult;
+    if (!result) {
+      return `<div class="archive-empty">Aún no has buscado nada. Prueba con un nombre, una dirección o un objeto que aparezca en una declaración.</div>`;
+    }
+    if (result.error) {
+      return `<div class="archive-miss">${ICON('alert')}<div><strong>Búsqueda interrumpida</strong>${esc(result.error)}</div></div>`;
+    }
+    if (!result.found || !result.card) {
+      return `<div class="archive-miss">${ICON('alert')}<div><strong>Registro no encontrado</strong>${esc(result.message || 'Revisa el código, la dirección o la palabra y vuelve a intentarlo.')}</div></div>`;
+    }
+    const meta = typeMeta(result.card.type);
+    return `
+      <div class="archive-card ${result.already ? 'dupe' : ''}">
+        <span class="tag">${ICON(result.already ? 'file-text' : 'check-circle')} ${result.already ? 'Ficha ya archivada' : 'Nueva ficha recuperada'}</span>
+        <h4>${esc(result.card.title)}</h4>
+        <p>${esc(result.card.description || 'Sin descripción adicional.')}</p>
+        <div class="archive-meta">
+          <span>${esc(meta.label)}</span>
+          <span>${result.already ? 'Ya estaba en el tablero' : 'Añadida al tablero'}</span>
+          ${Number.isFinite(result.score) ? `<span>Coincidencia ${Math.round(result.score * 100)}%</span>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function archiveHistoryHtml() {
+    const entries = state.searches.slice(0, 8);
+    if (!entries.length) {
+      return '<span class="hint" style="font-size:9.5px">Todavía no hay búsquedas registradas.</span>';
+    }
+    return entries.map((entry, index) => `
+      <button type="button" data-archive-history="${index}" title="Volver a buscar «${esc(entry.query || '')}»">
+        <span>${esc(entry.query || '—')}</span>
+        <span class="${entry.found ? 'hit' : 'miss'}">${entry.found ? 'RECUPERADA' : 'NO ENCONTRADA'}</span>
+      </button>`).join('');
+  }
+
+  function renderArchivePanel() {
+    if (!state.level) return;
+    if (els.archiveProgress) els.archiveProgress.innerHTML = archiveProgressHtml();
+    if (els.archiveResult) els.archiveResult.innerHTML = archiveResultHtml();
+    if (els.archiveHistory) els.archiveHistory.innerHTML = archiveHistoryHtml();
+    if (els.archiveFootNote) {
+      const recovered = state.level.cards.filter((card) => !state.visibleIds.has(card.id)).length;
+      els.archiveFootNote.textContent = `${plural(recovered, 'ficha recuperada', 'fichas recuperadas')} · ${plural(state.searches.length, 'búsqueda registrada', 'búsquedas registradas')}`;
+    }
+  }
+
+  function openArchiveModal() {
+    if (!state.level) {
+      toast({ type: 'warn', title: 'Sin expediente', message: 'Abre un caso antes de consultar el archivador.' });
+      return;
+    }
+    state.archiveResult = null;
+    renderArchivePanel();
+    openModal('archiveModal');
+    setTimeout(() => els.archiveQuery?.focus({ preventScroll: true }), 80);
+  }
+
+  async function handleArchiveSubmit(event) {
+    event?.preventDefault();
+    if (!state.level || state.busyArchive) return;
+    const query = (els.archiveQuery?.value || '').trim();
+    if (normalizeArchiveText(query).length < 2) {
+      state.archiveResult = {
+        found: false,
+        message: 'Escribe al menos dos caracteres para buscar en el archivo.'
+      };
+      renderArchivePanel();
+      els.archiveQuery?.focus();
+      return;
+    }
+
+    state.busyArchive = true;
+    if (els.archiveSubmitBtn) {
+      els.archiveSubmitBtn.disabled = true;
+      els.archiveSubmitBtn.classList.add('is-loading');
+    }
+
+    try {
+      let result;
+      let source = state.mode;
+      if (state.mode === 'real') {
+        try {
+          result = await api.archive({
+            level_id: state.level.level_id,
+            query,
+            session_id: sessionId
+          });
+          source = 'real';
+        } catch (error) {
+          if (!isAvailabilityError(error)) throw error;
+          if (!state.archiveDefinitions.length) {
+            throw new ApiError(
+              'El motor no está disponible y este expediente no incluye las fichas ocultas para buscar sin conexión.',
+              503
+            );
+          }
+          await sleep(320);
+          result = localArchive(query);
+          source = 'sim';
+          setHealth('engine', 'offline');
+          notifyFallback('archivador');
+        }
+      } else {
+        await sleep(360);
+        result = localArchive(query);
+        source = 'sim';
+      }
+
+      if (!result || typeof result.found !== 'boolean') {
+        throw new ApiError('El motor devolvió una respuesta vacía o inválida.', 502);
+      }
+      applyArchiveResult(result, query, source);
+    } catch (error) {
+      state.archiveResult = {
+        found: false,
+        error: error.message || 'No se pudo consultar el archivador.'
+      };
+      renderArchivePanel();
+      toast({
+        type: 'error',
+        title: 'Búsqueda fallida',
+        message: error.message || 'El archivo no ha podido completar la consulta.'
+      });
+    } finally {
+      state.busyArchive = false;
+      if (els.archiveSubmitBtn?.isConnected) {
+        els.archiveSubmitBtn.disabled = false;
+        els.archiveSubmitBtn.classList.remove('is-loading');
+      }
+    }
+  }
+
+  function applyArchiveResult(result, query, source) {
+    if (!state.level) return;
+    const at = nowISO();
+    const card = result.card ? publicCard(result.card) : null;
+    const known = card ? state.level.cards.find((item) => item.id === card.id) : null;
+    const already = Boolean(result.already_unlocked) || Boolean(known);
+
+    if (card && !known) {
+      state.level.cards.push(card);
+      ensurePositions(state.level.cards);
+      state.freshCardId = card.id;
+    }
+    if (card && !state.unlocked[card.id] && !state.visibleIds.has(card.id)) {
+      state.unlocked[card.id] = {
+        statement: '',
+        suspectId: null,
+        suspectName: 'Archivador',
+        sourceId: null,
+        source: 'archive',
+        card,
+        at
+      };
+    }
+
+    state.searches.unshift({
+      id: `arc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+      at,
+      query,
+      found: Boolean(card),
+      cardId: card?.id || null,
+      cardTitle: card?.title || null,
+      message: result.message || '',
+      source
+    });
+    state.searches = state.searches.slice(0, 80);
+    state.archiveResult = {
+      found: Boolean(card),
+      message: result.message || '',
+      card,
+      already,
+      score: result.score
+    };
+
+    renderAll();
+    saveProgress();
+    renderArchivePanel();
+
+    toast({
+      type: already ? 'info' : card ? 'success' : 'warn',
+      title: already ? 'Ficha ya archivada' : card ? 'Ficha recuperada' : 'Registro no encontrado',
+      message: result.message || (card ? `${card.title} está en el tablero.` : 'Revisa el código, la dirección o la palabra.')
+    });
+  }
+
+  function openObservation(cardId, button) {
+    if (!state.level) return;
+    const card = state.level.cards.find((item) => item.id === cardId);
+    if (!card) return;
+
+    if (card.type === 'SUSPECT') {
+      handleInterrogate(card.id, button);
+      return;
+    }
+
+    state.examined[card.id] = nowISO();
+    saveProgress();
+    renderObservationModal(card);
+  }
+
+  function renderObservationModal(card) {
+    if (!els.statementContent) return;
+    if (els.statementKicker) {
+      els.statementKicker.innerHTML = `${ICON('search')} Observación`;
+    }
+    if (els.statementTitle) els.statementTitle.textContent = card.title;
+    if (els.statementSub) {
+      els.statementSub.textContent = 'Esto es lo que revela la evidencia. Contrasta el texto con las declaraciones y busca sus términos en el archivador.';
+    }
+
+    const meta = typeMeta(card.type);
+    const statement = String(card.description || '').trim() || 'Sin texto archivado para esta evidencia.';
+
+    els.statementContent.innerHTML = `
+      <div class="statement-head">
+        <div class="statement-suspect">
+          <span class="suspect-avatar">${ICON('file-text')}</span>
+          <div>
+            <small>${esc(meta.label)} · evidencia observada</small>
+            <strong>${esc(card.title)}</strong>
+          </div>
+        </div>
+        <span class="statement-source">${state.mode === 'real' ? 'Motor real' : 'Simulación local'}</span>
+      </div>
+      <blockquote class="statement-quote">${esc(statement)}</blockquote>
+      <div class="modal-foot" style="margin:16px -19px -18px">
+        <button class="btn ghost" type="button" data-close-modal>Volver al tablón</button>
+        <button class="btn gold" type="button" data-open-archive>${ICON('search')} Abrir archivador</button>
+      </div>`;
+
+    els.statementContent.querySelector('[data-open-archive]')?.addEventListener('click', () => {
+      closeModal('statementModal');
+      setTimeout(() => openArchiveModal(), 120);
+    });
+    openModal('statementModal');
   }
 
   async function handleInterrogate(cardId, button) {
@@ -3983,9 +4680,7 @@
           description: clue.description || '',
           image_url: clue.image_url || null
         });
-      }
-      if (!state.level.cards.some((card) => card.id === clue.id)) {
-        state.level.cards.push(clue);
+        ensurePositions(state.level.cards);
       }
       if (!state.unlocked[clue.id]) {
         isNew = true;
@@ -3993,9 +4688,11 @@
           statement: result.unlocked_clue_text,
           suspectId: suspect.id,
           suspectName: suspect.title,
+          sourceId: suspect.id,
+          source: 'interrogation',
           at
         };
-        state.freshClueId = clue.id;
+        state.freshCardId = clue.id;
       }
     }
 
@@ -4018,6 +4715,13 @@
 
   function showStatementModal({ suspect, text, clue, isNew, source }) {
     if (!els.statementContent) return;
+    if (els.statementKicker) {
+      els.statementKicker.innerHTML = `${ICON('quote')} Transcripción`;
+    }
+    if (els.statementTitle) els.statementTitle.textContent = 'Declaración del sospechoso';
+    if (els.statementSub) {
+      els.statementSub.textContent = 'La grabadora seguía encendida. Esto es lo que quedó en la cinta.';
+    }
     els.statementContent.innerHTML = `
       <div class="statement-head">
         <div class="statement-suspect">
@@ -4037,19 +4741,24 @@
           <p>${esc(clue.description || 'Sin descripción adicional.')}</p>
         </div>` : `
         <div class="statement-clue dupe">
-          <span class="tag">${ICON('info')} Sin nueva evidencia</span>
-          <h4>Declaración registrada</h4>
-          <p>La pista asociada a este sospechoso ya estaba en el expediente. La declaración queda grabada en el registro.</p>
+          <span class="tag">${ICON('search')} Archivador disponible</span>
+          <h4>La ficha no aparece sola</h4>
+          <p>Abre el archivador y teclea el código, la dirección o la palabra que te haya llamado la atención en la declaración. Si coincide con una ficha sellada, aparecerá en el tablero.</p>
         </div>`}
       <div class="modal-foot" style="margin:16px -19px -18px">
         <button class="btn ghost" type="button" data-close-modal>Archivar</button>
-        <button class="btn gold" type="button" data-view-clues>${ICON('book')} Ver pistas</button>
+        <button class="btn gold" type="button" data-open-archive>${ICON('search')} Abrir archivador</button>
+        <button class="btn ghost" type="button" data-view-clues>${ICON('book')} Ver archivo</button>
       </div>`;
 
     const viewButton = els.statementContent.querySelector('[data-view-clues]');
     viewButton?.addEventListener('click', () => {
       closeModal('statementModal');
       setTimeout(() => openCluesModal(), 120);
+    });
+    els.statementContent.querySelector('[data-open-archive]')?.addEventListener('click', () => {
+      closeModal('statementModal');
+      setTimeout(() => openArchiveModal(), 120);
     });
     openModal('statementModal');
   }
@@ -4250,7 +4959,7 @@
           <span>${attempt.cardIds.length} ${attempt.cardIds.length === 1 ? 'tarjeta' : 'tarjetas'}</span>
         </div>
         <div class="modal-foot">
-          ${solved ? '' : `<button class="btn ghost" type="button" data-result-clues>${ICON('book')} Revisar pistas</button>`}
+          ${solved ? '' : `<button class="btn ghost" type="button" data-result-clues>${ICON('book')} Revisar archivo</button>`}
           <button class="btn ${solved ? 'gold' : 'primary'}" type="button" data-close-modal>${solved ? 'Cerrar expediente' : 'Volver al tablón'}</button>
         </div>
       </div>`;
@@ -4328,50 +5037,52 @@
 
   function openCluesModal() {
     if (!state.level) {
-      toast({ type: 'warn', title: 'Sin expediente', message: 'Abre un caso para consultar sus pistas.' });
+      toast({ type: 'warn', title: 'Sin expediente', message: 'Abre un caso para consultar su archivo.' });
       return;
     }
-    const entries = unlockedClueEntries();
-    const total = state.level.cards.filter((card) => card.type === 'CLUE').length;
-    const percent = total ? Math.round((entries.length / total) * 100) : 0;
-    els.cluesModalSub.textContent = `${entries.length} de ${total} pistas desbloqueadas · ${state.interrogations.length} interrogatorios registrados.`;
+    const entries = recoveredEntries();
+    const onBoard = state.level.cards.length;
+    const total = Math.max(Number(state.level.card_count) || 0, onBoard);
+    const percent = total ? Math.round((onBoard / total) * 100) : 0;
+    els.cluesModalSub.textContent = `${onBoard} de ${total} fichas sobre el tablero · ${plural(state.searches.length, 'búsqueda registrada', 'búsquedas registradas')}.`;
 
     if (!entries.length) {
       els.cluesModalBody.innerHTML = `
         <div class="clues-progress">
-          <strong>0 / ${total}</strong>
-          <div class="progress-track"><div class="progress-fill" style="width:0%"></div></div>
+          <strong>${onBoard} / ${total}</strong>
+          <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>
         </div>
         <div class="empty-state" style="padding:34px 18px">
-          ${ICON('lock')}
+          ${ICON('search')}
           <h4>El archivo sigue sellado</h4>
-          <p>No has arrancado ninguna declaración. Cierra este panel y pulsa <b>Interrogar</b> en una tarjeta de sospechoso.</p>
+          <p>Abre el archivador y teclea un código, una dirección o una palabra que hayas leído en una declaración. Si coincide con una ficha oculta, aparecerá en el tablero.</p>
+          <button class="btn gold" type="button" data-open-archive>${ICON('search')} Abrir archivador</button>
         </div>`;
     } else {
       els.cluesModalBody.innerHTML = `
         <div class="clues-progress">
-          <strong>${entries.length} / ${total}</strong>
+          <strong>${onBoard} / ${total}</strong>
           <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>
         </div>
         ${entries.map((entry, index) => `
           <article class="clue-sheet">
             <div class="clue-sheet-top">
-              <span>Pista ${String(index + 1).padStart(2, '0')} · ${esc(formatTime(entry.at))}</span>
+              <span>Ficha ${String(index + 1).padStart(2, '0')} · ${esc(formatTime(entry.at))}</span>
               <span>${esc(formatDateTime(entry.at))}</span>
             </div>
             <h4>${esc(entry.card.title)}</h4>
             <p>${esc(entry.card.description || 'Sin descripción archivada.')}</p>
-            <details>
-              <summary>Declaración de ${esc(entry.suspectName || 'sospechoso')}</summary>
-              <blockquote>${esc(entry.statement || 'Sin transcripción disponible.')}</blockquote>
-            </details>
             <div class="sheet-source">
-              <span>Declaró: ${esc(entry.suspectName || '—')}</span>
-              <span>${esc(formatDateTime(entry.at))}</span>
+              <span>Fuente: ${esc(entry.sourceName || 'Archivador')}</span>
+              <span>${esc(typeMeta(entry.card.type).label)}</span>
             </div>
           </article>`).join('')}`;
     }
 
+    els.cluesModalBody.querySelector('[data-open-archive]')?.addEventListener('click', () => {
+      closeModal('cluesModal');
+      setTimeout(() => openArchiveModal(), 120);
+    });
     openModal('cluesModal');
   }
 
@@ -4528,10 +5239,10 @@
 
   function newEditorTemplate() {
     return [
-      { type: 'SUSPECT', title: '', description: '', solution: true },
-      { type: 'WEAPON', title: '', description: '', solution: true },
-      { type: 'LOCATION', title: '', description: '', solution: true },
-      { type: 'CLUE', title: '', description: '', solution: true }
+      { type: 'SUSPECT', title: '', description: '', solution: true, hidden: false, aliases: '' },
+      { type: 'WEAPON', title: '', description: '', solution: true, hidden: false, aliases: '' },
+      { type: 'LOCATION', title: '', description: '', solution: true, hidden: false, aliases: '' },
+      { type: 'CLUE', title: '', description: '', solution: true, hidden: false, aliases: '' }
     ];
   }
 
@@ -4553,6 +5264,13 @@
             <button class="editor-remove" type="button" data-remove-row aria-label="Eliminar tarjeta ${index + 1}">${ICON('trash')}</button>
           </div>
           <textarea class="textarea" data-field="description" maxlength="4000" rows="2" placeholder="${esc(placeholders.description)}" aria-label="Descripción de la tarjeta ${index + 1}">${esc(row.description)}</textarea>
+          <div class="editor-flags">
+            <label class="editor-hidden" title="La ficha no aparece hasta recuperarla desde el archivador">
+              <input type="checkbox" data-field="hidden" ${row.hidden ? 'checked' : ''} />
+              Ficha oculta
+            </label>
+            <input class="input editor-aliases" type="text" data-field="aliases" maxlength="400" value="${esc(row.aliases || '')}" placeholder="Alias separados por comas: copa, champán, calle falsa 123" aria-label="Alias de búsqueda de la tarjeta ${index + 1}" />
+          </div>
           <span class="sr-only">${esc(meta.kicker)}</span>
         </div>`;
     }).join('');
@@ -4564,7 +5282,9 @@
       type: row.querySelector('[data-field="type"]').value,
       title: row.querySelector('[data-field="title"]').value,
       description: row.querySelector('[data-field="description"]').value,
-      solution: row.querySelector('[data-field="solution"]').checked
+      solution: row.querySelector('[data-field="solution"]').checked,
+      hidden: row.querySelector('[data-field="hidden"]').checked,
+      aliases: row.querySelector('[data-field="aliases"]').value
     }));
   }
 
@@ -4587,7 +5307,7 @@
   function addEditorRow() {
     syncEditorRows();
     const nextType = TYPE_ORDER[state.editorRows.length % TYPE_ORDER.length];
-    state.editorRows.push({ type: nextType, title: '', description: '', solution: false });
+    state.editorRows.push({ type: nextType, title: '', description: '', solution: false, hidden: false, aliases: '' });
     renderCardEditor();
     const rows = $$('.editor-row', els.cardEditor);
     const last = rows[rows.length - 1];
@@ -4601,7 +5321,7 @@
     const index = Number(row?.dataset.index);
     if (!Number.isInteger(index)) return;
     state.editorRows.splice(index, 1);
-    if (!state.editorRows.length) state.editorRows.push({ type: 'SUSPECT', title: '', description: '', solution: true });
+    if (!state.editorRows.length) state.editorRows.push({ type: 'SUSPECT', title: '', description: '', solution: true, hidden: false, aliases: '' });
     renderCardEditor();
   }
 
@@ -4654,8 +5374,42 @@
       return null;
     }
 
+    if (!rows.some((row) => !row.hidden)) {
+      showNewCaseError('El expediente necesita al menos una tarjeta visible para abrir el tablón.');
+      return null;
+    }
+
+    const aliasOwner = new Map();
+    const rowsWithAliases = rows.map((row) => {
+      const aliases = String(row.aliases || '')
+        .split(',')
+        .map((alias) => alias.trim())
+        .filter(Boolean);
+      if (row.hidden && !aliases.length) {
+        const index = state.editorRows.indexOf(row);
+        const field = els.cardEditor.querySelector(`.editor-row[data-index="${index}"] [data-field="aliases"]`);
+        showNewCaseError(`La ficha oculta «${row.title.trim()}» necesita al menos un alias de búsqueda.`, field);
+        return null;
+      }
+      for (const alias of aliases) {
+        const normalized = normalizeArchiveText(alias);
+        if (!normalized) continue;
+        if (normalized.length < 2) {
+          showNewCaseError(`El alias «${alias}» necesita al menos dos caracteres.`);
+          return null;
+        }
+        if (aliasOwner.has(normalized)) {
+          showNewCaseError(`El alias «${alias}» está repetido con «${aliasOwner.get(normalized)}».`);
+          return null;
+        }
+        aliasOwner.set(normalized, row.title.trim());
+      }
+      return { ...row, aliases };
+    });
+    if (rowsWithAliases.some((row) => !row)) return null;
+
     const usedIds = new Set();
-    const prepared = rows.map((row) => {
+    const prepared = rowsWithAliases.map((row) => {
       const prefix = row.type.toLowerCase();
       const slug = slugify(row.title) || 'sin-titulo';
       const base = `${prefix}-${slug}`.slice(0, 58);
@@ -4671,6 +5425,8 @@
         type: row.type,
         title: row.title.trim().slice(0, 120),
         description: row.description.trim().slice(0, 4000),
+        hidden: Boolean(row.hidden),
+        aliases: row.hidden ? row.aliases : [],
         solution: Boolean(row.solution)
       };
     });
@@ -4689,7 +5445,7 @@
       suffix += 1;
     }
 
-    const cards = prepared.map(({ id, type, title: cardTitle, description }) => ({ id, type, title: cardTitle, description }));
+    const cards = prepared.map(({ id, type, title: cardTitle, description, hidden, aliases }) => ({ id, type, title: cardTitle, description, hidden, aliases }));
     const payload = {
       level_id: levelId,
       title: title.slice(0, 120),
@@ -4703,6 +5459,7 @@
       payload,
       localLevel: {
         ...payload,
+        card_count: cards.length,
         created_at: nowISO()
       }
     };
@@ -4810,9 +5567,21 @@
 
     els.newCaseBtn.addEventListener('click', openNewCaseModal);
     els.emptyNewCaseBtn.addEventListener('click', openNewCaseModal);
+    els.archiveBtn.addEventListener('click', openArchiveModal);
     els.viewCluesBtn.addEventListener('click', openCluesModal);
     els.accuseBtn.addEventListener('click', openAccusationModal);
     els.confirmAccuseBtn.addEventListener('click', confirmAccusation);
+
+    els.archiveForm.addEventListener('submit', handleArchiveSubmit);
+    els.archiveHistory.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-archive-history]');
+      if (!button) return;
+      const entry = state.searches[Number(button.dataset.archiveHistory)];
+      if (!entry) return;
+      els.archiveQuery.value = entry.query || '';
+      els.archiveQuery.focus({ preventScroll: true });
+      els.archiveQuery.select();
+    });
 
     els.tabClues.addEventListener('click', () => {
       state.activeTab = 'clues';
@@ -4825,7 +5594,7 @@
 
     els.cluesGoInterrogateBtn.addEventListener('click', () => {
       closeModal('cluesModal');
-      setTimeout(highlightSuspects, 140);
+      setTimeout(() => openArchiveModal(), 140);
     });
 
     els.testConnectionsBtn.addEventListener('click', testSettingsConnections);

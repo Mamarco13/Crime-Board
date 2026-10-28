@@ -27,6 +27,7 @@ from .config import Settings
 from .database import init_database
 from .models import (
     Card,
+    CardAdmin,
     LevelAdmin,
     LevelCreate,
     LevelDetail,
@@ -155,20 +156,32 @@ async def require_internal_api_key(
 # Conversores modelo ORM → esquema de salida
 # ---------------------------------------------------------------------------
 def _to_detail(level: LevelModel) -> LevelDetail:
+    """Vista pública: solo tarjetas visibles y el total del expediente."""
     return LevelDetail(
         level_id=level.level_id,
         title=level.title,
         description=level.description,
         difficulty=level.difficulty,
-        cards=[Card.model_validate(card) for card in level.cards],
+        cards=[
+            Card.model_validate(card) for card in level.cards if not card.hidden
+        ],
+        card_count=len(level.cards),
         created_at=level.created_at,
     )
 
 
 def _to_admin(level: LevelModel) -> LevelAdmin:
-    payload = _to_detail(level).model_dump()
-    payload["solution_card_ids"] = list(level.solution_card_ids)
-    return LevelAdmin(**payload)
+    """Vista interna: incluye ocultas, alias y solución."""
+    return LevelAdmin(
+        level_id=level.level_id,
+        title=level.title,
+        description=level.description,
+        difficulty=level.difficulty,
+        cards=[CardAdmin.model_validate(card) for card in level.cards],
+        card_count=len(level.cards),
+        solution_card_ids=list(level.solution_card_ids),
+        created_at=level.created_at,
+    )
 
 
 def _to_summary(level: LevelModel) -> LevelSummary:

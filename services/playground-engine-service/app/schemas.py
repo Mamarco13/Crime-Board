@@ -3,10 +3,12 @@
 Los esquemas públicos replican el contrato acordado con el cliente:
 
 * ``InterrogationRequest/Response`` para interrogar sospechosos.
+* ``ArchiveRequest/Response`` para buscar fichas en el archivador.
 * ``AccusationRequest/Response`` para validar la acusación final.
 
 ``LevelSnapshot`` es la representación interna que el motor recibe del
-Level Management Service (incluye la solución y nunca se devuelve al cliente).
+Level Management Service (incluye la solución, las tarjetas ocultas y sus
+alias, y nunca se devuelve al cliente).
 """
 
 from __future__ import annotations
@@ -44,6 +46,52 @@ class Card(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     description: str = Field(default="", max_length=4000)
     image_url: str | None = Field(default=None, max_length=2048)
+
+
+class InternalCard(Card):
+    """Tarjeta del canal interno, con su estado de archivo y alias."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    hidden: bool = False
+    aliases: list[str] = Field(default_factory=list, max_length=20)
+
+
+class ArchiveRequest(BaseModel):
+    """Consulta libre al archivador del expediente."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    level_id: str = Field(min_length=2, max_length=64, pattern=SLUG_PATTERN)
+    query: str = Field(
+        min_length=1,
+        max_length=200,
+        description="Código, dirección o palabra que el jugador busca.",
+        examples=["calle falsa 123"],
+    )
+    session_id: str = Field(
+        default="default",
+        min_length=1,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9_-]{1,64}$",
+        description="Identificador de partida para el estado efímero.",
+    )
+
+
+class ArchiveResponse(BaseModel):
+    """Resultado de una búsqueda en el archivador."""
+
+    found: bool
+    card: Card | None = Field(
+        default=None,
+        description="Ficha recuperada; solo se envía cuando la búsqueda acierta.",
+    )
+    already_unlocked: bool = Field(
+        default=False,
+        description="La ficha ya estaba sobre el tablero en esta partida.",
+    )
+    message: str
+    score: float | None = Field(default=None, ge=0, le=1)
 
 
 class InterrogationRequest(BaseModel):
@@ -122,7 +170,7 @@ class LevelSnapshot(BaseModel):
 
     level_id: str = Field(min_length=2, max_length=64)
     title: str = Field(min_length=1, max_length=120)
-    cards: list[Card] = Field(min_length=1, max_length=200)
+    cards: list[InternalCard] = Field(min_length=1, max_length=200)
     solution_card_ids: list[str] = Field(min_length=1, max_length=50)
 
     @model_validator(mode="after")
@@ -132,11 +180,22 @@ class LevelSnapshot(BaseModel):
         if len(set(card_ids)) != len(card_ids):
             raise ValueError("El nivel contiene ids de tarjeta duplicados")
 
-        known = set(card_ids)
+        if not any(not card.hidden for card in self.cards):
+            raise ValueError(
+                "El nivel necesita al menos una tarjeta visible para abrir "
+                "el tablón"
+            )
+
+        for card in self.cards:
+            if card.hidden and not card.aliases:
+                raise ValueError(
+                    f"La tarjeta oculta '{card.id}' no tiene alias de búsqueda"
+                )
+
         unknown = [
             card_id
             for card_id in self.solution_card_ids
-            if card_id not in known
+            if card_id not in set(card_ids)
         ]
         if unknown:
             raise ValueError(

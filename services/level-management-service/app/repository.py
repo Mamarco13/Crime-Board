@@ -18,7 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from .models import CardModel, LevelCreate, LevelModel
+from .models import CardModel, LevelCreate, LevelModel, normalize_alias
 
 
 class LevelAlreadyExistsError(Exception):
@@ -67,6 +67,8 @@ def _build_level_model(
                 title=card.title,
                 description=card.description,
                 image_url=card.image_url,
+                hidden=card.hidden,
+                aliases=[normalize_alias(alias) for alias in card.aliases],
                 position=position,
             )
             for position, card in enumerate(payload.cards)
