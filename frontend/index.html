@@ -784,6 +784,10 @@
       letter-spacing: -.01em;
       color: inherit;
       text-wrap: balance;
+      /* Acota la altura de la tarjeta: un título larguísimo no puede empujar
+         el contenido hasta solaparse con la tarjeta de la fila siguiente. */
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .type-clue .card-title { color: #241b12; }
     .card-desc {
@@ -2708,6 +2712,7 @@
         <button class="btn" id="newCaseBtn" type="button"><i data-lucide="folder-plus"></i><span>Nuevo Caso</span></button>
         <button class="btn" id="archiveBtn" type="button"><svg class="i"><use href="#i-search"></use></svg><span>Archivador</span><span class="btn-badge" id="archiveBadge" hidden>0</span></button>
         <button class="btn" id="viewCluesBtn" type="button"><i data-lucide="book-open"></i><span>Ver Archivo</span><span class="btn-badge" id="clueCountBadge" hidden>0</span></button>
+        <button class="btn ghost" id="arrangeBtn" type="button" title="Reorganizar el tablero con la altura real de las tarjetas"><i data-lucide="layout-grid"></i><span>Ordenar</span></button>
         <button class="btn" id="connectBtn" type="button" aria-pressed="false"><i data-lucide="link-2"></i><span>Conectar Hilo</span></button>
         <button class="btn primary" id="accuseBtn" type="button"><i data-lucide="gavel"></i><span>Realizar Acusación</span><span class="btn-badge" id="accuseCount" hidden>0</span></button>
       </nav>
@@ -3385,10 +3390,17 @@
   const COLUMN_X = [0.006, 0.254, 0.502, 0.75];
   const ROW_HEIGHT = 210;
   const BOARD_MIN_HEIGHT = 780;
-  // Altura conservadora para detectar solapes al insertar recompensas. Las
-  // tarjetas tienen 172px de alto mínimo y crecen con descripciones largas.
-  const CARD_COLLISION_HEIGHT = 230;
-  const CARD_COLLISION_GAP = 14;
+  // El tablero se mide y empaqueta con la altura real de cada tarjeta. Estas
+  // constantes solo definen los márgenes, la separación y cuántas filas se
+  // acumulan antes de abrir una subcolumna dentro del mismo tipo de prueba.
+  const BOARD_MIN_WIDTH = 900;
+  const BOARD_PAD_X = 14;
+  const BOARD_PAD_TOP = 20;
+  const BOARD_PAD_BOTTOM = 20;
+  const CARD_GAP_X = 18;
+  const CARD_GAP_Y = 16;
+  const MAX_ROWS_PER_COLUMN = 6;
+  const FALLBACK_CARD_HEIGHT = 190;
 
   const DIFFICULTY = {
     tutorial: { label: 'Tutorial', order: 0 },
@@ -3745,6 +3757,7 @@
     authPending: null,
     busyAuth: false,
     boardVisible: false,
+    boardWidth: 0,
     levels: [],
     // Resumen de valoraciones por level_id: { average_rating, total_votes }.
     ratings: {},
@@ -3755,6 +3768,7 @@
     solution: null,
     knownSolutions: {},
     positions: {},
+    pendingCards: new Set(),
     threads: [],
     selected: new Set(),
     unlocked: {},
@@ -3870,6 +3884,7 @@
     archiveBtn: $('#archiveBtn'),
     archiveBadge: $('#archiveBadge'),
     viewCluesBtn: $('#viewCluesBtn'),
+    arrangeBtn: $('#arrangeBtn'),
     connectBtn: $('#connectBtn'),
     accuseBtn: $('#accuseBtn'),
     clueCountBadge: $('#clueCountBadge'),
@@ -5032,9 +5047,14 @@
         const x = Number(pos.x);
         const y = Number(pos.y);
         if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-        state.positions[cardId] = { x: clamp(x, 0, .98), y: clamp(y, 0, .98) };
+        state.positions[cardId] = {
+          x: clamp(x, 0, .98),
+          y: clamp(y, 0, .98),
+          manual: Boolean(pos.manual)
+        };
       });
     }
+    state.pendingCards = new Set();
 
     state.interrogations = Array.isArray(saved.interrogations) ? saved.interrogations.filter(Boolean).slice(0, 80) : [];
     state.searches = Array.isArray(saved.searches) ? saved.searches.filter(Boolean).slice(0, 80) : [];
@@ -5056,6 +5076,7 @@
       searches: state.searches.slice(0, 80),
       examined: state.examined,
       boardHeight: state.boardHeight,
+      boardWidth: state.boardWidth,
       attempts: state.attempts.slice(0, 80),
       solved: state.solved,
       updatedAt: nowISO()
@@ -5116,6 +5137,10 @@
     state.boardHeight = Number.isFinite(savedHeight) && savedHeight >= BOARD_MIN_HEIGHT
       ? savedHeight
       : 0;
+    const savedWidth = Number((PROGRESS[state.level.level_id] || {}).boardWidth);
+    state.boardWidth = Number.isFinite(savedWidth) && savedWidth >= BOARD_MIN_WIDTH
+      ? savedWidth
+      : BOARD_MIN_WIDTH;
     state.selected.clear();
     state.connectMode = false;
     state.connectSource = null;
@@ -5211,56 +5236,260 @@
   }
 
   function ensurePositions(cards) {
+    if (!(state.pendingCards instanceof Set)) state.pendingCards = new Set();
     const layout = buildLayout(cards);
-    const previousHeight = state.boardHeight || layout.height;
-    let height = Math.max(previousHeight, layout.height);
-
-    // Las posiciones se guardan en porcentaje. Si el tablón crece, se reescalan
-    // para conservar la posición en píxeles: de lo contrario las tarjetas ya
-    // colocadas se separarían y la recompensa nueva podría solaparse con ellas.
-    if (height !== previousHeight) {
-      const ratio = previousHeight / height;
-      Object.values(state.positions).forEach((position) => {
-        position.y *= ratio;
-      });
-    }
+    const layoutHeight = Math.max(BOARD_MIN_HEIGHT, layout.height);
 
     cards.forEach((card) => {
       if (state.positions[card.id]) return;
+      const provisional = layout.positions[card.id];
+      state.positions[card.id] = provisional
+        ? { x: provisional.x, y: provisional.y }
+        : { x: COLUMN_X[0], y: BOARD_PAD_TOP / layoutHeight };
+      // Se coloca de forma provisional; el empaquetado real se hace después de
+      // medir las tarjetas en el DOM.
+      state.pendingCards.add(card.id);
+    });
 
-      const layoutPosition = layout.positions[card.id]
-        || { x: COLUMN_X[0], y: 20 / layout.height };
-      const sameColumn = cards.filter((item) => {
-        const position = state.positions[item.id];
-        return position && Math.abs(position.x - layoutPosition.x) < 0.02;
+    state.boardHeight = Math.max(state.boardHeight || 0, layoutHeight);
+    return layout;
+  }
+
+  function measureCards() {
+    const metrics = new Map();
+    let cardWidth = 204;
+    $$('.card-wrap', els.cardsLayer).forEach((wrap) => {
+      metrics.set(wrap.dataset.cardId, {
+        height: wrap.offsetHeight || FALLBACK_CARD_HEIGHT
       });
+      cardWidth = Math.max(cardWidth, wrap.offsetWidth || 204);
+    });
+    return { metrics, cardWidth };
+  }
 
-      let top = layoutPosition.y * layout.height;
-      if (sameColumn.length) {
-        // Coloca la tarjeta nueva debajo de la última de su columna.
-        top = Math.max(
-          ...sameColumn.map((item) => state.positions[item.id].y * height + CARD_COLLISION_HEIGHT)
-        ) + CARD_COLLISION_GAP;
+  function applyBoardSize(width, height) {
+    const safeWidth = Math.max(BOARD_MIN_WIDTH, Math.round(width));
+    const safeHeight = Math.max(BOARD_MIN_HEIGHT, Math.round(height));
+    state.boardWidth = safeWidth;
+    els.board.style.minWidth = `${safeWidth}px`;
+    els.board.style.height = `${safeHeight}px`;
+    return { width: safeWidth, height: safeHeight };
+  }
+
+  function applyAllPositions() {
+    const wraps = $$('.card-wrap', els.cardsLayer);
+    // Se desactiva la transición durante el reparto para que las tarjetas y los
+    // hilos queden alineados en el mismo frame.
+    wraps.forEach((wrap) => { wrap.style.transition = 'none'; });
+    wraps.forEach((wrap) => {
+      const position = state.positions[wrap.dataset.cardId];
+      if (!position) return;
+      wrap.style.left = `${(position.x * 100).toFixed(3)}%`;
+      wrap.style.top = `${(position.y * 100).toFixed(3)}%`;
+    });
+    void els.cardsLayer.offsetHeight;
+    wraps.forEach((wrap) => { wrap.style.transition = ''; });
+  }
+
+  // Empaqueta todas las tarjetas midiendo su altura real. Cada tipo de prueba
+  // ocupa una o varias columnas; si una columna pasa de MAX_ROWS_PER_COLUMN
+  // filas se abre otra al lado, de modo que el tablero crece a lo ancho en vez
+  // de acumular tarjetas encima de otras.
+  function packBoardColumns(metrics, cardWidth) {
+    const groups = {};
+    TYPE_ORDER.forEach((type) => { groups[type] = []; });
+    state.level.cards.forEach((card) => {
+      if (groups[card.type]) groups[card.type].push(card);
+    });
+
+    const columns = [];
+    TYPE_ORDER.forEach((type) => {
+      const list = groups[type];
+      if (!list.length) return;
+      const subColumns = Math.max(1, Math.ceil(list.length / MAX_ROWS_PER_COLUMN));
+      const chunkSize = Math.ceil(list.length / subColumns);
+      for (let index = 0; index < list.length; index += chunkSize) {
+        columns.push(list.slice(index, index + chunkSize));
       }
+    });
 
-      if (top + CARD_COLLISION_HEIGHT + CARD_COLLISION_GAP > height) {
-        const needed = top + CARD_COLLISION_HEIGHT + CARD_COLLISION_GAP;
-        const grown = Math.ceil(needed / ROW_HEIGHT) * ROW_HEIGHT;
-        const ratio = height / grown;
-        Object.values(state.positions).forEach((position) => {
-          position.y *= ratio;
-        });
-        height = grown;
-      }
+    const step = cardWidth + CARD_GAP_X;
+    const boardWidth = Math.max(
+      BOARD_MIN_WIDTH,
+      BOARD_PAD_X * 2 + columns.length * cardWidth
+        + Math.max(0, columns.length - 1) * CARD_GAP_X
+    );
 
-      state.positions[card.id] = {
-        x: layoutPosition.x,
-        y: top / height
+    const placements = new Map();
+    let maxBottom = BOARD_PAD_TOP;
+    columns.forEach((column, columnIndex) => {
+      const left = BOARD_PAD_X + columnIndex * step;
+      let top = BOARD_PAD_TOP;
+      column.forEach((card) => {
+        const height = metrics.get(card.id)?.height || FALLBACK_CARD_HEIGHT;
+        placements.set(card.id, { left, top });
+        top += height + CARD_GAP_Y;
+      });
+      maxBottom = Math.max(maxBottom, top - CARD_GAP_Y);
+    });
+
+    const boardHeight = Math.max(BOARD_MIN_HEIGHT, maxBottom + BOARD_PAD_BOTTOM);
+    placements.forEach(({ left, top }, id) => {
+      state.positions[id] = {
+        x: left / boardWidth,
+        y: top / boardHeight
       };
     });
 
-    state.boardHeight = height;
-    return layout;
+    state.boardHeight = boardHeight;
+    state.pendingCards.clear();
+    applyBoardSize(boardWidth, boardHeight);
+    applyAllPositions();
+    saveProgress();
+    return true;
+  }
+
+  // Cuando el jugador ha movido tarjetas a mano no se reordena todo: las nuevas
+  // se apilan en la subcolumna más corta de su tipo. Para calcular el hueco se
+  // tienen en cuenta TODAS las tarjetas del tablero (no solo las del mismo
+  // tipo): una columna vecina o una tarjeta arrastrada a mano también ocupan
+  // espacio y provocarían solapes.
+  function appendPendingCards(metrics, cardWidth) {
+    const pending = new Set(state.pendingCards || []);
+    if (!pending.size) {
+      if (fitBoardToContent(metrics)) saveProgress();
+      return false;
+    }
+
+    let boardHeight = Math.max(BOARD_MIN_HEIGHT, state.boardHeight || BOARD_MIN_HEIGHT);
+    // El ancho real del DOM es la referencia: las posiciones se guardan como
+    // fracción de ese ancho, así que cualquier cálculo en píxeles debe usar la
+    // misma base para que luego el render coincida exactamente.
+    let boardWidth = Math.max(
+      BOARD_MIN_WIDTH,
+      els.board.clientWidth || state.boardWidth || BOARD_MIN_WIDTH
+    );
+    const unplaced = new Set(pending);
+    const heightOf = (id) => metrics.get(id)?.height || FALLBACK_CARD_HEIGHT;
+
+    // Primer hueco vertical libre en la franja [left, left + cardWidth).
+    const freeTopAt = (left, ignoreId) => {
+      const right = left + cardWidth;
+      let top = BOARD_PAD_TOP;
+      state.level.cards.forEach((other) => {
+        if (other.id === ignoreId || unplaced.has(other.id)) return;
+        const position = state.positions[other.id];
+        if (!position) return;
+        const otherLeft = position.x * boardWidth;
+        const otherRight = otherLeft + cardWidth;
+        // Las columnas ya tienen CARD_GAP_X de separación: solo hay conflicto
+        // si las franjas se cruzan realmente.
+        if (right <= otherLeft + 1 || left >= otherRight - 1) return;
+        top = Math.max(
+          top,
+          position.y * boardHeight + heightOf(other.id) + CARD_GAP_Y
+        );
+      });
+      return top;
+    };
+
+    state.level.cards.forEach((card) => {
+      if (!unplaced.has(card.id)) return;
+      const height = heightOf(card.id);
+
+      // Columnas candidatas: las que ya ocupa su mismo tipo.
+      const candidates = [];
+      state.level.cards.forEach((other) => {
+        if (other.id === card.id || other.type !== card.type) return;
+        if (unplaced.has(other.id)) return;
+        const position = state.positions[other.id];
+        if (!position) return;
+        const left = position.x * boardWidth;
+        if (candidates.some((existing) => Math.abs(existing - left) < cardWidth * 0.5)) return;
+        candidates.push(left);
+      });
+      if (!candidates.length) {
+        // Sin subcolumna previa: se usa la columna por defecto de su tipo.
+        const typeIndex = Math.max(0, TYPE_ORDER.indexOf(card.type));
+        candidates.push(BOARD_PAD_X + typeIndex * (cardWidth + CARD_GAP_X));
+      }
+
+      let left = candidates[0];
+      let top = Infinity;
+      candidates.forEach((candidateLeft) => {
+        const candidateTop = freeTopAt(candidateLeft, card.id);
+        if (candidateTop < top - 0.5) {
+          top = candidateTop;
+          left = candidateLeft;
+        }
+      });
+
+      // Si la franja se sale por la derecha, el tablero crece a lo ancho.
+      const neededWidth = left + cardWidth + BOARD_PAD_X;
+      if (neededWidth > boardWidth) {
+        const grown = Math.ceil(neededWidth);
+        const ratio = boardWidth / grown;
+        // Se reescalan las x para que las tarjetas existentes conserven su
+        // posición en píxeles al ensanchar el lienzo.
+        Object.values(state.positions).forEach((position) => {
+          if (position) position.x *= ratio;
+        });
+        boardWidth = grown;
+      }
+
+      if (top + height + BOARD_PAD_BOTTOM > boardHeight) {
+        const grown = Math.ceil((top + height + BOARD_PAD_BOTTOM) / ROW_HEIGHT) * ROW_HEIGHT;
+        const ratio = boardHeight / grown;
+        Object.values(state.positions).forEach((position) => {
+          if (position) position.y *= ratio;
+        });
+        boardHeight = Math.max(grown, boardHeight);
+      }
+
+      state.positions[card.id] = { x: left / boardWidth, y: top / boardHeight };
+      unplaced.delete(card.id);
+    });
+
+    state.boardHeight = boardHeight;
+    state.pendingCards.clear();
+    applyBoardSize(boardWidth, boardHeight);
+    applyAllPositions();
+    saveProgress();
+    return true;
+  }
+
+  // Ajusta el alto al contenido sin mover las tarjetas ni perder el orden manual.
+  function fitBoardToContent(metrics) {
+    const currentHeight = Math.max(BOARD_MIN_HEIGHT, state.boardHeight || BOARD_MIN_HEIGHT);
+    let maxBottom = BOARD_PAD_TOP;
+    Object.entries(state.positions).forEach(([id, position]) => {
+      maxBottom = Math.max(
+        maxBottom,
+        position.y * currentHeight + (metrics.get(id)?.height || FALLBACK_CARD_HEIGHT)
+      );
+    });
+
+    const targetHeight = Math.max(BOARD_MIN_HEIGHT, maxBottom + BOARD_PAD_BOTTOM);
+    if (Math.abs(targetHeight - currentHeight) < 2) return false;
+
+    const ratio = currentHeight / targetHeight;
+    Object.values(state.positions).forEach((position) => {
+      position.y *= ratio;
+    });
+    state.boardHeight = targetHeight;
+    els.board.style.height = `${Math.round(targetHeight)}px`;
+    applyAllPositions();
+    return true;
+  }
+
+  function layoutBoard({ force = false } = {}) {
+    if (!state.level) return false;
+    if (!$$('.card-wrap', els.cardsLayer).length) return false;
+
+    const { metrics, cardWidth } = measureCards();
+    const hasManual = Object.values(state.positions).some((position) => position?.manual);
+    if (hasManual && !force) return appendPendingCards(metrics, cardWidth);
+    return packBoardColumns(metrics, cardWidth);
   }
 
   function renderAll() {
@@ -5385,7 +5614,7 @@
             <span class="type-chip">${ICON(meta.icon)} ${esc(meta.label.toUpperCase())}</span>
             <span class="card-no">${serial}</span>
           </div>
-          <h3 class="card-title">${esc(card.title)}</h3>
+          <h3 class="card-title" title="${esc(card.title)}">${esc(card.title)}</h3>
           <p class="card-desc" title="${esc(card.description || '')}">${esc(card.description || 'Sin descripción archivada.')}</p>
           ${ICON(meta.icon, 'card-watermark')}
           <div class="card-footer">${footer}</div>
@@ -5399,6 +5628,8 @@
     const level = state.level;
     if (!level) {
       state.boardHeight = BOARD_MIN_HEIGHT;
+      state.boardWidth = BOARD_MIN_WIDTH;
+      els.board.style.minWidth = `${BOARD_MIN_WIDTH}px`;
       els.board.style.height = `${BOARD_MIN_HEIGHT}px`;
       els.cardsLayer.innerHTML = '';
       els.threads.innerHTML = '';
@@ -5409,6 +5640,7 @@
     }
 
     ensurePositions(level.cards);
+    els.board.style.minWidth = `${Math.max(BOARD_MIN_WIDTH, state.boardWidth || BOARD_MIN_WIDTH)}px`;
     els.board.style.height = `${state.boardHeight}px`;
     els.cardsLayer.innerHTML = level.cards.map(cardHtml).join('');
     els.boardEmpty.hidden = true;
@@ -5418,7 +5650,7 @@
     updateBoardHint();
 
     requestAnimationFrame(() => {
-      clampCardPositions();
+      layoutBoard();
       renderThreads();
       syncSelectionUI();
       if (state.freshCardId) {
@@ -5427,26 +5659,6 @@
           fresh?.classList.remove('fresh');
           state.freshCardId = null;
         }, 4200);
-      }
-    });
-  }
-
-  function clampCardPositions() {
-    if (!state.level) return;
-    const boardWidth = els.board.clientWidth;
-    const boardHeight = els.board.clientHeight;
-    $$('.card-wrap', els.cardsLayer).forEach((wrap) => {
-      const position = state.positions[wrap.dataset.cardId];
-      if (!position) return;
-      const maxX = Math.max(.002, 1 - (wrap.offsetWidth + 8) / Math.max(1, boardWidth));
-      const maxY = Math.max(.002, 1 - (wrap.offsetHeight + 8) / Math.max(1, boardHeight));
-      const x = clamp(position.x, .002, maxX);
-      const y = clamp(position.y, .002, maxY);
-      if (x !== position.x || y !== position.y) {
-        position.x = x;
-        position.y = y;
-        wrap.style.left = `${(x * 100).toFixed(3)}%`;
-        wrap.style.top = `${(y * 100).toFixed(3)}%`;
       }
     });
   }
@@ -5886,7 +6098,7 @@
     if (moved) {
       const x = clamp(left / Math.max(1, els.board.clientWidth), 0, .99);
       const y = clamp(top / Math.max(1, els.board.clientHeight), 0, .99);
-      state.positions[id] = { x, y };
+      state.positions[id] = { x, y, manual: true };
       wrap.style.left = `${(x * 100).toFixed(3)}%`;
       wrap.style.top = `${(y * 100).toFixed(3)}%`;
       state.dragSuppressClickUntil = Date.now() + 180;
@@ -5987,6 +6199,20 @@
       }
     });
 
+    els.arrangeBtn?.addEventListener('click', () => {
+      if (!state.level) return;
+      Object.values(state.positions).forEach((position) => {
+        if (position) delete position.manual;
+      });
+      layoutBoard({ force: true });
+      renderThreads();
+      toast({
+        type: 'info',
+        title: 'Tablero ordenado',
+        message: 'Las tarjetas se han recolocado midiendo su altura real.'
+      });
+    });
+
     els.connectBtn.addEventListener('click', () => setConnectMode(!state.connectMode));
     els.clearSelectionBtn.addEventListener('click', () => {
       state.selected.clear();
@@ -5997,6 +6223,16 @@
     window.addEventListener('resize', () => {
       scheduleThreadUpdate();
     }, { passive: true });
+
+    // La tipografía de Google puede terminar de cargar después del primer
+    // render y cambiar el alto de los títulos: se vuelve a empaquetar.
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        if (!state.level) return;
+        layoutBoard();
+        renderThreads();
+      }).catch(() => {});
+    }
   }
 
   /* =======================================================================
