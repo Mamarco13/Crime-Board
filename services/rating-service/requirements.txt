@@ -1,0 +1,17 @@
+# =============================================================================
+# Rating Service — dependencias de valoraciones de niveles
+# =============================================================================
+# Versiones fijadas para builds reproducibles. Al actualizar una versión,
+# reconstruye la imagen y ejecuta los tests/smoke tests del servicio.
+#
+# SQLAlchemy[asyncio] + asyncpg persisten las valoraciones en PostgreSQL.
+# python-jose verifica los JWT emitidos por el User Service con la clave
+# compartida (JWT_SECRET_KEY/APP_SECRET_KEY).
+# =============================================================================
+
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.10.6
+sqlalchemy[asyncio]==2.1.6
+asyncpg==0.32.0
+python-jose[cryptography]==3.5.0

@@ -76,6 +76,13 @@ class ArchiveRequest(BaseModel):
         pattern=r"^[A-Za-z0-9_-]{1,64}$",
         description="Identificador de partida para el estado efímero.",
     )
+    guest: bool = Field(
+        default=False,
+        description=(
+            "Consulta de invitado. Se acepta sin sesión ni token: el estado se "
+            "aísla mediante session_id."
+        ),
+    )
 
 
 class ArchiveResponse(BaseModel):
@@ -116,6 +123,13 @@ class InterrogationRequest(BaseModel):
         pattern=r"^[A-Za-z0-9_-]{1,64}$",
         description="Identificador de partida para el estado efímero.",
     )
+    guest: bool = Field(
+        default=False,
+        description=(
+            "Partida de invitado. No requiere sesión ni token: el estado se "
+            "aísla mediante session_id."
+        ),
+    )
 
 
 class InterrogationResponse(BaseModel):
@@ -141,6 +155,13 @@ class AccusationRequest(BaseModel):
 
     level_id: str = Field(min_length=2, max_length=64, pattern=SLUG_PATTERN)
     selected_card_ids: list[str] = Field(min_length=1, max_length=50)
+    guest: bool = Field(
+        default=False,
+        description=(
+            "Acusación de invitado. Se acepta sin sesión ni token; la "
+            "validación es idéntica a la de un usuario registrado."
+        ),
+    )
 
     @field_validator("selected_card_ids")
     @classmethod

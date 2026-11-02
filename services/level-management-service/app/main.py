@@ -41,6 +41,7 @@ from .repository import (
     LevelRepository,
     SqlLevelRepository,
 )
+from .security import AuthenticatedUser, decode_access_token, user_from_payload
 from .seed import seed_demo_level
 
 logger = logging.getLogger(__name__)
@@ -83,6 +84,12 @@ async def lifespan(app: FastAPI):
                 "interno de solución queda sin autenticación (solo desarrollo)"
             )
 
+        if settings.jwt_secret_key is None:
+            logger.warning(
+                "JWT_SECRET_KEY/APP_SECRET_KEY no definida: no se podrán "
+                "publicar niveles autenticados (solo lectura del catálogo)"
+            )
+
         yield
     finally:
         if engine is not None:
@@ -95,7 +102,7 @@ app = FastAPI(
         "Catálogo de niveles y tarjetas de Crime Board. La solución del caso "
         "solo se expone en el endpoint interno autenticado."
     ),
-    version="0.2.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
@@ -123,6 +130,64 @@ def get_repository(request: Request) -> LevelRepository:
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 RepositoryDep = Annotated[LevelRepository, Depends(get_repository)]
+
+
+def _bearer_token(authorization: str | None) -> str | None:
+    if not authorization:
+        return None
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return None
+    return token.strip()
+
+
+async def require_creator(
+    settings: SettingsDep,
+    authorization: Annotated[
+        str | None,
+        Header(description="JWT emitido por el User Service (prefijo Bearer)"),
+    ] = None,
+) -> AuthenticatedUser:
+    """Exige una sesión válida para publicar un caso.
+
+    Un invitado (sin cabecera Authorization) recibe 401. Un token caducado o
+    manipulado también se rechaza. La identidad del creador nunca se toma del
+    cuerpo de la petición: se extrae del JWT firmado.
+    """
+    if settings.jwt_secret_key is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "La autenticación no está configurada en el catálogo. "
+                "Define JWT_SECRET_KEY/APP_SECRET_KEY."
+            ),
+        )
+
+    token = _bearer_token(authorization)
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Debes iniciar sesión para publicar un caso",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = decode_access_token(
+        token,
+        secret_key=settings.jwt_secret_key,
+        algorithm=settings.jwt_algorithm,
+        issuer=settings.jwt_issuer,
+    )
+    user = user_from_payload(payload) if payload else None
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sesión no válida o caducada. Vuelve a iniciar sesión.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
+CurrentUserDep = Annotated[AuthenticatedUser, Depends(require_creator)]
 
 
 async def require_internal_api_key(
@@ -162,6 +227,7 @@ def _to_detail(level: LevelModel) -> LevelDetail:
         title=level.title,
         description=level.description,
         difficulty=level.difficulty,
+        creator_username=level.creator_username,
         cards=[
             Card.model_validate(card) for card in level.cards if not card.hidden
         ],
@@ -177,6 +243,7 @@ def _to_admin(level: LevelModel) -> LevelAdmin:
         title=level.title,
         description=level.description,
         difficulty=level.difficulty,
+        creator_username=level.creator_username,
         cards=[CardAdmin.model_validate(card) for card in level.cards],
         card_count=len(level.cards),
         solution_card_ids=list(level.solution_card_ids),
@@ -190,6 +257,7 @@ def _to_summary(level: LevelModel) -> LevelSummary:
         title=level.title,
         description=level.description,
         difficulty=level.difficulty,
+        creator_username=level.creator_username,
         card_count=len(level.cards),
         created_at=level.created_at,
     )
@@ -230,21 +298,32 @@ async def health() -> dict[str, str]:
 async def create_level(
     payload: LevelCreate,
     repository: RepositoryDep,
+    current_user: CurrentUserDep,
 ) -> LevelAdmin:
     """Valida y persiste un nivel completo.
 
+    Requiere un JWT válido del User Service: los invitados deben registrarse
+    para publicar. ``creator_username`` se toma del token, no del payload.
     La respuesta incluye ``solution_card_ids`` porque es una operación de
     autoría; los GET públicos nunca la devuelven.
     """
     try:
-        level = await repository.create(payload)
+        level = await repository.create(
+            payload,
+            creator_username=current_user.username,
+        )
     except LevelAlreadyExistsError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Ya existe un nivel con level_id '{exc.level_id}'",
         ) from exc
 
-    logger.info("Nivel creado: %s (%d tarjetas)", level.level_id, len(level.cards))
+    logger.info(
+        "Nivel creado: %s (%d tarjetas) por %s",
+        level.level_id,
+        len(level.cards),
+        level.creator_username,
+    )
     return _to_admin(level)
 
 

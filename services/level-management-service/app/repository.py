@@ -32,7 +32,12 @@ class LevelAlreadyExistsError(Exception):
 class LevelRepository(Protocol):
     """Operaciones que necesita la capa HTTP del catálogo."""
 
-    async def create(self, payload: LevelCreate) -> LevelModel: ...
+    async def create(
+        self,
+        payload: LevelCreate,
+        *,
+        creator_username: str = "Anónimo",
+    ) -> LevelModel: ...
 
     async def get(self, level_id: str) -> LevelModel | None: ...
 
@@ -50,6 +55,7 @@ def _build_level_model(
     payload: LevelCreate,
     level_id: str,
     *,
+    creator_username: str = "Anónimo",
     created_at: datetime | None = None,
 ) -> LevelModel:
     """Traduce el esquema Pydantic validado a entidades SQLAlchemy."""
@@ -58,6 +64,7 @@ def _build_level_model(
         title=payload.title,
         description=payload.description,
         difficulty=payload.difficulty,
+        creator_username=creator_username.strip()[:64] or "Anónimo",
         solution_card_ids=list(payload.solution_card_ids),
         cards=[
             CardModel(
@@ -87,7 +94,12 @@ class InMemoryLevelRepository:
     def __init__(self) -> None:
         self._levels: dict[str, LevelModel] = {}
 
-    async def create(self, payload: LevelCreate) -> LevelModel:
+    async def create(
+        self,
+        payload: LevelCreate,
+        *,
+        creator_username: str = "Anónimo",
+    ) -> LevelModel:
         level_id = payload.level_id or generate_level_id()
         if level_id in self._levels:
             raise LevelAlreadyExistsError(level_id)
@@ -95,6 +107,7 @@ class InMemoryLevelRepository:
         level = _build_level_model(
             payload,
             level_id,
+            creator_username=creator_username,
             created_at=datetime.now(UTC),
         )
         self._levels[level_id] = level
@@ -123,9 +136,18 @@ class SqlLevelRepository:
     ) -> None:
         self._session_factory = session_factory
 
-    async def create(self, payload: LevelCreate) -> LevelModel:
+    async def create(
+        self,
+        payload: LevelCreate,
+        *,
+        creator_username: str = "Anónimo",
+    ) -> LevelModel:
         level_id = payload.level_id or generate_level_id()
-        level = _build_level_model(payload, level_id)
+        level = _build_level_model(
+            payload,
+            level_id,
+            creator_username=creator_username,
+        )
 
         async with self._session_factory() as session:
             session.add(level)

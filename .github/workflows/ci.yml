@@ -9,6 +9,8 @@
 # Imágenes publicadas:
 #   ghcr.io/<owner>/<repo>/level-management-service:<sha-corto|latest>
 #   ghcr.io/<owner>/<repo>/playground-engine-service:<sha-corto|latest>
+#   ghcr.io/<owner>/<repo>/user-service:<sha-corto|latest>
+#   ghcr.io/<owner>/<repo>/rating-service:<sha-corto|latest>
 # =============================================================================
 
 name: CI
@@ -125,6 +127,8 @@ jobs:
         service:
           - level-management-service
           - playground-engine-service
+          - user-service
+          - rating-service
 
     steps:
       - name: Checkout del repositorio

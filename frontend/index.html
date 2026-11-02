@@ -1295,70 +1295,6 @@
     }
     .session-line code { color: var(--paper-2); font-family: var(--font-type); font-size: 8.5px; }
 
-    /* Editor de tarjetas del nuevo caso */
-    .editor-list { display: flex; flex-direction: column; gap: 7px; }
-    .editor-row {
-      position: relative;
-      padding: 9px 9px 8px;
-      border: 1px solid #382b22;
-      border-left: 2px solid var(--row-color, var(--gold-dim));
-      border-radius: 2px;
-      background: rgba(255, 255, 255, .018);
-      transition: border-color .2s;
-    }
-    .editor-row[data-type="SUSPECT"] { --row-color: var(--red); }
-    .editor-row[data-type="WEAPON"] { --row-color: var(--steel); }
-    .editor-row[data-type="LOCATION"] { --row-color: #b87b42; }
-    .editor-row[data-type="CLUE"] { --row-color: var(--gold); }
-    .editor-grid {
-      display: grid; grid-template-columns: 116px minmax(0, 1fr) auto;
-      gap: 7px; align-items: center;
-    }
-    .editor-grid .select, .editor-grid .input { padding-top: 7px; padding-bottom: 7px; font-size: 11px; }
-    .editor-grid .select { padding-right: 26px; background-position: calc(100% - 12px) 13px, calc(100% - 7px) 13px; }
-    .editor-row textarea { margin-top: 7px; min-height: 46px; padding: 7px 9px; font-size: 10.5px; }
-    .editor-flags { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 7px; }
-    .editor-aliases { flex: 1 1 200px; min-width: 120px; padding: 6px 8px !important; font-size: 10px !important; }
-    .editor-solution, .editor-hidden {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 5px 7px;
-      border: 1px solid rgba(212, 175, 55, .22);
-      border-radius: 2px;
-      font-family: var(--font-type); font-size: 7.5px; letter-spacing: .06em;
-      color: var(--muted); text-transform: uppercase;
-      cursor: pointer; white-space: nowrap;
-      transition: .18s;
-      user-select: none;
-    }
-    .editor-hidden { border-color: rgba(230, 57, 70, .22); }
-    .editor-solution:has(input:checked) { color: var(--gold); border-color: rgba(212, 175, 55, .5); background: rgba(212, 175, 55, .07); }
-    .editor-hidden:has(input:checked) { color: var(--red); border-color: rgba(230, 57, 70, .5); background: rgba(230, 57, 70, .06); }
-    .editor-solution input, .editor-hidden input {
-      appearance: none; width: 11px; height: 11px; margin: 0;
-      border: 1px solid currentColor; border-radius: 1px; background: transparent;
-      display: inline-grid; place-items: center; cursor: pointer;
-    }
-    .editor-solution input:checked::after, .editor-hidden input:checked::after {
-      content: '✓'; font-size: 9px; line-height: 1; color: currentColor;
-    }
-    .editor-remove {
-      width: 27px; height: 27px; display: grid; place-items: center;
-      border: 1px solid rgba(230, 57, 70, .18); border-radius: 2px;
-      background: transparent; color: var(--muted-2); transition: .18s;
-    }
-    .editor-remove:hover { color: var(--red); border-color: rgba(230, 57, 70, .5); background: rgba(230, 57, 70, .06); }
-    .editor-remove .i { width: 12px; height: 12px; }
-    .editor-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
-    .editor-legend {
-      display: flex; align-items: center; gap: 8px;
-      font-family: var(--font-type); font-size: 8px; color: var(--muted-2); letter-spacing: .03em;
-    }
-    .editor-legend .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 3px; }
-    .editor-legend .dot.suspect { background: var(--red); }
-    .editor-legend .dot.weapon { background: var(--steel); }
-    .editor-legend .dot.location { background: #b87b42; }
-    .editor-legend .dot.clue { background: var(--gold); }
-
     /* Pistas desbloqueadas */
     .clues-progress {
       display: flex; align-items: center; gap: 10px;
@@ -1789,9 +1725,6 @@
       .app-footer { padding: 6px 14px 11px; font-size: 7px; gap: 8px; flex-wrap: wrap; }
       .modal-layer { padding: 12px; }
       .modal-panel { max-height: 94vh; }
-      .editor-grid { grid-template-columns: 1fr auto; }
-      .editor-grid .editor-index { display: none; }
-      .editor-grid .select { grid-column: 1 / -1; }
       .mode-options { grid-template-columns: 1fr; }
       .field-row { grid-template-columns: 1fr; }
       .toast-stack { right: 10px; bottom: 10px; }
@@ -1854,6 +1787,746 @@
       .board-statusbar { font-size: 7px; flex-wrap: wrap; }
       .status-hint span { white-space: normal; }
     }
+
+    /* =======================================================================
+       08. DOSIER DE CASOS, AUTENTICACIÓN Y GALERÍA
+       ======================================================================= */
+    .landing-screen { min-height: 100vh; display: flex; flex-direction: column; }
+    .landing-topbar { position: sticky; top: 0; }
+    .landing-main {
+      flex: 1;
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      padding: 34px 22px 54px;
+    }
+
+    .landing-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 34px 34px 30px;
+      border: 1px solid rgba(212, 175, 55, .26);
+      border-radius: 3px;
+      background:
+        radial-gradient(ellipse at 88% 12%, rgba(230, 57, 70, .14), transparent 46%),
+        radial-gradient(ellipse at 8% 100%, rgba(212, 175, 55, .09), transparent 50%),
+        linear-gradient(150deg, #1b1512 0%, #120f0e 62%, #0d0b0b 100%);
+      box-shadow: var(--shadow-deep), inset 0 1px rgba(255, 255, 255, .05);
+    }
+    .landing-hero::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--red), var(--gold-dim) 42%, transparent 88%);
+    }
+    .landing-hero::after {
+      content: 'CONFIDENCIAL';
+      position: absolute; right: -18px; bottom: 8px;
+      font-family: var(--font-type); font-size: 42px; font-weight: 700;
+      letter-spacing: .14em; color: rgba(230, 57, 70, .055);
+      transform: rotate(-7deg); pointer-events: none; user-select: none;
+    }
+    .landing-kicker {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-type); font-size: 8.5px; font-weight: 700;
+      letter-spacing: .24em; text-transform: uppercase; color: var(--red);
+    }
+    .landing-kicker::before {
+      content: ''; width: 22px; height: 1px; background: var(--red); opacity: .7;
+    }
+    .landing-hero h2 {
+      margin-top: 12px;
+      max-width: 900px;
+      font-family: var(--font-type);
+      font-size: clamp(24px, 3.6vw, 42px);
+      line-height: 1.12;
+      letter-spacing: -.015em;
+      color: var(--paper);
+      text-shadow: 0 3px 18px rgba(0, 0, 0, .65);
+    }
+    .landing-hero h2 em { color: var(--gold); font-style: normal; }
+    .landing-hero p {
+      margin-top: 12px;
+      max-width: 730px;
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+    .landing-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-top: 22px; }
+    .landing-actions .btn { min-height: 40px; padding: 9px 15px; }
+
+    .gallery-head {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 14px; flex-wrap: wrap; margin: 30px 2px 12px;
+    }
+    .gallery-head .field-label { margin-bottom: 3px; font-size: 9px; letter-spacing: .2em; }
+    .gallery-head .hint { margin-top: 0; }
+    .gallery-count {
+      font-family: var(--font-type); font-size: 8.5px; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--gold);
+      padding: 5px 8px; border: 1px solid rgba(212, 175, 55, .25);
+      background: rgba(212, 175, 55, .045);
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+      gap: 13px;
+    }
+    .gallery-card {
+      position: relative;
+      display: flex; flex-direction: column; gap: 9px;
+      padding: 16px 16px 15px;
+      border: 1px solid rgba(212, 175, 55, .18);
+      border-radius: 2px;
+      background:
+        radial-gradient(ellipse at 100% 0%, rgba(212, 175, 55, .055), transparent 42%),
+        linear-gradient(160deg, #181310 0%, #110e0d 100%);
+      box-shadow: 0 12px 26px -16px rgba(0, 0, 0, .9), inset 0 1px rgba(255, 255, 255, .035);
+      transition: transform .18s, border-color .18s, box-shadow .18s;
+    }
+    .gallery-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+      background: linear-gradient(180deg, var(--red), transparent 78%); opacity: .55;
+    }
+    .gallery-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(212, 175, 55, .42);
+      box-shadow: 0 18px 34px -16px rgba(0, 0, 0, .95), 0 0 0 1px rgba(212, 175, 55, .07);
+    }
+    .gallery-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .gallery-card h3 {
+      font-family: var(--font-type); font-size: 16.5px; font-weight: 700;
+      line-height: 1.2; letter-spacing: -.01em; color: var(--paper);
+    }
+    .gallery-card p {
+      font-size: 10.5px; line-height: 1.55; color: var(--muted);
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .gallery-card-meta {
+      display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+      font-family: var(--font-type); font-size: 8px; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--muted-2);
+    }
+    .gallery-card-meta .dot-sep { color: rgba(212, 175, 55, .45); }
+    .gallery-card-creator {
+      font-family: var(--font-type); font-size: 9px; letter-spacing: .04em;
+      color: var(--gold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .gallery-card-creator b { color: var(--paper-2); font-weight: 400; }
+    .gallery-card-actions { display: flex; gap: 7px; margin-top: auto; padding-top: 4px; }
+    .gallery-card-actions .btn { flex: 1; min-height: 33px; padding: 7px 9px; font-size: 8.5px; }
+
+    .gallery-empty {
+      display: grid; place-items: center; gap: 8px;
+      padding: 44px 20px;
+      border: 1px dashed rgba(212, 175, 55, .22);
+      background: rgba(0, 0, 0, .16);
+      text-align: center;
+    }
+    .gallery-empty .i { width: 30px; height: 30px; color: var(--gold-dim); opacity: .6; }
+    .gallery-empty h3 { font-family: var(--font-type); font-size: 14px; color: var(--paper-2); }
+    .gallery-empty p { max-width: 430px; font-size: 11px; line-height: 1.55; color: var(--muted); }
+
+    /* =======================================================================
+       VALORACIONES (estrellas)
+       ======================================================================= */
+    .gallery-card-rating {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      margin-top: 1px;
+      font-family: var(--font-type); font-size: 9px; letter-spacing: .06em;
+      color: var(--gold);
+    }
+    .gallery-card-rating .stars { letter-spacing: .13em; }
+    .gallery-card-rating .votes {
+      font-size: 7.5px; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted-2);
+    }
+    .gallery-card-rating.is-empty { color: var(--muted-2); }
+    .gallery-card-rating.is-empty .stars { color: rgba(212, 175, 55, .22); }
+
+    .case-rating {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-top: 10px; padding-top: 9px;
+      border-top: 1px dashed rgba(212, 175, 55, .18);
+      font-family: var(--font-type); font-size: 9px; color: var(--gold);
+    }
+    .case-rating .stars { letter-spacing: .1em; }
+    .case-rating .votes { font-size: 8px; letter-spacing: .05em; color: var(--muted); }
+    .case-rating .link-btn { margin-left: auto; font-size: 8.5px; }
+    .case-rating.is-empty { color: var(--muted-2); }
+    .case-rating.is-empty .stars { color: rgba(212, 175, 55, .22); }
+
+    .rating-widget {
+      display: grid; gap: 11px;
+      margin: 16px 0 12px; padding: 14px;
+      border: 1px solid rgba(212, 175, 55, .22);
+      border-left: 2px solid var(--gold);
+      background:
+        radial-gradient(ellipse at 100% 0%, rgba(212, 175, 55, .07), transparent 55%),
+        rgba(0, 0, 0, .22);
+      text-align: left;
+    }
+    .rating-widget-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap;
+    }
+    .rating-widget-title {
+      font-family: var(--font-type); font-size: 10px; font-weight: 700;
+      letter-spacing: .14em; text-transform: uppercase; color: var(--paper-2);
+    }
+    .rating-widget-summary {
+      font-family: var(--font-type); font-size: 10px; letter-spacing: .04em;
+      color: var(--gold); white-space: nowrap;
+    }
+    .rating-widget-summary.is-empty { color: var(--muted-2); }
+    .star-picker { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: 5px; }
+    .star-picker input {
+      position: absolute; width: 1px; height: 1px; opacity: 0;
+      pointer-events: none;
+    }
+    .star-picker label {
+      font-size: 30px; line-height: 1; color: #45382d; cursor: pointer;
+      transition: color .12s, transform .12s, text-shadow .12s;
+      user-select: none;
+    }
+    .star-picker input:checked ~ label,
+    .star-picker label:hover,
+    .star-picker label:hover ~ label {
+      color: var(--gold);
+      text-shadow: 0 0 16px var(--gold-glow);
+    }
+    .star-picker label:hover { transform: scale(1.08); }
+    .star-picker input:focus-visible + label {
+      outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 2px;
+    }
+    .rating-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .rating-actions .btn { min-height: 31px; padding: 7px 12px; font-size: 8.5px; }
+    .rating-note {
+      font-family: var(--font-type); font-size: 8px; letter-spacing: .06em;
+      color: var(--muted-2); text-transform: uppercase;
+    }
+    .rating-guest {
+      display: flex; align-items: flex-start; gap: 9px;
+      margin: 14px 0 4px; padding: 12px;
+      border: 1px dashed rgba(212, 175, 55, .3);
+      background: rgba(212, 175, 55, .045);
+      font-family: var(--font-type); font-size: 10px; line-height: 1.55;
+      color: var(--paper-2); text-align: left;
+    }
+    .rating-guest .i { width: 17px; height: 17px; color: var(--gold); flex: none; margin-top: 1px; }
+    .rating-guest b { color: var(--gold); font-weight: 400; }
+    .rating-guest .btn { margin-top: 9px; }
+    .result-panel .rating-widget { margin-bottom: 4px; }
+
+    .auth-chip {
+      display: flex; align-items: center; gap: 9px;
+      padding: 5px 7px 5px 6px;
+      border: 1px solid rgba(212, 175, 55, .22);
+      border-radius: 3px;
+      background: rgba(0, 0, 0, .28);
+    }
+    .auth-avatar {
+      width: 30px; height: 30px; flex: none; display: grid; place-items: center;
+      border-radius: 50%; border: 1px solid rgba(212, 175, 55, .45);
+      background: radial-gradient(circle at 38% 30%, rgba(212, 175, 55, .2), transparent 60%), #171210;
+      color: var(--gold);
+    }
+    .auth-avatar .i { width: 15px; height: 15px; }
+    .auth-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+    .auth-copy small {
+      font-family: var(--font-type); font-size: 7px; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--red);
+    }
+    .auth-copy strong {
+      max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-family: var(--font-type); font-size: 9.5px; font-weight: 400; color: var(--paper-2);
+    }
+    .auth-chip .btn { min-height: 30px; padding: 5px 9px; font-size: 8px; }
+    .auth-chip .btn.logout { border-color: rgba(230, 57, 70, .35); color: #ffb0b6; }
+
+    .auth-tabs {
+      display: flex; gap: 4px;
+      padding: 10px 19px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .07);
+      background: rgba(0, 0, 0, .12);
+    }
+    .auth-tabs .tab { padding: 7px 10px 8px; }
+    .auth-panel .modal-body { padding-top: 15px; }
+
+    .case-credit {
+      margin-top: 7px;
+      font-family: var(--font-type); font-size: 8.5px; letter-spacing: .05em;
+      color: var(--gold);
+    }
+    .case-credit b { color: var(--paper-2); font-weight: 400; }
+
+    @media (max-width: 900px) {
+      .landing-main { padding: 20px 12px 38px; }
+      .landing-hero { padding: 24px 18px 22px; }
+      .landing-hero::after { font-size: 28px; }
+      .landing-topbar { position: relative; }
+      .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); }
+      .auth-copy strong { max-width: 110px; }
+    }
+    @media (max-width: 620px) {
+      .auth-chip { width: 100%; }
+      .auth-chip .btn { margin-left: auto; }
+      .gallery-grid { grid-template-columns: 1fr; }
+      .landing-actions .btn { flex: 1; }
+    }
+
+    /* =======================================================================
+       09. EDITOR DE CASOS Y TEST PLAY
+       ======================================================================= */
+    .editor-screen, .test-screen { min-height: 100vh; display: flex; flex-direction: column; }
+    .editor-main, .test-main {
+      flex: 1;
+      width: min(1360px, 100%);
+      margin: 0 auto;
+      padding: 30px 22px 120px;
+    }
+    .editor-heading {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 20px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .editor-heading > div { min-width: 0; }
+    .editor-heading h2 {
+      margin-top: 9px;
+      font-family: var(--font-type);
+      font-size: clamp(26px, 3.4vw, 40px);
+      line-height: 1.1;
+      letter-spacing: -.015em;
+      color: var(--paper);
+      text-shadow: 0 3px 18px rgba(0, 0, 0, .65);
+    }
+    .editor-heading p {
+      margin-top: 9px; max-width: 820px;
+      font-size: 11.5px; line-height: 1.6; color: var(--muted);
+    }
+    .editor-heading p b { color: var(--gold); font-weight: 400; }
+    .editor-mode-badge {
+      max-width: 310px;
+      padding: 7px 10px;
+      border: 1px solid rgba(212, 175, 55, .24);
+      background: rgba(212, 175, 55, .045);
+      font-family: var(--font-type); font-size: 8px; line-height: 1.5;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--gold);
+    }
+    .editor-mode-badge.real { border-color: rgba(103, 201, 139, .35); color: var(--green); background: rgba(103, 201, 139, .055); }
+
+    .editor-blocks {
+      display: grid;
+      grid-template-columns: minmax(0, .92fr) minmax(0, 1.48fr);
+      gap: 15px;
+      align-items: start;
+    }
+    .editor-block {
+      position: relative;
+      padding: 18px 18px 16px;
+      border: 1px solid rgba(212, 175, 55, .2);
+      border-radius: 2px;
+      background:
+        radial-gradient(ellipse at 100% 0%, rgba(212, 175, 55, .055), transparent 45%),
+        linear-gradient(160deg, #181310 0%, #110e0d 100%);
+      box-shadow: 0 14px 30px -20px rgba(0, 0, 0, .95), inset 0 1px rgba(255, 255, 255, .035);
+    }
+    .editor-block::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--red), var(--gold-dim) 45%, transparent 90%);
+      opacity: .75;
+    }
+    .editor-block.solution-block { grid-column: 1 / -1; }
+    .editor-block-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; margin-bottom: 14px;
+    }
+    .editor-block-head > div { min-width: 0; }
+    .editor-block-no {
+      display: inline-block; margin-bottom: 4px;
+      font-family: var(--font-type); font-size: 7.5px; font-weight: 700;
+      letter-spacing: .2em; text-transform: uppercase; color: var(--red);
+    }
+    .editor-block-head h3 {
+      font-family: var(--font-type); font-size: 17px; line-height: 1.2;
+      color: var(--paper);
+    }
+    .editor-block-head p { margin-top: 5px; font-size: 10px; line-height: 1.5; color: var(--muted); }
+    .editor-block-tag {
+      flex: none; padding: 5px 7px;
+      border: 1px solid rgba(212, 175, 55, .2);
+      background: rgba(212, 175, 55, .04);
+      font-family: var(--font-type); font-size: 7.5px; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--gold); white-space: nowrap;
+    }
+    .editor-author {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 13px; padding-top: 11px;
+      border-top: 1px dashed rgba(212, 175, 55, .18);
+      font-family: var(--font-type); font-size: 8.5px; letter-spacing: .04em;
+      color: var(--muted-2);
+    }
+    .editor-author .i { width: 14px; height: 14px; color: var(--gold); }
+    .editor-author b { color: var(--paper-2); font-weight: 400; }
+
+    /* Taller de tarjetas */
+    .card-composer {
+      margin-bottom: 15px; padding: 13px;
+      border: 1px dashed rgba(212, 175, 55, .24);
+      background: rgba(0, 0, 0, .16);
+    }
+    .card-composer-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+      font-family: var(--font-type); font-size: 8.5px; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--gold);
+    }
+    .card-composer-head .hint { margin: 0; text-transform: none; letter-spacing: .02em; }
+    .card-composer-grid {
+      display: grid; grid-template-columns: 142px minmax(0, 1fr);
+      gap: 9px;
+    }
+    .card-composer-grid .field { margin-bottom: 9px; }
+    .card-composer .field { margin-bottom: 9px; }
+    .card-composer .field:last-child { margin-bottom: 0; }
+    .card-composer textarea { min-height: 52px; }
+    .composer-flags {
+      display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .composer-check {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 8px;
+      border: 1px solid rgba(212, 175, 55, .22);
+      border-radius: 2px;
+      font-family: var(--font-type); font-size: 7.5px; letter-spacing: .06em;
+      color: var(--muted); text-transform: uppercase;
+      cursor: pointer; white-space: nowrap; user-select: none;
+      transition: .18s;
+    }
+    .composer-check input {
+      appearance: none; width: 11px; height: 11px; margin: 0;
+      border: 1px solid currentColor; border-radius: 1px;
+      background: transparent; display: inline-grid; place-items: center;
+      cursor: pointer;
+    }
+    .composer-check input:checked::after { content: '✓'; font-size: 9px; line-height: 1; color: currentColor; }
+    .composer-check:has(input:checked) { color: var(--gold); border-color: rgba(212, 175, 55, .5); background: rgba(212, 175, 55, .07); }
+    .composer-aliases-field { flex: 1 1 240px; min-width: 170px; margin: 0 !important; }
+    .composer-aliases-field.is-required { padding: 5px 7px; border: 1px solid rgba(230, 57, 70, .35); background: rgba(230, 57, 70, .05); }
+    .composer-aliases-field.is-required > label { color: #ff9aa2; }
+    .card-composer-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 11px; }
+    .card-composer-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 8.5px; }
+
+    .editor-card-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+      gap: 9px;
+    }
+    .editor-card-tile {
+      position: relative;
+      display: flex; flex-direction: column; gap: 6px;
+      min-height: 150px; padding: 11px;
+      border: 1px solid rgba(212, 175, 55, .16);
+      border-left: 3px solid var(--tile, var(--gold-dim));
+      background: linear-gradient(160deg, rgba(255, 255, 255, .035), rgba(0, 0, 0, .16));
+      color: var(--paper);
+    }
+    .editor-card-tile[data-type="SUSPECT"] { --tile: var(--red); }
+    .editor-card-tile[data-type="WEAPON"] { --tile: var(--steel); }
+    .editor-card-tile[data-type="LOCATION"] { --tile: #b87b42; }
+    .editor-card-tile[data-type="CLUE"] { --tile: var(--gold); }
+    .editor-card-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .editor-card-top .type-chip { font-size: 6.5px; }
+    .editor-card-id {
+      font-family: var(--font-type); font-size: 6.5px; letter-spacing: .03em;
+      color: var(--muted-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .editor-card-tile h4 {
+      margin-top: 2px;
+      font-family: var(--font-type); font-size: 13.5px; line-height: 1.2;
+      color: var(--paper);
+      text-wrap: balance;
+    }
+    .editor-card-tile p {
+      font-family: var(--font-type); font-size: 9px; line-height: 1.5;
+      color: var(--muted);
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .editor-card-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: auto; padding-top: 5px; }
+    .editor-tile-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 3px 5px; border-radius: 1px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      font-family: var(--font-type); font-size: 6.5px; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted-2);
+    }
+    .editor-tile-badge.solution { color: var(--gold); border-color: rgba(212, 175, 55, .35); background: rgba(212, 175, 55, .055); }
+    .editor-tile-badge.hidden { color: #ff9aa2; border-color: rgba(230, 57, 70, .32); background: rgba(230, 57, 70, .05); }
+    .editor-tile-badge .i { width: 8px; height: 8px; }
+    .editor-card-tile-actions { display: flex; gap: 5px; margin-top: 7px; }
+    .editor-tile-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 7px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 1px; background: transparent;
+      font-family: var(--font-type); font-size: 7px; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--muted);
+      transition: .18s;
+    }
+    .editor-tile-btn:hover { color: var(--gold); border-color: rgba(212, 175, 55, .4); background: rgba(212, 175, 55, .05); }
+    .editor-tile-btn.danger:hover { color: var(--red); border-color: rgba(230, 57, 70, .45); background: rgba(230, 57, 70, .06); }
+    .editor-tile-btn .i { width: 9px; height: 9px; }
+    .editor-card-tile-actions .editor-tile-btn:first-child { flex: 1; justify-content: center; }
+    .editor-card-empty {
+      display: grid; place-items: center; gap: 6px;
+      padding: 26px 14px; border: 1px dashed rgba(212, 175, 55, .18);
+      background: rgba(0, 0, 0, .12); text-align: center;
+    }
+    .editor-card-empty .i { width: 22px; height: 22px; color: var(--gold-dim); opacity: .55; }
+    .editor-card-empty p { max-width: 360px; font-size: 10px; line-height: 1.5; color: var(--muted); }
+
+    /* Solución secreta */
+    .solution-selector { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; min-height: 36px; }
+    .solution-selector.invalid { outline: 2px solid rgba(230, 57, 70, .5); outline-offset: 3px; }
+    .solution-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      max-width: 100%; padding: 6px 8px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 2px; background: rgba(0, 0, 0, .18);
+      font-family: var(--font-type); font-size: 8px; letter-spacing: .03em;
+      color: var(--muted); text-align: left;
+      transition: .18s;
+    }
+    .solution-chip:hover { color: var(--paper); border-color: rgba(212, 175, 55, .4); }
+    .solution-chip .dot { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--muted-2); }
+    .solution-chip[data-type="SUSPECT"] .dot { background: var(--red); }
+    .solution-chip[data-type="WEAPON"] .dot { background: var(--steel); }
+    .solution-chip[data-type="LOCATION"] .dot { background: #b87b42; }
+    .solution-chip[data-type="CLUE"] .dot { background: var(--gold); }
+    .solution-chip .chip-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 210px; }
+    .solution-chip .chip-check { width: 11px; height: 11px; flex: none; opacity: 0; }
+    .solution-chip .chip-hidden {
+      padding: 1px 3px; border-radius: 1px;
+      background: rgba(230, 57, 70, .12); color: #ff9aa2;
+      font-size: 6px; letter-spacing: .06em;
+    }
+    .solution-chip.is-on {
+      color: var(--gold); border-color: rgba(212, 175, 55, .55);
+      background: rgba(212, 175, 55, .075);
+      box-shadow: inset 0 0 16px rgba(212, 175, 55, .04);
+    }
+    .solution-chip.is-on .chip-check { opacity: 1; }
+    .solution-selector .editor-empty-note { font-family: var(--font-type); font-size: 9px; color: var(--muted-2); }
+
+    /* Estado de verificación y publicación */
+    .editor-statusbar {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 14px; flex-wrap: wrap;
+      margin-top: 18px; padding: 12px 14px;
+      border: 1px solid rgba(212, 175, 55, .3);
+      background: linear-gradient(180deg, rgba(24, 18, 15, .98), rgba(14, 12, 11, .98));
+      box-shadow: 0 18px 44px -22px rgba(0, 0, 0, .98), inset 0 1px rgba(255, 255, 255, .04);
+      backdrop-filter: blur(10px);
+    }
+    .editor-status {
+      flex: 1 1 320px;
+      font-family: var(--font-type); font-size: 9.5px; line-height: 1.55;
+      letter-spacing: .04em; color: var(--muted);
+    }
+    .editor-status.verified { color: var(--green); text-shadow: 0 0 18px rgba(103, 201, 139, .22); }
+    .editor-status.error { color: #ffa9af; }
+    .editor-status.warning { color: var(--gold); }
+    .editor-status.publishing { color: var(--gold); animation: pulseDot 1.4s ease-in-out infinite; }
+    .editor-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .editor-actions .btn { min-height: 40px; padding: 9px 13px; }
+    .editor-actions .btn.gold { box-shadow: 0 0 0 1px rgba(212, 175, 55, .12), 0 8px 20px -12px rgba(212, 175, 55, .6); }
+
+    /* Test Play */
+    .test-layout {
+      display: grid; grid-template-columns: minmax(0, 1fr) 318px;
+      gap: 15px; align-items: start;
+    }
+    .test-board-frame {
+      border: 1px solid rgba(212, 175, 55, .24);
+      background: linear-gradient(160deg, #1a1411 0%, #110e0d 100%);
+      box-shadow: var(--shadow-deep), inset 0 1px rgba(255, 255, 255, .04);
+    }
+    .test-board-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 11px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, .07);
+      background: rgba(0, 0, 0, .14);
+    }
+    .test-board-meta {
+      font-family: var(--font-type); font-size: 8px; letter-spacing: .1em;
+      color: var(--muted-2); text-transform: uppercase;
+    }
+    .test-board {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(198px, 1fr));
+      align-items: start; align-content: start;
+      gap: 11px; min-height: 440px; padding: 17px;
+      background:
+        radial-gradient(ellipse at 22% 12%, rgba(120, 81, 46, .2), transparent 48%),
+        radial-gradient(ellipse at 82% 88%, rgba(72, 49, 29, .18), transparent 52%),
+        repeating-linear-gradient(92deg, rgba(0, 0, 0, .07) 0 2px, transparent 2px 8px),
+        linear-gradient(150deg, #2c211a 0%, #211812 55%, #19110d 100%);
+      box-shadow: inset 0 0 70px rgba(0, 0, 0, .65);
+    }
+    .test-card {
+      position: relative;
+      display: flex; flex-direction: column; gap: 6px;
+      min-height: 164px; padding: 12px 11px 10px;
+      border: 1px solid rgba(212, 175, 55, .3);
+      border-radius: 2px;
+      background: linear-gradient(155deg, #3c1418 0%, #291014 52%, #1c0c0e 100%);
+      color: var(--paper);
+      text-align: left;
+      box-shadow: 0 14px 24px -9px rgba(0, 0, 0, .78), 0 3px 7px rgba(0, 0, 0, .55);
+      transition: transform .16s, box-shadow .16s, outline-color .16s;
+    }
+    .test-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--red-deep), var(--red), rgba(212, 175, 55, .75));
+    }
+    .test-card[data-type="WEAPON"] {
+      border-color: rgba(154, 166, 178, .36);
+      background: repeating-linear-gradient(120deg, rgba(255, 255, 255, .016) 0 1px, transparent 1px 4px), linear-gradient(150deg, #303840 0%, #222930 55%, #171c21 100%);
+      color: #e6edf4;
+    }
+    .test-card[data-type="WEAPON"]::before { background: linear-gradient(90deg, #6d7b87, #c4ced7 50%, #5c6873); }
+    .test-card[data-type="LOCATION"] {
+      border-color: rgba(192, 139, 80, .35);
+      background: repeating-linear-gradient(92deg, rgba(0, 0, 0, .06) 0 2px, transparent 2px 7px), linear-gradient(150deg, #3d2b1c 0%, #2e2015 55%, #21170f 100%);
+      color: #f1e4d3;
+    }
+    .test-card[data-type="LOCATION"]::before { background: linear-gradient(90deg, #7a4f2a, #c08b50 50%, #6d4524); }
+    .test-card[data-type="CLUE"] {
+      border-color: #bda778;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .38), transparent 22%), repeating-linear-gradient(0deg, rgba(71, 51, 27, .032) 0 1px, transparent 1px 4px), linear-gradient(150deg, #f6edd9 0%, #eee0c2 100%);
+      color: var(--ink);
+    }
+    .test-card[data-type="CLUE"]::before { background: linear-gradient(90deg, rgba(120, 91, 43, .5), rgba(120, 91, 43, .1)); }
+    .test-card:hover { transform: translateY(-2px); box-shadow: 0 20px 34px -10px rgba(0, 0, 0, .85); }
+    .test-card.selected {
+      outline: 2px solid var(--gold); outline-offset: 2px;
+      box-shadow: 0 16px 28px -9px rgba(0, 0, 0, .85), 0 0 30px rgba(212, 175, 55, .18);
+    }
+    .test-card-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; position: relative; z-index: 2; }
+    .test-card .type-chip { border-color: rgba(255, 255, 255, .16); background: rgba(0, 0, 0, .16); }
+    .test-card[data-type="CLUE"] .type-chip { color: #5a4526; border-color: rgba(90, 69, 38, .32); background: rgba(255, 255, 255, .18); }
+    .test-hidden-badge {
+      padding: 2px 4px; border: 1px solid rgba(230, 57, 70, .4);
+      background: rgba(230, 57, 70, .12); color: #ffb0b6;
+      font-family: var(--font-type); font-size: 6px; letter-spacing: .08em; text-transform: uppercase;
+    }
+    .test-card-title {
+      position: relative; z-index: 2; display: block;
+      font-family: var(--font-type); font-size: 13.5px; line-height: 1.18;
+      color: inherit; text-wrap: balance;
+    }
+    .test-card-desc {
+      position: relative; z-index: 2; display: block;
+      font-family: var(--font-type); font-size: 8.8px; line-height: 1.45;
+      color: rgba(241, 233, 220, .62);
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .test-card[data-type="CLUE"] .test-card-desc { color: rgba(36, 28, 19, .74); }
+    .test-card-code {
+      margin-top: auto; padding-top: 7px; position: relative; z-index: 2;
+      font-family: var(--font-type); font-size: 6.5px; letter-spacing: .1em;
+      text-transform: uppercase; color: rgba(255, 255, 255, .34);
+    }
+    .test-card[data-type="CLUE"] .test-card-code { color: rgba(36, 28, 19, .42); }
+    .test-card.selected .test-card-code { color: var(--gold); }
+    .test-card[data-type="CLUE"].selected .test-card-code { color: #6d5428; }
+    .test-card-check {
+      position: absolute; right: -6px; bottom: -6px; z-index: 5;
+      width: 23px; height: 23px; display: grid; place-items: center;
+      border-radius: 50%; border: 1px solid #f8e9a6;
+      background: linear-gradient(160deg, #f0d56b, #b48a1e);
+      color: #241b08; box-shadow: 0 3px 8px rgba(0, 0, 0, .7);
+    }
+    .test-card-check .i { width: 12px; height: 12px; stroke-width: 2.6; }
+    .test-board-foot {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 11px 14px; border-top: 1px solid rgba(255, 255, 255, .07);
+      background: rgba(0, 0, 0, .16);
+      font-family: var(--font-type); font-size: 8.5px; letter-spacing: .05em;
+      color: var(--muted);
+    }
+    .test-board-foot .btn { margin-left: auto; }
+    .test-side { position: sticky; top: 92px; display: grid; gap: 12px; }
+    .test-side-block {
+      padding: 15px;
+      border: 1px solid rgba(212, 175, 55, .2);
+      background: linear-gradient(160deg, #181310 0%, #110e0d 100%);
+    }
+    .test-side-block h3 {
+      font-family: var(--font-type); font-size: 11px; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--gold);
+    }
+    .test-side-block ol { margin: 10px 0 0; padding-left: 17px; display: grid; gap: 7px; }
+    .test-side-block li { font-size: 10px; line-height: 1.5; color: var(--muted); }
+    .test-side-block .hint { margin-top: 10px; }
+    .test-verdict {
+      padding: 14px; border: 1px solid rgba(212, 175, 55, .26);
+      border-left: 3px solid var(--gold);
+      background: rgba(212, 175, 55, .045);
+    }
+    .test-verdict.success { border-color: rgba(103, 201, 139, .45); border-left-color: var(--green); background: rgba(103, 201, 139, .06); }
+    .test-verdict.fail { border-color: rgba(230, 57, 70, .45); border-left-color: var(--red); background: rgba(230, 57, 70, .06); }
+    .test-verdict.error { border-color: rgba(212, 175, 55, .45); border-left-color: var(--gold); background: rgba(212, 175, 55, .055); }
+    .test-verdict.loading { border-left-color: var(--gold); animation: pulseDot 1.6s ease-in-out infinite; }
+    .test-verdict-kicker {
+      font-family: var(--font-type); font-size: 7px; letter-spacing: .22em;
+      text-transform: uppercase; color: var(--muted-2);
+    }
+    .test-verdict h4 {
+      margin-top: 5px; font-family: var(--font-type); font-size: 17px;
+      line-height: 1.18; color: var(--paper);
+    }
+    .test-verdict p { margin-top: 7px; font-size: 10px; line-height: 1.55; color: var(--muted); }
+    .test-verdict small {
+      display: block; margin-top: 9px;
+      font-family: var(--font-type); font-size: 7.5px; line-height: 1.5;
+      letter-spacing: .04em; color: var(--muted-2);
+    }
+    .test-verdict .test-verified-line {
+      font-family: var(--font-type); font-size: 9px; font-weight: 700;
+      letter-spacing: .04em; color: var(--green);
+    }
+    .test-verdict .btn { margin-top: 11px; min-height: 32px; padding: 6px 10px; font-size: 8px; }
+    .gallery-card.is-new {
+      border-color: rgba(103, 201, 139, .5);
+      box-shadow: 0 0 0 1px rgba(103, 201, 139, .12), 0 18px 34px -16px rgba(0, 0, 0, .95);
+    }
+    .gallery-card.is-new::before { background: linear-gradient(180deg, var(--green), transparent 78%); }
+
+    @media (max-width: 1080px) {
+      .editor-blocks { grid-template-columns: 1fr; }
+      .editor-block.solution-block { grid-column: auto; }
+      .test-layout { grid-template-columns: 1fr; }
+      .test-side { position: static; grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 720px) {
+      .editor-main, .test-main { padding: 20px 12px 100px; }
+      .editor-block { padding: 14px; }
+      .card-composer-grid { grid-template-columns: 1fr; }
+      .test-side { grid-template-columns: 1fr; }
+      .test-board { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+    }
+    @media (max-width: 620px) {
+      .editor-heading { align-items: flex-start; }
+      .editor-mode-badge { max-width: none; width: 100%; }
+      .editor-statusbar { position: static; }
+      .editor-actions { width: 100%; }
+      .editor-actions .btn { flex: 1; }
+      .editor-card-grid { grid-template-columns: 1fr; }
+      .test-board { grid-template-columns: 1fr; padding: 12px; }
+      .test-board-foot .btn { width: 100%; margin-left: 0; }
+      .composer-flags { flex-direction: column; align-items: stretch; }
+      .composer-aliases-field { flex-basis: auto; }
+    }
   </style>
 </head>
 <body>
@@ -1873,6 +2546,7 @@
     <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2Z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7Z"/></symbol>
     <symbol id="i-gavel" viewBox="0 0 24 24"><path d="m14 10 4-4"/><path d="m5 21 6-6"/><path d="m8.5 5.5 10 10"/><path d="m10 4 6 6"/><path d="m4 10 6 6"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9L12 3Z"/></symbol>
     <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5.5"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><path d="m10.3 3.7-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.3l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></symbol>
@@ -1885,13 +2559,101 @@
     <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01"/><path d="M7 16.5h.01"/><path d="M11 7.5h5"/><path d="M11 16.5h5"/></symbol>
     <symbol id="i-quote" viewBox="0 0 24 24"><path d="M9 6H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v2a2 2 0 0 1-2 2H4"/><path d="M20 6h-4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v2a2 2 0 0 1-2 2h-1"/></symbol>
     <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="m12 17 4-4"/><path d="M9 4h6l-1 7 4 4H6l4-4-1-7Z"/><path d="m12 15-3 6"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></symbol>
     <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="4"/></symbol>
   </svg>
 
-  <div class="app-shell">
+  <!-- =====================================================================
+       Pantalla inicial: dosier de casos y estado del detective
+       ===================================================================== -->
+  <section class="landing-screen" id="landingScreen" aria-label="Dosier de casos de Crime Board">
+    <header class="topbar landing-topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
+        <div class="brand-copy">
+          <h1 class="brand-title">CRIME BOARD <span class="slash">//</span> <span class="dosier">DOSIER POLICIAL</span></h1>
+          <p class="brand-sub">UNIDAD DE CASOS SIN RESOLVER · <span class="case-ref">ACCESO ABIERTO</span></p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="service-cluster" aria-label="Estado de los microservicios">
+          <button class="service-pill" id="landingHealthLevel" type="button" title="Estado del servicio de catálogo">
+            <span class="status-dot" id="landingLevelHealthDot" aria-hidden="true"></span>
+            <span>CATÁLOGO</span>
+          </button>
+          <button class="service-pill" id="landingHealthEngine" type="button" title="Estado del motor de juego">
+            <span class="status-dot" id="landingEngineHealthDot" aria-hidden="true"></span>
+            <span>MOTOR</span>
+          </button>
+          <button class="service-pill" id="landingHealthUser" type="button" title="Estado del servicio de cuentas">
+            <span class="status-dot" id="landingUserHealthDot" aria-hidden="true"></span>
+            <span>CUENTAS</span>
+          </button>
+        </div>
+
+        <button class="icon-btn" id="landingSettingsBtn" type="button" title="Configuración de API" aria-label="Configuración de API">
+          <svg class="i"><use href="#i-settings"></use></svg>
+        </button>
+
+        <div class="auth-chip" id="authChip">
+          <span class="auth-avatar" aria-hidden="true"><svg class="i"><use href="#i-user"></use></svg></span>
+          <div class="auth-copy">
+            <small id="authRole">INVITADO</small>
+            <strong id="authName">Detective anónimo</strong>
+          </div>
+          <button class="btn ghost" id="authActionBtn" type="button">Iniciar sesión</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="landing-main">
+      <section class="landing-hero" aria-labelledby="landingTitle">
+        <span class="landing-kicker">Departamento de investigación criminal</span>
+        <h2 id="landingTitle">Elige un caso. Lee el dosier. <em>Señala al culpable.</em></h2>
+        <p>
+          Los invitados pueden abrir cualquier expediente y jugar sin cuenta. Para publicar un caso propio
+          necesitas identificarte como detective: la autoría queda sellada en el dosier.
+        </p>
+        <div class="landing-actions">
+          <button class="btn primary" id="designCaseBtn" type="button">
+            <svg class="i"><use href="#i-plus"></use></svg> Diseñar Nuevo Caso
+          </button>
+          <button class="btn ghost" id="landingRefreshBtn" type="button">
+            <svg class="i"><use href="#i-refresh"></use></svg> Actualizar dosier
+          </button>
+        </div>
+      </section>
+
+      <div class="gallery-head">
+        <div>
+          <span class="field-label">Casos disponibles</span>
+          <p class="hint" id="gallerySummary">Sincronizando el catálogo de expedientes…</p>
+        </div>
+        <span class="gallery-count" id="galleryCount">0 expedientes</span>
+      </div>
+
+      <div class="gallery-grid" id="caseGallery" aria-live="polite"></div>
+
+      <div class="gallery-empty" id="galleryEmpty" hidden>
+        <svg class="i" aria-hidden="true"><use href="#i-file-text"></use></svg>
+        <h3>El dosier está vacío</h3>
+        <p>No hay casos en el catálogo. Diseña el primero y firma el expediente con tu nombre de detective.</p>
+        <button class="btn gold" id="emptyDesignCaseBtn" type="button"><svg class="i"><use href="#i-plus"></use></svg> Diseñar Nuevo Caso</button>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <span>CRIME BOARD <span class="foot-sep">//</span> <b>CLOUD-NATIVE</b></span>
+      <span>API <b id="landingFooterLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="landingFooterEngineUrl">127.0.0.1:8001</b> <span class="foot-sep">/</span> <b id="landingFooterUserUrl">127.0.0.1:8002</b></span>
+      <span><b>INVITADO</b> o detective · elige un caso para empezar</span>
+    </footer>
+  </section>
+
+  <div class="app-shell" id="boardShell" hidden>
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
@@ -1916,8 +2678,13 @@
             <span class="status-dot" id="engineHealthDot" aria-hidden="true"></span>
             <span>MOTOR</span>
           </button>
+          <button class="service-pill" id="healthUser" type="button" title="Estado del servicio de cuentas">
+            <span class="status-dot" id="userHealthDot" aria-hidden="true"></span>
+            <span>CUENTAS</span>
+          </button>
         </div>
 
+        <button class="btn ghost" id="boardAuthBtn" type="button">Iniciar sesión</button>
         <button class="icon-btn" id="settingsBtn" type="button" title="Configuración de API" aria-label="Configuración de API">
           <svg class="i"><use href="#i-settings"></use></svg>
         </button>
@@ -1937,6 +2704,7 @@
       </div>
 
       <nav class="actions" aria-label="Acciones del caso">
+        <button class="btn ghost" id="backToGalleryBtn" type="button"><svg class="i"><use href="#i-arrow-right"></use></svg><span>Volver al Dosier de Casos</span></button>
         <button class="btn" id="newCaseBtn" type="button"><i data-lucide="folder-plus"></i><span>Nuevo Caso</span></button>
         <button class="btn" id="archiveBtn" type="button"><svg class="i"><use href="#i-search"></use></svg><span>Archivador</span><span class="btn-badge" id="archiveBadge" hidden>0</span></button>
         <button class="btn" id="viewCluesBtn" type="button"><i data-lucide="book-open"></i><span>Ver Archivo</span><span class="btn-badge" id="clueCountBadge" hidden>0</span></button>
@@ -2020,10 +2788,16 @@
             </div>
             <h2 id="caseMetaTitle">Sin expediente abierto</h2>
             <p id="caseMetaDescription">El archivo espera la llegada de un nuevo caso. Revisa el catálogo o publica un misterio.</p>
+            <p class="case-credit" id="caseCreator">Diseñado por: <b>—</b></p>
             <div class="case-stats">
               <span><b id="caseCardCount">0</b> en el tablero</span>
               <span><b id="caseClueCount">0</b> archivadas</span>
               <span><b id="caseThreadCount">0</b> hilos</span>
+            </div>
+            <div class="case-rating is-empty" id="caseRating">
+              <span class="stars" id="caseRatingStars" aria-hidden="true">☆☆☆☆☆</span>
+              <span class="votes" id="caseRatingVotes">Sin valoraciones</span>
+              <button class="link-btn" id="caseRatingBtn" type="button" disabled>Valorar</button>
             </div>
           </div>
 
@@ -2051,9 +2825,57 @@
 
     <footer class="app-footer">
       <span>CRIME BOARD <span class="foot-sep">//</span> <b>CLOUD-NATIVE</b></span>
-      <span>API <b id="footerLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="footerEngineUrl">127.0.0.1:8001</b></span>
+      <span>API <b id="footerLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="footerEngineUrl">127.0.0.1:8001</b> <span class="foot-sep">/</span> <b id="footerUserUrl">127.0.0.1:8002</b></span>
       <span><b id="footerEvidence">0</b> EVIDENCIAS <span class="foot-sep">·</span> <b id="footerThreads">0</b> HILOS</span>
     </footer>
+  </div>
+
+  <!-- Identificación del detective -->
+  <div class="modal-layer" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
+    <div class="modal-panel auth-panel">
+      <div class="modal-head">
+        <div>
+          <span class="modal-kicker"><svg class="i"><use href="#i-lock"></use></svg> Credenciales de detective</span>
+          <h2 class="modal-title" id="authTitle">Identifícate, detective</h2>
+          <p class="modal-sub" id="authSub">Los invitados pueden jugar sin cuenta. Publicar un caso exige identificarse para firmar el expediente.</p>
+        </div>
+        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar identificación"><svg class="i"><use href="#i-x"></use></svg></button>
+      </div>
+
+      <div class="auth-tabs" role="tablist" aria-label="Acceso o registro">
+        <button class="tab active" id="authLoginTab" type="button" role="tab" aria-selected="true" data-auth-mode="login">Iniciar sesión</button>
+        <button class="tab" id="authRegisterTab" type="button" role="tab" aria-selected="false" data-auth-mode="register">Crear cuenta</button>
+      </div>
+
+      <form id="authForm" novalidate>
+        <div class="modal-body">
+          <div class="field" id="authEmailField" hidden>
+            <label for="authEmail">Correo electrónico</label>
+            <input class="input" id="authEmail" type="email" autocomplete="email" maxlength="254" placeholder="detective@crimeboard.dev" />
+          </div>
+          <div class="field">
+            <label for="authUsername">Nombre de detective</label>
+            <input class="input" id="authUsername" type="text" autocomplete="username" maxlength="32" placeholder="detective_miller" />
+          </div>
+          <div class="field">
+            <label for="authPassword">Contraseña</label>
+            <input class="input" id="authPassword" type="password" autocomplete="current-password" maxlength="128" placeholder="••••••••" />
+            <p class="hint" id="authPasswordHint">Mínimo 8 caracteres al crear la cuenta.</p>
+          </div>
+
+          <div class="form-error" id="authError" hidden>
+            <svg class="i"><use href="#i-alert"></use></svg>
+            <span id="authErrorText"></span>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <span class="danger-note" id="authFootNote">El juego como invitado no necesita cuenta.</span>
+          <button class="btn ghost" type="button" data-close-modal>Cancelar</button>
+          <button class="btn primary" id="authSubmitBtn" type="submit">Entrar</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Configuración de API y modo -->
@@ -2098,6 +2920,18 @@
         </div>
 
         <div class="field">
+          <label for="userUrlInput">User Service <span class="opt">Base URL</span></label>
+          <input class="input" id="userUrlInput" type="url" spellcheck="false" autocomplete="off" placeholder="http://127.0.0.1:8002" />
+          <p class="hint">Registro, login y autoría de casos. Endpoints: <b>/api/users/register</b> y <b>/api/users/login</b>.</p>
+        </div>
+
+        <div class="field">
+          <label for="ratingUrlInput">Rating Service <span class="opt">Base URL</span></label>
+          <input class="input" id="ratingUrlInput" type="url" spellcheck="false" autocomplete="off" placeholder="http://127.0.0.1:8003" />
+          <p class="hint">Valoraciones de 1 a 5 estrellas. Endpoints: <b>/api/ratings/levels/{level_id}</b> y <b>/api/ratings/levels/batch</b>.</p>
+        </div>
+
+        <div class="field">
           <span class="field-label">Diagnóstico de conexión</span>
           <div id="testResults">
             <div class="conn-row">
@@ -2109,6 +2943,16 @@
               <span class="status-dot" id="testEngineDot"></span>
               <span class="conn-name" id="testEngineName">Motor · sin probar</span>
               <span class="conn-state" id="testEngineState">—</span>
+            </div>
+            <div class="conn-row">
+              <span class="status-dot" id="testUserDot"></span>
+              <span class="conn-name" id="testUserName">Cuentas · sin probar</span>
+              <span class="conn-state" id="testUserState">—</span>
+            </div>
+            <div class="conn-row">
+              <span class="status-dot" id="testRatingDot"></span>
+              <span class="conn-name" id="testRatingName">Valoraciones · sin probar</span>
+              <span class="conn-state" id="testRatingState">—</span>
             </div>
           </div>
           <button class="btn ghost" id="testConnectionsBtn" type="button" style="margin-top:8px">
@@ -2135,78 +2979,238 @@
     </div>
   </div>
 
-  <!-- Nuevo caso -->
-  <div class="modal-layer" id="newCaseModal" role="dialog" aria-modal="true" aria-labelledby="newCaseTitle" hidden>
-    <div class="modal-panel wide">
-      <div class="modal-head">
-        <div>
-          <span class="modal-kicker"><svg class="i"><use href="#i-plus"></use></svg> Publicar expediente</span>
-          <h2 class="modal-title" id="newCaseTitle">Nuevo caso en el corcho</h2>
-          <p class="modal-sub">Define el misterio, sus tarjetas y la combinación exacta que lo resuelve.</p>
+  <!-- Editor de casos: pantalla completa con tres bloques de trabajo -->
+  <section class="editor-screen" id="editorScreen" hidden aria-label="Editor de casos de Crime Board">
+    <header class="topbar editor-topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
+        <div class="brand-copy">
+          <h1 class="brand-title">CRIME BOARD <span class="slash">//</span> <span class="dosier">EDITOR DE CASOS</span></h1>
+          <p class="brand-sub">MESA DE MONTAJE · <span class="case-ref" id="editorModeBadge">SIMULACIÓN LOCAL</span></p>
         </div>
-        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar nuevo caso"><svg class="i"><use href="#i-x"></use></svg></button>
+      </div>
+      <div class="header-right">
+        <button class="btn ghost" id="editorBackBtn" type="button"><svg class="i"><use href="#i-arrow-left"></use></svg> Volver al Dosier</button>
+      </div>
+    </header>
+
+    <main class="editor-main">
+      <div class="editor-heading">
+        <div>
+          <span class="landing-kicker">Departamento de investigación criminal</span>
+          <h2>Editor de Casos</h2>
+          <p>Monta el expediente, define la combinación secreta y resuélvelo tú mismo antes de publicarlo. Ningún caso sale del dosier sin superar el Test Play.</p>
+        </div>
+        <span class="editor-mode-badge" id="editorModeHint">Se guardará en el catálogo local de este navegador al publicar.</span>
       </div>
 
-      <form id="newCaseForm" novalidate>
-        <div class="modal-body">
+      <div class="editor-blocks">
+        <section class="editor-block" aria-labelledby="editorMetaTitle">
+          <div class="editor-block-head">
+            <div>
+              <span class="editor-block-no">Bloque 01</span>
+              <h3 id="editorMetaTitle">Ficha del expediente</h3>
+              <p>Identidad del caso tal y como aparecerá en el dosier.</p>
+            </div>
+            <span class="editor-block-tag">METADATOS</span>
+          </div>
+
+          <div class="field">
+            <label for="editorTitleInput">Título del misterio</label>
+            <input class="input" id="editorTitleInput" type="text" maxlength="120" placeholder="El reloj que dejó de mentir" autocomplete="off" />
+          </div>
+
           <div class="field-row">
             <div class="field">
-              <label for="newCaseTitleInput">Título del misterio</label>
-              <input class="input" id="newCaseTitleInput" type="text" maxlength="120" placeholder="El reloj que dejó de mentir" autocomplete="off" />
-            </div>
-            <div class="field">
-              <label for="newCaseDifficulty">Dificultad</label>
-              <select class="select" id="newCaseDifficulty">
-                <option value="tutorial">Tutorial</option>
+              <label for="editorDifficulty">Dificultad</label>
+              <select class="select" id="editorDifficulty">
                 <option value="easy" selected>Fácil</option>
                 <option value="medium">Media</option>
                 <option value="hard">Difícil</option>
               </select>
             </div>
-          </div>
-
-          <div class="field">
-            <label for="newCaseDescription">Descripción del caso</label>
-            <textarea class="textarea" id="newCaseDescription" maxlength="4000" rows="3" placeholder="La escena, la víctima y lo que el expediente deja entrever…"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="newCaseLevelId">Identificador del expediente <span class="opt">opcional · slug</span></label>
-            <input class="input" id="newCaseLevelId" type="text" maxlength="64" spellcheck="false" autocomplete="off" placeholder="se-genera-desde-el-titulo" />
-            <p class="hint">Minúsculas, números, guion y guion bajo. Si lo dejas vacío se genera automáticamente.</p>
-          </div>
-
-          <div class="field">
-            <span class="field-label">Tarjetas del tablón <span id="cardEditorCount" style="color:var(--muted-2);font-weight:400">0</span></span>
-            <div class="editor-list" id="cardEditor"></div>
-            <div class="editor-foot">
-              <div class="editor-legend">
-                <span><span class="dot suspect"></span>Sospechoso</span>
-                <span><span class="dot weapon"></span>Arma</span>
-                <span><span class="dot location"></span>Lugar</span>
-                <span><span class="dot clue"></span>Pista</span>
-              </div>
-              <button class="btn ghost" id="addCardRowBtn" type="button" style="min-height:30px;padding:5px 9px">
-                <svg class="i"><use href="#i-plus"></use></svg> Añadir tarjeta
-              </button>
+            <div class="field">
+              <label for="editorLevelId">Identificador <span class="opt">opcional</span></label>
+              <input class="input" id="editorLevelId" type="text" maxlength="64" spellcheck="false" autocomplete="off" placeholder="se-genera-desde-el-titulo" />
             </div>
-                <p class="hint">Marca con <b>“En la solución”</b> la combinación exacta que el jugador deberá acusar. Las tarjetas ocultas se recuperan desde el archivador tecleando uno de sus alias. Necesitas al menos una tarjeta de cada tipo y una visible.</p>
           </div>
 
-          <div class="form-error" id="newCaseError" hidden>
-            <svg class="i"><use href="#i-alert"></use></svg>
-            <span id="newCaseErrorText"></span>
+          <div class="field">
+            <label for="editorDescription">Descripción del caso</label>
+            <textarea class="textarea" id="editorDescription" maxlength="4000" rows="4" placeholder="La escena, la víctima y lo que el expediente deja entrever…"></textarea>
+            <p class="hint">El identificador y los ids de las tarjetas usan el formato slug del backend. Si lo dejas vacío, se genera automáticamente a partir del título.</p>
           </div>
-        </div>
 
-        <div class="modal-foot">
-          <span class="danger-note" id="newCaseModeNote">Se publicará en modo simulación.</span>
-          <button class="btn ghost" type="button" data-close-modal>Cancelar</button>
-          <button class="btn primary" id="publishCaseBtn" type="submit">Publicar expediente</button>
+          <div class="editor-author">
+            <svg class="i" aria-hidden="true"><use href="#i-user"></use></svg>
+            <span>Autoría sellada como <b id="editorAuthorName">—</b></span>
+          </div>
+        </section>
+
+        <section class="editor-block" aria-labelledby="editorCardsTitle">
+          <div class="editor-block-head">
+            <div>
+              <span class="editor-block-no">Bloque 02</span>
+              <h3 id="editorCardsTitle">Taller de tarjetas</h3>
+              <p>Añade sospechosos, armas, lugares y pistas. Los ids se generan automáticamente y se mantienen estables al editar.</p>
+            </div>
+            <span class="editor-block-tag" id="editorCardCount">0 tarjetas</span>
+          </div>
+
+          <form class="card-composer" id="cardComposer" novalidate>
+            <div class="card-composer-head">
+              <span id="composerModeLabel">Nueva tarjeta</span>
+              <span class="hint">Necesitas al menos una ficha de cada tipo y una visible.</span>
+            </div>
+
+            <div class="card-composer-grid">
+              <div class="field">
+                <label for="composerType">Tipo</label>
+                <select class="select" id="composerType">
+                  <option value="SUSPECT">Sospechoso</option>
+                  <option value="WEAPON">Arma</option>
+                  <option value="LOCATION">Lugar</option>
+                  <option value="CLUE">Pista</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="composerTitle">Título de la tarjeta</label>
+                <input class="input" id="composerTitle" type="text" maxlength="120" placeholder="Nombre del sospechoso" autocomplete="off" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="composerDescription">Descripción visible</label>
+              <textarea class="textarea" id="composerDescription" maxlength="4000" rows="2" placeholder="Coartada, móvil, relación con la víctima…"></textarea>
+            </div>
+
+            <div class="composer-flags">
+              <label class="composer-check" title="La ficha no aparece hasta recuperarla desde el archivador">
+                <input type="checkbox" id="composerHidden" />
+                Ficha oculta
+              </label>
+              <label class="composer-check" title="Incluir esta tarjeta en la combinación secreta">
+                <input type="checkbox" id="composerSolution" />
+                En la solución secreta
+              </label>
+              <div class="field composer-aliases-field" id="composerAliasesField">
+                <label for="composerAliases">Alias del archivador <span class="opt">separados por comas</span></label>
+                <input class="input" id="composerAliases" type="text" maxlength="400" placeholder="copa, champán, calle falsa 123" autocomplete="off" />
+              </div>
+            </div>
+
+            <div class="form-error" id="composerError" hidden>
+              <svg class="i"><use href="#i-alert"></use></svg>
+              <span id="composerErrorText"></span>
+            </div>
+
+            <div class="card-composer-actions">
+              <button class="btn primary" id="composerSaveBtn" type="submit">
+                <svg class="i"><use href="#i-plus"></use></svg>
+                <span id="composerSaveLabel">Añadir al tablón</span>
+              </button>
+              <button class="btn ghost" id="composerCancelBtn" type="button" hidden>Cancelar edición</button>
+            </div>
+          </form>
+
+          <div class="editor-card-grid" id="editorCardGrid"></div>
+          <div class="editor-card-empty" id="editorCardEmpty">
+            <svg class="i" aria-hidden="true"><use href="#i-file-text"></use></svg>
+            <p>El taller está vacío. Añade la primera tarjeta con el formulario de arriba.</p>
+          </div>
+        </section>
+
+        <section class="editor-block solution-block" aria-labelledby="editorSolutionTitle">
+          <div class="editor-block-head">
+            <div>
+              <span class="editor-block-no">Bloque 03</span>
+              <h3 id="editorSolutionTitle">Solución secreta</h3>
+              <p>Marca las tarjetas exactas que resuelven el caso. Esta combinación nunca se publica: el jugador debe reconstruirla y acusar con el conjunto exacto.</p>
+            </div>
+            <span class="editor-block-tag" id="solutionCount">0 seleccionadas</span>
+          </div>
+          <div class="solution-selector" id="solutionSelector"></div>
+          <p class="hint" id="solutionSummary">Añade tarjetas al taller antes de configurar la solución secreta.</p>
+        </section>
+      </div>
+
+      <div class="form-error" id="editorError" hidden>
+        <svg class="i"><use href="#i-alert"></use></svg>
+        <span id="editorErrorText"></span>
+      </div>
+
+      <div class="editor-statusbar">
+        <p class="editor-status neutral" id="editorStatus" aria-live="polite">🔒 Publicación bloqueada · supera el Test Play resolviendo tu propio caso para desbloquear la publicación.</p>
+        <div class="editor-actions">
+          <button class="btn gold" id="editorTestPlayBtn" type="button">🧪 Probar y Resolver mi Caso (Test Play)</button>
+          <button class="btn primary" id="editorPublishBtn" type="button" disabled>Publicar Nivel en la Plataforma</button>
         </div>
-      </form>
-    </div>
-  </div>
+      </div>
+    </main>
+  </section>
+
+  <!-- Test Play del borrador: tablero de corcho aislado del catálogo -->
+  <section class="test-screen" id="testPlayScreen" hidden aria-label="Test Play del caso en borrador">
+    <header class="topbar editor-topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
+        <div class="brand-copy">
+          <h1 class="brand-title">CRIME BOARD <span class="slash">//</span> <span class="dosier">TEST PLAY</span></h1>
+          <p class="brand-sub">CONTROL DE CALIDAD · <span class="case-ref" id="testModeBadge">SIMULACIÓN LOCAL</span></p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="btn ghost" id="testBackBtn" type="button"><svg class="i"><use href="#i-arrow-left"></use></svg> Volver al editor</button>
+      </div>
+    </header>
+
+    <main class="test-main">
+      <div class="editor-heading">
+        <div>
+          <span class="landing-kicker">Verificación obligatoria antes de publicar</span>
+          <h2 id="testLevelTitle">Test Play</h2>
+          <p>Resuelve tu propio caso seleccionando las tarjetas de la solución secreta. Solo un veredicto <b>solved: true</b> desbloquea la publicación del nivel.</p>
+        </div>
+        <span class="editor-mode-badge" id="testModeHint">Validación local del borrador.</span>
+      </div>
+
+      <div class="test-layout">
+        <section class="test-board-frame" aria-label="Tablero de pruebas del borrador">
+          <div class="test-board-head">
+            <span class="field-label">Tablero de pruebas</span>
+            <span class="test-board-meta" id="testBoardMeta">EXP. — · 0 FICHAS</span>
+          </div>
+          <div class="test-board" id="testBoard"></div>
+          <div class="test-board-foot">
+            <span id="testSelectionCount">0 tarjetas seleccionadas</span>
+            <button class="link-btn" id="testClearBtn" type="button" hidden>Limpiar selección</button>
+            <button class="btn primary" id="testSubmitBtn" type="button" disabled>Formular acusación de prueba</button>
+          </div>
+        </section>
+
+        <aside class="test-side">
+          <div class="test-side-block">
+            <h3>Protocolo del Test Play</h3>
+            <ol>
+              <li>Selecciona exactamente las tarjetas que forman tu solución secreta.</li>
+              <li>Envía la acusación de prueba al motor o a la validación local del borrador.</li>
+              <li>Si aciertas, el editor desbloquea la publicación. Si fallas, corrige el caso y repite.</li>
+            </ol>
+            <p class="hint">Las fichas ocultas aparecen aquí para que puedas probar la combinación completa; en la partida real se recuperan desde el archivador con sus alias.</p>
+          </div>
+
+          <div class="test-verdict" id="testVerdict" hidden>
+            <span class="test-verdict-kicker">Veredicto</span>
+            <h4 id="testVerdictTitle">Esperando acusación</h4>
+            <p id="testVerdictText"></p>
+            <p class="test-verified-line" id="testVerifiedLine" hidden>✓ Nivel verificado y listo para publicar</p>
+            <small id="testVerdictSource"></small>
+            <button class="btn ghost" id="testBackToEditorBtn" type="button"><svg class="i"><use href="#i-arrow-left"></use></svg> Volver al editor y corregir</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </section>
 
   <!-- Archivo de fichas recuperadas -->
   <div class="modal-layer" id="cluesModal" role="dialog" aria-modal="true" aria-labelledby="cluesModalTitle" hidden>
@@ -2263,6 +3267,21 @@
   <div class="modal-layer" id="resultModal" role="dialog" aria-modal="true" aria-label="Resultado de la acusación" hidden>
     <div class="modal-panel result-panel" id="resultPanel">
       <div id="resultContent"></div>
+    </div>
+  </div>
+
+  <!-- Valoración del expediente (1-5 estrellas) -->
+  <div class="modal-layer" id="ratingModal" role="dialog" aria-modal="true" aria-labelledby="ratingTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <div>
+          <span class="modal-kicker"><svg class="i"><use href="#i-star"></use></svg> Valoración del expediente</span>
+          <h2 class="modal-title" id="ratingTitle">Valora este caso</h2>
+          <p class="modal-sub" id="ratingSub">Tu voto orienta a otros detectives hacia los mejores expedientes.</p>
+        </div>
+        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar valoración"><svg class="i"><use href="#i-x"></use></svg></button>
+      </div>
+      <div class="modal-body" id="ratingBody"></div>
     </div>
   </div>
 
@@ -2343,14 +3362,17 @@
      ======================================================================= */
   const DEFAULT_API = {
     level: 'http://127.0.0.1:8000',
-    engine: 'http://127.0.0.1:8001'
+    engine: 'http://127.0.0.1:8001',
+    user: 'http://127.0.0.1:8002',
+    rating: 'http://127.0.0.1:8003'
   };
 
   const STORAGE = {
     settings: 'crimeboard.settings.v1',
     session: 'crimeboard.session.v1',
     progress: 'crimeboard.progress.v1',
-    levels: 'crimeboard.levels.v1'
+    levels: 'crimeboard.levels.v1',
+    auth: 'crimeboard.auth.v1'
   };
 
   const TYPE_META = {
@@ -2675,6 +3697,7 @@
         title: level.title,
         description: level.description,
         difficulty: level.difficulty,
+        creator_username: level.creator_username || 'Anónimo',
         card_count: Number(level.card_count) || (Array.isArray(level.cards) ? level.cards.length : 0),
         created_at: level.created_at || nowISO(),
         __local: true
@@ -2693,6 +3716,7 @@
       title: level.title,
       description: level.description || '',
       difficulty: level.difficulty,
+      creator_username: level.creator_username || 'Anónimo',
       card_count: Number(level.card_count) || (Array.isArray(level.cards) ? level.cards.length : 0),
       created_at: level.created_at || nowISO()
     };
@@ -2702,14 +3726,30 @@
   }
 
   const sessionId = ensureSession();
+  const STORED_AUTH = loadJSON(STORAGE.auth, {});
 
   const state = {
     mode: STORED_SETTINGS.mode === 'real' ? 'real' : 'sim',
     api: {
       level: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.levelUrl || DEFAULT_API.level); } catch (error) { return DEFAULT_API.level; } })(),
-      engine: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.engineUrl || DEFAULT_API.engine); } catch (error) { return DEFAULT_API.engine; } })()
+      engine: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.engineUrl || DEFAULT_API.engine); } catch (error) { return DEFAULT_API.engine; } })(),
+      user: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.userUrl || DEFAULT_API.user); } catch (error) { return DEFAULT_API.user; } })(),
+      rating: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.ratingUrl || DEFAULT_API.rating); } catch (error) { return DEFAULT_API.rating; } })()
     },
+    auth: {
+      token: typeof STORED_AUTH.token === 'string' ? STORED_AUTH.token : '',
+      username: typeof STORED_AUTH.username === 'string' ? STORED_AUTH.username : '',
+      userId: typeof STORED_AUTH.userId === 'string' ? STORED_AUTH.userId : ''
+    },
+    authMode: 'login',
+    authPending: null,
+    busyAuth: false,
+    boardVisible: false,
     levels: [],
+    // Resumen de valoraciones por level_id: { average_rating, total_votes }.
+    ratings: {},
+    ratingBusy: false,
+    ratingsWarningShown: false,
     level: null,
     levelSource: 'sim',
     solution: null,
@@ -2735,7 +3775,7 @@
     animatedThreadId: null,
     loading: false,
     catalogFallback: false,
-    health: { level: 'unknown', engine: 'unknown' },
+    health: { level: 'unknown', engine: 'unknown', user: 'unknown' },
     healthBusy: false,
     lastFallbackToast: 0,
     loadToken: 0,
@@ -2744,7 +3784,21 @@
     busyInterrogation: false,
     busyArchive: false,
     busyAccusation: false,
-    editorRows: [],
+    // Editor de casos: borrador, compositor de tarjetas y verificación previa.
+    editorCards: [],
+    editorEditingId: null,
+    editorVerified: false,
+    editorVerifiedFingerprint: '',
+    editorVerifiedSource: '',
+    editorVerificationStale: false,
+    editorLastVerdict: null,
+    editorTestSnapshot: null,
+    editorTestFingerprint: '',
+    editorTestSelected: new Set(),
+    editorTestBusy: false,
+    editorTestVerdict: null,
+    editorPublishing: false,
+    highlightLevelId: null,
     openModals: [],
     lastFocused: null
   };
@@ -2759,13 +3813,55 @@
      03. REFERENCIAS DEL DOM Y CAPA DE API
      ======================================================================= */
   const els = {
+    landingScreen: $('#landingScreen'),
+    boardShell: $('#boardShell'),
+    caseGallery: $('#caseGallery'),
+    galleryEmpty: $('#galleryEmpty'),
+    gallerySummary: $('#gallerySummary'),
+    galleryCount: $('#galleryCount'),
+    designCaseBtn: $('#designCaseBtn'),
+    emptyDesignCaseBtn: $('#emptyDesignCaseBtn'),
+    landingRefreshBtn: $('#landingRefreshBtn'),
+    landingSettingsBtn: $('#landingSettingsBtn'),
+    landingHealthLevel: $('#landingHealthLevel'),
+    landingHealthEngine: $('#landingHealthEngine'),
+    landingHealthUser: $('#landingHealthUser'),
+    landingLevelHealthDot: $('#landingLevelHealthDot'),
+    landingEngineHealthDot: $('#landingEngineHealthDot'),
+    landingUserHealthDot: $('#landingUserHealthDot'),
+    landingFooterLevelUrl: $('#landingFooterLevelUrl'),
+    landingFooterEngineUrl: $('#landingFooterEngineUrl'),
+    landingFooterUserUrl: $('#landingFooterUserUrl'),
+    authChip: $('#authChip'),
+    authRole: $('#authRole'),
+    authName: $('#authName'),
+    authActionBtn: $('#authActionBtn'),
+    boardAuthBtn: $('#boardAuthBtn'),
+    backToGalleryBtn: $('#backToGalleryBtn'),
+    authModal: $('#authModal'),
+    authForm: $('#authForm'),
+    authTitle: $('#authTitle'),
+    authSub: $('#authSub'),
+    authLoginTab: $('#authLoginTab'),
+    authRegisterTab: $('#authRegisterTab'),
+    authEmailField: $('#authEmailField'),
+    authEmail: $('#authEmail'),
+    authUsername: $('#authUsername'),
+    authPassword: $('#authPassword'),
+    authPasswordHint: $('#authPasswordHint'),
+    authError: $('#authError'),
+    authErrorText: $('#authErrorText'),
+    authFootNote: $('#authFootNote'),
+    authSubmitBtn: $('#authSubmitBtn'),
     modeToggle: $('#modeToggle'),
     modeLabel: $('#modeLabel'),
     modeHint: $('#modeHint'),
     healthLevel: $('#healthLevel'),
     healthEngine: $('#healthEngine'),
+    healthUser: $('#healthUser'),
     levelHealthDot: $('#levelHealthDot'),
     engineHealthDot: $('#engineHealthDot'),
+    userHealthDot: $('#userHealthDot'),
     settingsBtn: $('#settingsBtn'),
     caseSubtitle: $('#caseSubtitle'),
     levelSelect: $('#levelSelect'),
@@ -2797,9 +3893,14 @@
     caseSolvedTag: $('#caseSolvedTag'),
     caseMetaTitle: $('#caseMetaTitle'),
     caseMetaDescription: $('#caseMetaDescription'),
+    caseCreator: $('#caseCreator'),
     caseCardCount: $('#caseCardCount'),
     caseClueCount: $('#caseClueCount'),
     caseThreadCount: $('#caseThreadCount'),
+    caseRating: $('#caseRating'),
+    caseRatingStars: $('#caseRatingStars'),
+    caseRatingVotes: $('#caseRatingVotes'),
+    caseRatingBtn: $('#caseRatingBtn'),
     tabClues: $('#tabClues'),
     tabLog: $('#tabLog'),
     tabClueCount: $('#tabClueCount'),
@@ -2810,6 +3911,7 @@
     footThreads: $('#footThreads'),
     footerLevelUrl: $('#footerLevelUrl'),
     footerEngineUrl: $('#footerEngineUrl'),
+    footerUserUrl: $('#footerUserUrl'),
     footerEvidence: $('#footerEvidence'),
     footerThreads: $('#footerThreads'),
     sessionTag: $('#sessionTag'),
@@ -2821,6 +3923,8 @@
     settingsModal: $('#settingsModal'),
     levelUrlInput: $('#levelUrlInput'),
     engineUrlInput: $('#engineUrlInput'),
+    userUrlInput: $('#userUrlInput'),
+    ratingUrlInput: $('#ratingUrlInput'),
     modeSimRadio: $('#modeSimRadio'),
     modeRealRadio: $('#modeRealRadio'),
     testConnectionsBtn: $('#testConnectionsBtn'),
@@ -2830,21 +3934,64 @@
     testEngineDot: $('#testEngineDot'),
     testEngineName: $('#testEngineName'),
     testEngineState: $('#testEngineState'),
+    testUserDot: $('#testUserDot'),
+    testUserName: $('#testUserName'),
+    testUserState: $('#testUserState'),
+    testRatingDot: $('#testRatingDot'),
+    testRatingName: $('#testRatingName'),
+    testRatingState: $('#testRatingState'),
     sessionIdText: $('#sessionIdText'),
     saveSettingsBtn: $('#saveSettingsBtn'),
-    newCaseModal: $('#newCaseModal'),
-    newCaseForm: $('#newCaseForm'),
-    newCaseTitleInput: $('#newCaseTitleInput'),
-    newCaseDescription: $('#newCaseDescription'),
-    newCaseDifficulty: $('#newCaseDifficulty'),
-    newCaseLevelId: $('#newCaseLevelId'),
-    cardEditor: $('#cardEditor'),
-    cardEditorCount: $('#cardEditorCount'),
-    addCardRowBtn: $('#addCardRowBtn'),
-    newCaseError: $('#newCaseError'),
-    newCaseErrorText: $('#newCaseErrorText'),
-    newCaseModeNote: $('#newCaseModeNote'),
-    publishCaseBtn: $('#publishCaseBtn'),
+    editorScreen: $('#editorScreen'),
+    editorBackBtn: $('#editorBackBtn'),
+    editorModeBadge: $('#editorModeBadge'),
+    editorModeHint: $('#editorModeHint'),
+    editorTitleInput: $('#editorTitleInput'),
+    editorDescription: $('#editorDescription'),
+    editorDifficulty: $('#editorDifficulty'),
+    editorLevelId: $('#editorLevelId'),
+    editorAuthorName: $('#editorAuthorName'),
+    editorCardGrid: $('#editorCardGrid'),
+    editorCardEmpty: $('#editorCardEmpty'),
+    editorCardCount: $('#editorCardCount'),
+    cardComposer: $('#cardComposer'),
+    composerModeLabel: $('#composerModeLabel'),
+    composerType: $('#composerType'),
+    composerTitle: $('#composerTitle'),
+    composerDescription: $('#composerDescription'),
+    composerHidden: $('#composerHidden'),
+    composerSolution: $('#composerSolution'),
+    composerAliases: $('#composerAliases'),
+    composerAliasesField: $('#composerAliasesField'),
+    composerSaveBtn: $('#composerSaveBtn'),
+    composerSaveLabel: $('#composerSaveLabel'),
+    composerCancelBtn: $('#composerCancelBtn'),
+    composerError: $('#composerError'),
+    composerErrorText: $('#composerErrorText'),
+    solutionSelector: $('#solutionSelector'),
+    solutionCount: $('#solutionCount'),
+    solutionSummary: $('#solutionSummary'),
+    editorError: $('#editorError'),
+    editorErrorText: $('#editorErrorText'),
+    editorStatus: $('#editorStatus'),
+    editorTestPlayBtn: $('#editorTestPlayBtn'),
+    editorPublishBtn: $('#editorPublishBtn'),
+    testPlayScreen: $('#testPlayScreen'),
+    testBackBtn: $('#testBackBtn'),
+    testModeBadge: $('#testModeBadge'),
+    testModeHint: $('#testModeHint'),
+    testLevelTitle: $('#testLevelTitle'),
+    testBoard: $('#testBoard'),
+    testBoardMeta: $('#testBoardMeta'),
+    testSelectionCount: $('#testSelectionCount'),
+    testClearBtn: $('#testClearBtn'),
+    testSubmitBtn: $('#testSubmitBtn'),
+    testVerdict: $('#testVerdict'),
+    testVerdictTitle: $('#testVerdictTitle'),
+    testVerdictText: $('#testVerdictText'),
+    testVerdictSource: $('#testVerdictSource'),
+    testVerifiedLine: $('#testVerifiedLine'),
+    testBackToEditorBtn: $('#testBackToEditorBtn'),
     cluesModal: $('#cluesModal'),
     cluesModalBody: $('#cluesModalBody'),
     cluesModalSub: $('#cluesModalSub'),
@@ -2865,6 +4012,8 @@
     accusationSource: $('#accusationSource'),
     confirmAccuseBtn: $('#confirmAccuseBtn'),
     resultModal: $('#resultModal'),
+    ratingModal: $('#ratingModal'),
+    ratingBody: $('#ratingBody'),
     resultPanel: $('#resultPanel'),
     resultContent: $('#resultContent'),
     statementModal: $('#statementModal'),
@@ -2898,11 +4047,12 @@
   }
 
   async function requestJson(url, options = {}) {
-    const { method = 'GET', body = null, timeout = 8000 } = options;
+    const { method = 'GET', body = null, timeout = 8000, token = null } = options;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     const headers = { Accept: 'application/json' };
     if (body !== null) headers['Content-Type'] = 'application/json';
+    if (token) headers.Authorization = `Bearer ${token}`;
     try {
       const response = await fetch(url, {
         method,
@@ -2960,15 +4110,71 @@
         throw error;
       }
     },
-    async createLevel(payload) {
+    async createLevel(payload, token) {
       try {
-        const data = await requestJson(`${state.api.level}/api/levels/`, { method: 'POST', body: payload, timeout: 9000 });
+        const data = await requestJson(`${state.api.level}/api/levels/`, { method: 'POST', body: payload, timeout: 9000, token });
         setHealth('level', 'online');
         return data;
       } catch (error) {
         if (isAvailabilityError(error)) setHealth('level', 'offline');
         throw error;
       }
+    },
+    async register(payload) {
+      try {
+        const data = await requestJson(`${state.api.user}/api/users/register`, { method: 'POST', body: payload, timeout: 9000 });
+        setHealth('user', 'online');
+        return data;
+      } catch (error) {
+        if (isAvailabilityError(error)) setHealth('user', 'offline');
+        throw error;
+      }
+    },
+    async login(payload) {
+      try {
+        const data = await requestJson(`${state.api.user}/api/users/login`, { method: 'POST', body: payload, timeout: 9000 });
+        setHealth('user', 'online');
+        return data;
+      } catch (error) {
+        if (isAvailabilityError(error)) setHealth('user', 'offline');
+        throw error;
+      }
+    },
+    async me(token) {
+      try {
+        const data = await requestJson(`${state.api.user}/api/users/me`, { timeout: 6000, token });
+        setHealth('user', 'online');
+        return data;
+      } catch (error) {
+        if (isAvailabilityError(error)) setHealth('user', 'offline');
+        throw error;
+      }
+    },
+    async getRating(levelId) {
+      const data = await requestJson(
+        `${state.api.rating}/api/ratings/levels/${encodeURIComponent(levelId)}`,
+        { timeout: 6000 }
+      );
+      return data && typeof data === 'object' ? data : null;
+    },
+    async getRatingsBatch(levelIds) {
+      const query = levelIds
+        .map((levelId) => `level_ids=${encodeURIComponent(levelId)}`)
+        .join('&');
+      const data = await requestJson(
+        `${state.api.rating}/api/ratings/levels/batch?${query}`,
+        { timeout: 7000 }
+      );
+      return data && typeof data === 'object' ? data : {};
+    },
+    async rate(payload, token) {
+      const data = await requestJson(`${state.api.rating}/api/ratings/`, {
+        method: 'POST',
+        body: payload,
+        timeout: 8000,
+        token
+      });
+      return data && typeof data === 'object' ? data : null;
     },
     async interrogate(payload) {
       try {
@@ -3027,12 +4233,14 @@
     if (state.healthBusy) return;
     state.healthBusy = true;
     try {
-      const [level, engine] = await Promise.all([
+      const [level, engine, user] = await Promise.all([
         probeService(state.api.level),
-        probeService(state.api.engine)
+        probeService(state.api.engine),
+        probeService(state.api.user)
       ]);
       setHealth('level', level.ok ? 'online' : 'offline');
       setHealth('engine', engine.ok ? 'online' : 'offline');
+      setHealth('user', user.ok ? 'online' : 'offline');
       state.lastHealthCheck = Date.now();
     } finally {
       state.healthBusy = false;
@@ -3040,7 +4248,7 @@
   }
 
   function setHealth(service, status) {
-    if (!['level', 'engine'].includes(service)) return;
+    if (!['level', 'engine', 'user'].includes(service)) return;
     if (!['online', 'offline', 'checking', 'unknown'].includes(status)) return;
     state.health[service] = status;
     renderHealth();
@@ -3048,20 +4256,32 @@
 
   function renderHealth() {
     const map = [
-      { key: 'level', dot: els.levelHealthDot, pill: els.healthLevel, label: 'Catálogo' },
-      { key: 'engine', dot: els.engineHealthDot, pill: els.healthEngine, label: 'Motor' }
+      { key: 'level', dot: els.levelHealthDot, pill: els.healthLevel, label: 'Catálogo', landingDot: els.landingLevelHealthDot, landingPill: els.landingHealthLevel },
+      { key: 'engine', dot: els.engineHealthDot, pill: els.healthEngine, label: 'Motor', landingDot: els.landingEngineHealthDot, landingPill: els.landingHealthEngine },
+      { key: 'user', dot: els.userHealthDot, pill: els.healthUser, label: 'Cuentas', landingDot: els.landingUserHealthDot, landingPill: els.landingHealthUser }
     ];
-    map.forEach(({ key, dot, pill, label }) => {
-      if (!dot) return;
-      dot.className = `status-dot ${state.health[key] === 'unknown' ? '' : state.health[key]}`;
+    map.forEach(({ key, dot, pill, label, landingDot, landingPill }) => {
       const status = state.health[key];
+      const dotClass = `status-dot ${status === 'unknown' ? '' : status}`;
+      if (dot) dot.className = dotClass;
+      if (landingDot) landingDot.className = dotClass;
       const text = status === 'online' ? 'en línea' : status === 'offline' ? 'sin conexión' : 'comprobando';
-      const url = key === 'level' ? state.api.level : state.api.engine;
-      pill.title = `${label}: ${text} · ${url}`;
-      pill.setAttribute('aria-label', `${label}: ${text}. ${url}`);
+      const url = key === 'level' ? state.api.level : key === 'engine' ? state.api.engine : state.api.user;
+      [pill, landingPill].forEach((element) => {
+        if (!element) return;
+        element.title = `${label}: ${text} · ${url}`;
+        element.setAttribute('aria-label', `${label}: ${text}. ${url}`);
+      });
     });
-    els.footerLevelUrl.textContent = prettyHost(state.api.level);
-    els.footerEngineUrl.textContent = prettyHost(state.api.engine);
+    const levelHost = prettyHost(state.api.level);
+    const engineHost = prettyHost(state.api.engine);
+    const userHost = prettyHost(state.api.user);
+    if (els.footerLevelUrl) els.footerLevelUrl.textContent = levelHost;
+    if (els.footerEngineUrl) els.footerEngineUrl.textContent = engineHost;
+    if (els.footerUserUrl) els.footerUserUrl.textContent = userHost;
+    if (els.landingFooterLevelUrl) els.landingFooterLevelUrl.textContent = levelHost;
+    if (els.landingFooterEngineUrl) els.landingFooterEngineUrl.textContent = engineHost;
+    if (els.landingFooterUserUrl) els.landingFooterUserUrl.textContent = userHost;
   }
 
   function toast({ type = 'info', title = 'Aviso', message = '', duration = 4600 } = {}) {
@@ -3108,6 +4328,8 @@
       mode: state.mode,
       levelUrl: state.api.level,
       engineUrl: state.api.engine,
+      userUrl: state.api.user,
+      ratingUrl: state.api.rating,
       lastLevel: state.level?.level_id || state.lastLevel || null
     });
   }
@@ -3121,7 +4343,10 @@
         if (token !== state.catalogToken) return state.levels;
         state.levels = mockSummaries();
         state.catalogFallback = false;
+        state.ratings = {};
         renderLevelPicker();
+        renderGallery();
+        renderCaseRating();
         return state.levels;
       }
 
@@ -3133,12 +4358,15 @@
           .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
         state.catalogFallback = false;
         renderLevelPicker();
+        renderGallery();
+        void refreshRatings(state.levels.map((item) => item.level_id));
         return state.levels;
       } catch (error) {
         if (token !== state.catalogToken) return state.levels;
         state.levels = mockSummaries();
         state.catalogFallback = true;
         renderLevelPicker();
+        renderGallery();
         if (isAvailabilityError(error)) {
           setHealth('level', 'offline');
           notifyFallback('catálogo');
@@ -3182,6 +4410,541 @@
     }
   }
 
+  /* =======================================================================
+     04.b DOSIER INICIAL, GALERÍA Y SESIÓN DEL DETECTIVE
+     ======================================================================= */
+  function renderGallery() {
+    if (!els.caseGallery) return;
+    const levels = state.levels.slice().sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    if (els.galleryCount) {
+      els.galleryCount.textContent = `${levels.length} ${levels.length === 1 ? 'expediente' : 'expedientes'}`;
+    }
+    if (els.gallerySummary) {
+      els.gallerySummary.textContent = state.catalogFallback
+        ? 'Catálogo local de simulación · los casos del backend no están disponibles ahora mismo.'
+        : 'Abre un expediente como invitado o identifícate para firmar y publicar tu propio caso.';
+    }
+
+    if (!levels.length) {
+      els.caseGallery.innerHTML = '';
+      if (els.galleryEmpty) els.galleryEmpty.hidden = false;
+      return;
+    }
+    if (els.galleryEmpty) els.galleryEmpty.hidden = true;
+
+    els.caseGallery.innerHTML = levels.map((level) => {
+      const diff = difficultyMeta(level.difficulty);
+      const creator = level.creator_username || 'Anónimo';
+      const count = Number(level.card_count) || 0;
+      return `
+        <article class="gallery-card${state.highlightLevelId === level.level_id ? ' is-new' : ''}" data-level-id="${esc(level.level_id)}">
+          <div class="gallery-card-top">
+            <span class="diff-stamp ${esc(level.difficulty || '')}">${esc(diff.label)}</span>
+            <span class="gallery-card-meta">${ICON('file-text')} ${count || '—'} FICHAS</span>
+          </div>
+          <h3>${esc(level.title || 'Expediente sin título')}</h3>
+          <p>${esc(level.description || 'Sin descripción archivada.')}</p>
+          <div class="gallery-card-creator">Diseñado por: <b>${esc(creator)}</b></div>
+          <div class="gallery-card-meta">
+            <span>EXP. ${esc(String(level.level_id || '').toUpperCase())}</span>
+            <span class="dot-sep">·</span>
+            <span>${esc(formatDateTime(level.created_at))}</span>
+          </div>
+          ${ratingBadgeHtml(level.level_id)}
+          <div class="gallery-card-actions">
+            <button class="btn primary" type="button" data-play-level="${esc(level.level_id)}">${ICON('search')} Jugar Caso</button>
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  function persistAuth() {
+    saveJSON(STORAGE.auth, state.auth);
+  }
+
+  function isAuthenticated() {
+    return Boolean(state.auth.token);
+  }
+
+  /* =======================================================================
+     04.c VALORACIONES (1-5 ESTRELLAS)
+     ======================================================================= */
+  function ratingFor(levelId) {
+    return state.ratings[levelId] || null;
+  }
+
+  function ratingSnapshot(summary) {
+    const votes = Math.max(0, Number(summary?.total_votes) || 0);
+    const average = votes ? clamp(Number(summary?.average_rating) || 0, 0, 5) : 0;
+    return { average, votes };
+  }
+
+  function starGlyphs(average) {
+    const filled = clamp(Math.round(Number(average) || 0), 0, 5);
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+  }
+
+  function ratingVotesLabel(votes) {
+    return plural(votes, 'voto', 'votos');
+  }
+
+  function ratingSummaryLabel(snapshot) {
+    if (!snapshot.votes) return 'Sin valoraciones';
+    return `★ ${snapshot.average.toFixed(1)}/5 (${ratingVotesLabel(snapshot.votes)})`;
+  }
+
+  function ratingBadgeHtml(levelId) {
+    const snapshot = ratingSnapshot(ratingFor(levelId));
+    if (!snapshot.votes) {
+      return `
+        <div class="gallery-card-rating is-empty" aria-label="Este caso todavía no tiene valoraciones">
+          <span class="stars" aria-hidden="true">☆☆☆☆☆</span>
+          <span class="votes">Sin valoraciones</span>
+        </div>`;
+    }
+    return `
+      <div class="gallery-card-rating" aria-label="Valoración media ${snapshot.average.toFixed(1)} sobre 5, ${ratingVotesLabel(snapshot.votes)}">
+        <span class="stars" aria-hidden="true">${starGlyphs(snapshot.average)}</span>
+        <span class="votes">★ ${snapshot.average.toFixed(1)}/5 (${ratingVotesLabel(snapshot.votes)})</span>
+      </div>`;
+  }
+
+  function renderCaseRating() {
+    if (!els.caseRating) return;
+    const level = state.level;
+    const snapshot = ratingSnapshot(level ? ratingFor(level.level_id) : null);
+    els.caseRating.classList.toggle('is-empty', !snapshot.votes);
+    if (els.caseRatingStars) {
+      els.caseRatingStars.textContent = snapshot.votes ? starGlyphs(snapshot.average) : '☆☆☆☆☆';
+    }
+    if (els.caseRatingVotes) {
+      els.caseRatingVotes.textContent = level
+        ? ratingSummaryLabel(snapshot)
+        : 'Sin expediente abierto';
+    }
+    if (els.caseRatingBtn) {
+      els.caseRatingBtn.disabled = !level;
+      els.caseRatingBtn.title = isAuthenticated()
+        ? 'Valorar este caso'
+        : 'Inicia sesión para valorar este caso';
+    }
+  }
+
+  async function refreshRatings(levelIds) {
+    if (state.mode !== 'real') return;
+    const ids = [...new Set((levelIds || []).map((id) => String(id || '')).filter(Boolean))];
+    if (!ids.length) return;
+    try {
+      const data = await api.getRatingsBatch(ids);
+      Object.entries(data || {}).forEach(([levelId, summary]) => {
+        if (summary && typeof summary === 'object') state.ratings[levelId] = summary;
+      });
+      renderGallery();
+      renderCaseRating();
+      refreshRatingWidgets();
+    } catch (error) {
+      // El catálogo debe seguir operativo aunque el Rating Service no
+      // responda: las estrellas se muestran como "sin valoraciones".
+      if (!state.ratingsWarningShown) {
+        state.ratingsWarningShown = true;
+        toast({
+          type: 'warn',
+          title: 'Valoraciones no disponibles',
+          message: 'El catálogo sigue operativo. Las estrellas aparecerán cuando el Rating Service responda.'
+        });
+      }
+    }
+  }
+
+  async function ensureLevelRating(levelId) {
+    if (!levelId || state.mode !== 'real') return;
+    if (state.ratings[levelId]) return;
+    try {
+      const summary = await api.getRating(levelId);
+      if (summary && typeof summary === 'object') {
+        state.ratings[levelId] = summary;
+        renderGallery();
+        renderCaseRating();
+        refreshRatingWidgets(levelId);
+      }
+    } catch (error) {
+      /* Lectura opcional: el tablón funciona sin el servicio de valoraciones. */
+    }
+  }
+
+  function ratingWidgetHtml({ levelId, selected = 0, source = 'modal', guest = false }) {
+    const snapshot = ratingSnapshot(ratingFor(levelId));
+    const summaryClass = snapshot.votes ? '' : ' is-empty';
+    const summaryText = ratingSummaryLabel(snapshot);
+    const head = `
+      <div class="rating-widget-head">
+        <span class="rating-widget-title">${ICON('star')} ¿Qué te ha parecido el caso?</span>
+        <span class="rating-widget-summary${summaryClass}" data-rating-summary>${summaryText}</span>
+      </div>`;
+
+    if (guest) {
+      return `
+        <div class="rating-widget" data-rating-widget data-level-id="${esc(levelId)}" data-rating-source="${esc(source)}">
+          ${head}
+          <div class="rating-guest">
+            ${ICON('lock')}
+            <div>
+              <b>Inicia sesión para valorar este caso.</b><br />
+              Los invitados pueden jugar sin cuenta, pero solo los detectives identificados pueden votar.
+              <button class="btn ghost" type="button" data-open-auth-from-rating>${ICON('user')} Iniciar sesión</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    const uid = `rt${source}${hashString(String(levelId))}`;
+    const stars = [5, 4, 3, 2, 1].map((value) => `
+      <input type="radio" id="${uid}-${value}" name="${uid}" value="${value}"${selected === value ? ' checked' : ''} />
+      <label for="${uid}-${value}" title="${value} ${value === 1 ? 'estrella' : 'estrellas'}">★</label>`).join('');
+
+    return `
+      <div class="rating-widget" data-rating-widget data-level-id="${esc(levelId)}" data-rating-source="${esc(source)}">
+        ${head}
+        <div class="star-picker" role="radiogroup" aria-label="Valoración de 1 a 5 estrellas">${stars}</div>
+        <div class="rating-actions">
+          <button class="btn gold" type="button" data-rating-submit>${ICON('star')} Enviar valoración</button>
+          <span class="rating-note">1 ★ muy flojo · 5 ★ obra maestra</span>
+        </div>
+      </div>`;
+  }
+
+  function refreshRatingWidgets(levelId = null) {
+    $$('[data-rating-widget]').forEach((widget) => {
+      if (levelId && widget.dataset.levelId !== levelId) return;
+      const snapshot = ratingSnapshot(ratingFor(widget.dataset.levelId));
+      const target = widget.querySelector('[data-rating-summary]');
+      if (!target) return;
+      target.textContent = ratingSummaryLabel(snapshot);
+      target.classList.toggle('is-empty', !snapshot.votes);
+    });
+  }
+
+  function openRatingModal() {
+    if (!state.level) {
+      toast({ type: 'warn', title: 'Sin expediente', message: 'Abre un caso antes de valorarlo.' });
+      return;
+    }
+    const guest = !isAuthenticated();
+    els.ratingBody.innerHTML = ratingWidgetHtml({
+      levelId: state.level.level_id,
+      source: 'modal',
+      guest
+    });
+    openModal('ratingModal');
+    if (!guest) void ensureLevelRating(state.level.level_id);
+  }
+
+  async function submitRating(widget) {
+    if (!widget || state.ratingBusy) return;
+    const levelId = widget.dataset.levelId || '';
+    if (!levelId) return;
+
+    if (!isAuthenticated()) {
+      closeModal('ratingModal');
+      openAuthModal('login', 'rating');
+      return;
+    }
+    const checked = widget.querySelector('input[type="radio"]:checked');
+    if (!checked) {
+      toast({ type: 'warn', title: 'Sin estrellas', message: 'Selecciona de 1 a 5 estrellas antes de enviar tu valoración.' });
+      return;
+    }
+    if (state.mode !== 'real') {
+      toast({
+        type: 'info',
+        title: 'Backend real desactivado',
+        message: 'Activa el modo Backend real en Configuración para registrar tu valoración.'
+      });
+      return;
+    }
+
+    const stars = Number(checked.value);
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) return;
+
+    state.ratingBusy = true;
+    const button = widget.querySelector('[data-rating-submit]');
+    if (button) {
+      button.disabled = true;
+      button.classList.add('is-loading');
+    }
+    try {
+      const summary = await api.rate(
+        { level_id: levelId, user_id: state.auth.userId, stars },
+        state.auth.token
+      );
+      if (summary && typeof summary === 'object') state.ratings[levelId] = summary;
+      renderGallery();
+      renderCaseRating();
+      refreshRatingWidgets(levelId);
+      const snapshot = ratingSnapshot(summary || ratingFor(levelId));
+      toast({
+        type: 'success',
+        title: 'Valoración registrada',
+        message: snapshot.votes
+          ? `${ratingSummaryLabel(snapshot)} · ¡gracias por tu voto!`
+          : '¡Gracias por tu voto!'
+      });
+      if (state.openModals.includes('ratingModal')) closeModal('ratingModal');
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        closeModal('ratingModal');
+        openAuthModal('login', 'rating');
+        toast({ type: 'warn', title: 'Sesión caducada', message: 'Vuelve a iniciar sesión para valorar este caso.' });
+      } else {
+        toast({ type: 'error', title: 'No se pudo registrar el voto', message: error.message || 'Inténtalo de nuevo.' });
+      }
+    } finally {
+      state.ratingBusy = false;
+      if (button) {
+        button.disabled = false;
+        button.classList.remove('is-loading');
+      }
+    }
+  }
+
+  function renderAuthUI() {
+    const authed = isAuthenticated();
+    const username = authed ? (state.auth.username || 'Detective') : 'Detective anónimo';
+    if (els.authRole) els.authRole.textContent = authed ? 'DETECTIVE' : 'INVITADO';
+    if (els.authName) els.authName.textContent = username;
+    if (els.authActionBtn) {
+      els.authActionBtn.textContent = authed ? 'Cerrar sesión' : 'Iniciar sesión';
+      els.authActionBtn.classList.toggle('logout', authed);
+    }
+    if (els.boardAuthBtn) {
+      els.boardAuthBtn.textContent = authed ? `Cerrar sesión (${state.auth.username})` : 'Iniciar sesión';
+    }
+    if (els.designCaseBtn) {
+      els.designCaseBtn.innerHTML = `${ICON(authed ? 'plus' : 'lock')} ${authed ? 'Diseñar Nuevo Caso' : 'Iniciar sesión para diseñar'}`;
+      els.designCaseBtn.title = authed
+        ? 'Abrir el editor de casos'
+        : 'Identifícate para acceder al editor y publicar un caso';
+    }
+    if (els.emptyDesignCaseBtn) {
+      els.emptyDesignCaseBtn.innerHTML = `${ICON(authed ? 'plus' : 'lock')} ${authed ? 'Diseñar Nuevo Caso' : 'Iniciar sesión para diseñar'}`;
+      els.emptyDesignCaseBtn.title = authed
+        ? 'Abrir el editor de casos'
+        : 'Identifícate para acceder al editor y publicar un caso';
+    }
+    if (els.editorAuthorName) {
+      els.editorAuthorName.textContent = authed ? (state.auth.username || 'Detective') : 'Invitado';
+    }
+    renderCaseRating();
+  }
+
+  function setAuthMode(mode) {
+    state.authMode = mode === 'register' ? 'register' : 'login';
+    const register = state.authMode === 'register';
+    if (els.authEmailField) els.authEmailField.hidden = !register;
+    if (els.authEmail) els.authEmail.required = register;
+    if (els.authTitle) els.authTitle.textContent = register ? 'Alta de detective' : 'Identifícate, detective';
+    if (els.authSub) {
+      els.authSub.textContent = register
+        ? 'Crea una cuenta para publicar casos y firmar los expedientes con tu nombre.'
+        : 'Los invitados pueden jugar sin cuenta. Publicar un caso exige identificarse para firmar el expediente.';
+    }
+    if (els.authSubmitBtn) els.authSubmitBtn.textContent = register ? 'Crear cuenta' : 'Entrar';
+    if (els.authFootNote) {
+      els.authFootNote.textContent = register
+        ? 'La cuenta se guarda en el User Service.'
+        : 'El juego como invitado no necesita cuenta.';
+    }
+    if (els.authPasswordHint) {
+      els.authPasswordHint.textContent = register
+        ? 'Mínimo 8 caracteres al crear la cuenta.'
+        : 'Introduce la contraseña de tu cuenta.';
+    }
+    if (els.authPassword) els.authPassword.autocomplete = register ? 'new-password' : 'current-password';
+    if (els.authLoginTab) {
+      els.authLoginTab.classList.toggle('active', !register);
+      els.authLoginTab.setAttribute('aria-selected', String(!register));
+    }
+    if (els.authRegisterTab) {
+      els.authRegisterTab.classList.toggle('active', register);
+      els.authRegisterTab.setAttribute('aria-selected', String(register));
+    }
+    if (els.authError) els.authError.hidden = true;
+  }
+
+  function openAuthModal(mode = 'login', pending = null) {
+    if (!els.authModal) return;
+    state.authPending = pending || null;
+    els.authForm?.reset();
+    setAuthMode(mode);
+    openModal('authModal');
+    setTimeout(() => els.authUsername?.focus({ preventScroll: true }), 80);
+  }
+
+  function showAuthError(message) {
+    if (!els.authError) return;
+    els.authError.hidden = false;
+    if (els.authErrorText) els.authErrorText.textContent = message;
+  }
+
+  function logout() {
+    const inEditor = (els.editorScreen && !els.editorScreen.hidden)
+      || (els.testPlayScreen && !els.testPlayScreen.hidden);
+    state.auth = { token: '', username: '', userId: '' };
+    persistAuth();
+    if (inEditor) closeEditor();
+    renderAuthUI();
+    renderGallery();
+    toast({
+      type: 'info',
+      title: 'Sesión cerrada',
+      message: 'Sigues navegando como invitado. Puedes abrir cualquier caso, pero no publicar uno nuevo.'
+    });
+  }
+
+  function requireAuth(pending) {
+    if (isAuthenticated()) return true;
+    openAuthModal('login', pending);
+    return false;
+  }
+
+  async function submitAuth(event) {
+    event?.preventDefault();
+    if (state.busyAuth) return;
+    const register = state.authMode === 'register';
+    const username = (els.authUsername?.value || '').trim();
+    const password = els.authPassword?.value || '';
+    const email = (els.authEmail?.value || '').trim();
+
+    if (register && username.length < 3) {
+      showAuthError('El nombre de detective necesita al menos 3 caracteres.');
+      els.authUsername?.focus();
+      return;
+    }
+    if (register && !email) {
+      showAuthError('El correo electrónico es obligatorio para crear la cuenta.');
+      els.authEmail?.focus();
+      return;
+    }
+    if (!username || !password) {
+      showAuthError('Escribe tu nombre de detective y tu contraseña.');
+      (username ? els.authPassword : els.authUsername)?.focus();
+      return;
+    }
+    if (register && password.length < 8) {
+      showAuthError('La contraseña necesita al menos 8 caracteres.');
+      els.authPassword?.focus();
+      return;
+    }
+
+    state.busyAuth = true;
+    if (els.authSubmitBtn) {
+      els.authSubmitBtn.disabled = true;
+      els.authSubmitBtn.classList.add('is-loading');
+    }
+    if (els.authError) els.authError.hidden = true;
+
+    try {
+      if (register) {
+        await api.register({ username, email, password });
+      }
+      const session = await api.login({ username, password });
+      state.auth = {
+        token: String(session.access_token || ''),
+        username: String(session.username || username),
+        userId: String(session.user_id || '')
+      };
+      persistAuth();
+      renderAuthUI();
+      closeModal('authModal');
+      toast({
+        type: 'success',
+        title: register ? 'Cuenta creada' : 'Sesión iniciada',
+        message: `Bienvenido, detective ${state.auth.username}. Ya puedes publicar casos.`
+      });
+
+      const pending = state.authPending;
+      state.authPending = null;
+      if (pending === 'design') {
+        openEditor();
+      } else if (pending === 'editor') {
+        // La sesión caducó mientras el editor estaba abierto: conserva el
+        // borrador y actualiza la autoría en cuanto el login termina.
+        renderEditorWorkspace();
+      } else if (pending === 'rating') {
+        openRatingModal();
+      } else if (typeof pending === 'string' && pending.startsWith('play:')) {
+        openBoard(pending.slice(5));
+      }
+    } catch (error) {
+      showAuthError(error.message || 'No se pudo completar la identificación.');
+    } finally {
+      state.busyAuth = false;
+      if (els.authSubmitBtn) {
+        els.authSubmitBtn.disabled = false;
+        els.authSubmitBtn.classList.remove('is-loading');
+      }
+    }
+  }
+
+  async function restoreAuth() {
+    if (!state.auth.token) {
+      renderAuthUI();
+      return;
+    }
+    renderAuthUI();
+    try {
+      const me = await api.me(state.auth.token);
+      state.auth.username = String(me.username || state.auth.username);
+      state.auth.userId = String(me.user_id || state.auth.userId);
+      persistAuth();
+      renderAuthUI();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        state.auth = { token: '', username: '', userId: '' };
+        persistAuth();
+        renderAuthUI();
+        toast({
+          type: 'warn',
+          title: 'Sesión caducada',
+          message: 'Vuelve a iniciar sesión para publicar o firmar casos.'
+        });
+      }
+    }
+  }
+
+  function showScreen(name) {
+    const screens = {
+      landing: els.landingScreen,
+      board: els.boardShell,
+      editor: els.editorScreen,
+      test: els.testPlayScreen
+    };
+    Object.entries(screens).forEach(([screenName, element]) => {
+      if (element) element.hidden = screenName !== name;
+    });
+  }
+
+  async function openBoard(levelId) {
+    if (!levelId) return;
+    state.boardVisible = true;
+    showScreen('board');
+    document.title = 'CRIME BOARD // Tablón de evidencias';
+    try {
+      await loadLevel(levelId);
+    } finally {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }
+
+  async function backToGallery() {
+    state.boardVisible = false;
+    showScreen('landing');
+    document.title = 'CRIME BOARD // Dosier Policial';
+    renderGallery();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    refreshCatalog({ silent: true });
+  }
+
   function setBoardLoading(show, text = 'Recuperando expediente…') {
     state.loading = show;
     els.boardLoading.hidden = !show;
@@ -3192,6 +4955,14 @@
     setBoardLoading(true, 'Sincronizando catálogo…');
     try {
       await refreshCatalog({ silent: true });
+      renderGallery();
+      // En el dosier inicial no se abre ningún expediente automáticamente:
+      // el jugador elige «Jugar Caso». Si el tablón ya está visible (cambio de
+      // configuración o de modo), se recarga el caso activo.
+      if (!state.boardVisible) {
+        setBoardLoading(false);
+        return;
+      }
       const preferred = state.level?.level_id || state.lastLevel || STORED_SETTINGS.lastLevel || 'tutorial-001';
       const target = state.levels.some((item) => item.level_id === preferred)
         ? preferred
@@ -3395,6 +5166,7 @@
 
       if (token !== state.loadToken) return;
       activateLevel(level, source, { solution });
+      void ensureLevelRating(level.level_id);
       if (!silent) {
         toast({
           type: 'info',
@@ -3516,6 +5288,9 @@
       els.boardStats.innerHTML = `<b>${onBoard}</b> / ${totalCards} EVIDENCIAS`;
       els.caseMetaTitle.textContent = level.title;
       els.caseMetaDescription.textContent = level.description || 'Sin descripción en el expediente.';
+      if (els.caseCreator) {
+        els.caseCreator.innerHTML = `Diseñado por: <b>${esc(level.creator_username || 'Anónimo')}</b>`;
+      }
       els.caseDifficulty.className = `diff-stamp ${level.difficulty || ''}`;
       els.caseDifficulty.textContent = difficultyMeta(level.difficulty).label;
       els.caseCardCount.textContent = onBoard;
@@ -3530,6 +5305,7 @@
       els.boardStats.innerHTML = '<b>0</b> EVIDENCIAS';
       els.caseMetaTitle.textContent = 'Sin expediente abierto';
       els.caseMetaDescription.textContent = 'El archivo espera la llegada de un nuevo caso. Revisa el catálogo o publica un misterio.';
+      if (els.caseCreator) els.caseCreator.innerHTML = 'Diseñado por: <b>—</b>';
       els.caseDifficulty.className = 'diff-stamp';
       els.caseDifficulty.textContent = 'SIN EXPEDIENTE';
       els.caseCardCount.textContent = '0';
@@ -3563,6 +5339,7 @@
     renderLevelPicker();
     updateBoardHint();
     syncSelectionUI();
+    renderCaseRating();
   }
 
   function cardHtml(card, index) {
@@ -3885,6 +5662,15 @@
     els.modeToggle.title = real
       ? 'Backend real activo. Pulsa para pasar al archivo local.'
       : 'Simulación local activa. Pulsa para conectar con los microservicios.';
+    if (els.editorModeBadge) {
+      els.editorModeBadge.textContent = real ? 'BACKEND REAL' : 'SIMULACIÓN LOCAL';
+      els.editorModeBadge.classList.toggle('real', real);
+    }
+    if (els.editorModeHint) {
+      els.editorModeHint.textContent = real
+        ? 'Se publicará mediante POST /api/levels/ con tu sesión.'
+        : 'Se guardará en el catálogo local de este navegador al publicar.';
+    }
     document.body.dataset.mode = state.mode;
   }
 
@@ -4457,7 +6243,8 @@
           result = await api.archive({
             level_id: state.level.level_id,
             query,
-            session_id: sessionId
+            session_id: sessionId,
+            guest: !isAuthenticated()
           });
           source = 'real';
         } catch (error) {
@@ -4629,7 +6416,8 @@
           result = await api.interrogate({
             level_id: state.level.level_id,
             suspect_card_id: suspect.id,
-            session_id: sessionId
+            session_id: sessionId,
+            guest: !isAuthenticated()
           });
           source = 'real';
         } catch (error) {
@@ -4848,7 +6636,11 @@
         source = 'sim';
       } else {
         try {
-          result = await api.validate({ level_id: state.level.level_id, selected_card_ids: ids });
+          result = await api.validate({
+            level_id: state.level.level_id,
+            selected_card_ids: ids,
+            guest: !isAuthenticated()
+          });
           source = 'real';
         } catch (error) {
           if (!isAvailabilityError(error) || !Array.isArray(state.solution)) throw error;
@@ -4958,6 +6750,7 @@
           <span class="sep"></span>
           <span>${attempt.cardIds.length} ${attempt.cardIds.length === 1 ? 'tarjeta' : 'tarjetas'}</span>
         </div>
+        ${solved && state.level ? ratingWidgetHtml({ levelId: state.level.level_id, source: 'result', guest: !isAuthenticated() }) : ''}
         <div class="modal-foot">
           ${solved ? '' : `<button class="btn ghost" type="button" data-result-clues>${ICON('book')} Revisar archivo</button>`}
           <button class="btn ${solved ? 'gold' : 'primary'}" type="button" data-close-modal>${solved ? 'Cerrar expediente' : 'Volver al tablón'}</button>
@@ -5089,21 +6882,38 @@
   function openSettingsModal() {
     els.levelUrlInput.value = state.api.level;
     els.engineUrlInput.value = state.api.engine;
+    els.userUrlInput.value = state.api.user;
+    els.ratingUrlInput.value = state.api.rating;
     els.modeSimRadio.checked = state.mode === 'sim';
     els.modeRealRadio.checked = state.mode === 'real';
     els.sessionIdText.textContent = sessionId;
     els.levelUrlInput.classList.remove('invalid');
     els.engineUrlInput.classList.remove('invalid');
+    els.userUrlInput.classList.remove('invalid');
+    els.ratingUrlInput.classList.remove('invalid');
     resetTestResult('level');
     resetTestResult('engine');
+    resetTestResult('user');
+    resetTestResult('rating');
     openModal('settingsModal');
   }
 
+  function testResultRefs(service) {
+    if (service === 'level') {
+      return { dot: els.testLevelDot, name: els.testLevelName, stateText: els.testLevelState, label: 'Catálogo', input: els.levelUrlInput };
+    }
+    if (service === 'engine') {
+      return { dot: els.testEngineDot, name: els.testEngineName, stateText: els.testEngineState, label: 'Motor', input: els.engineUrlInput };
+    }
+    if (service === 'rating') {
+      return { dot: els.testRatingDot, name: els.testRatingName, stateText: els.testRatingState, label: 'Valoraciones', input: els.ratingUrlInput };
+    }
+    return { dot: els.testUserDot, name: els.testUserName, stateText: els.testUserState, label: 'Cuentas', input: els.userUrlInput };
+  }
+
   function resetTestResult(service) {
-    const dot = service === 'level' ? els.testLevelDot : els.testEngineDot;
-    const name = service === 'level' ? els.testLevelName : els.testEngineName;
-    const stateText = service === 'level' ? els.testLevelState : els.testEngineState;
-    const label = service === 'level' ? 'Catálogo' : 'Motor';
+    const { dot, name, stateText, label } = testResultRefs(service);
+    if (!dot || !name || !stateText) return;
     dot.className = 'status-dot';
     name.textContent = `${label} · sin probar`;
     stateText.textContent = '—';
@@ -5111,11 +6921,9 @@
   }
 
   function setTestResult(service, result) {
-    const dot = service === 'level' ? els.testLevelDot : els.testEngineDot;
-    const name = service === 'level' ? els.testLevelName : els.testEngineName;
-    const stateText = service === 'level' ? els.testLevelState : els.testEngineState;
-    const label = service === 'level' ? 'Catálogo' : 'Motor';
-    const url = service === 'level' ? els.levelUrlInput.value : els.engineUrlInput.value;
+    const { dot, name, stateText, label, input } = testResultRefs(service);
+    if (!dot || !name || !stateText) return;
+    const url = input?.value || '';
     dot.className = `status-dot ${result.ok ? 'online' : 'offline'}`;
     let host = url;
     try { host = new URL(/^https?:\/\//i.test(url) ? url : `http://${url}`).host; } catch (error) { /* raw */ }
@@ -5127,6 +6935,8 @@
   async function testSettingsConnections() {
     let levelUrl;
     let engineUrl;
+    let userUrl;
+    let ratingUrl;
     try {
       levelUrl = normalizeBaseUrl(els.levelUrlInput.value);
       els.levelUrlInput.classList.remove('invalid');
@@ -5143,26 +6953,51 @@
       toast({ type: 'error', title: 'URL del motor inválida', message: error.message });
       return;
     }
+    try {
+      userUrl = normalizeBaseUrl(els.userUrlInput.value);
+      els.userUrlInput.classList.remove('invalid');
+    } catch (error) {
+      els.userUrlInput.classList.add('invalid');
+      toast({ type: 'error', title: 'URL de cuentas inválida', message: error.message });
+      return;
+    }
+    try {
+      ratingUrl = normalizeBaseUrl(els.ratingUrlInput.value);
+      els.ratingUrlInput.classList.remove('invalid');
+    } catch (error) {
+      els.ratingUrlInput.classList.add('invalid');
+      toast({ type: 'error', title: 'URL de valoraciones inválida', message: error.message });
+      return;
+    }
 
     els.testConnectionsBtn.disabled = true;
     els.testConnectionsBtn.classList.add('is-loading');
-    els.testLevelDot.className = 'status-dot checking';
-    els.testEngineDot.className = 'status-dot checking';
-    els.testLevelState.textContent = 'Probando…';
-    els.testEngineState.textContent = 'Probando…';
-    els.testLevelState.className = 'conn-state checking';
-    els.testEngineState.className = 'conn-state checking';
+    ['level', 'engine', 'user', 'rating'].forEach((service) => {
+      const refs = testResultRefs(service);
+      if (refs.dot) refs.dot.className = 'status-dot checking';
+      if (refs.stateText) {
+        refs.stateText.textContent = 'Probando…';
+        refs.stateText.className = 'conn-state checking';
+      }
+    });
     try {
-      const [level, engine] = await Promise.all([probeService(levelUrl), probeService(engineUrl)]);
+      const [level, engine, user, rating] = await Promise.all([
+        probeService(levelUrl),
+        probeService(engineUrl),
+        probeService(userUrl),
+        probeService(ratingUrl)
+      ]);
       setTestResult('level', level);
       setTestResult('engine', engine);
-      if (level.ok && engine.ok) {
-        toast({ type: 'success', title: 'Enlace establecido', message: 'Ambos microservicios responden correctamente.' });
+      setTestResult('user', user);
+      setTestResult('rating', rating);
+      if (level.ok && engine.ok && user.ok && rating.ok) {
+        toast({ type: 'success', title: 'Enlace establecido', message: 'Catálogo, motor, cuentas y valoraciones responden correctamente.' });
       } else {
         toast({
           type: 'warn',
           title: 'Conexión parcial',
-          message: `${level.ok ? 'Catálogo OK' : 'Catálogo sin respuesta'} · ${engine.ok ? 'Motor OK' : 'Motor sin respuesta'}.`
+          message: `${level.ok ? 'Catálogo OK' : 'Catálogo sin respuesta'} · ${engine.ok ? 'Motor OK' : 'Motor sin respuesta'} · ${user.ok ? 'Cuentas OK' : 'Cuentas sin respuesta'} · ${rating.ok ? 'Valoraciones OK' : 'Valoraciones sin respuesta'}.`
         });
       }
     } finally {
@@ -5174,6 +7009,8 @@
   async function saveSettings() {
     let levelUrl;
     let engineUrl;
+    let userUrl;
+    let ratingUrl;
     try {
       levelUrl = normalizeBaseUrl(els.levelUrlInput.value);
       els.levelUrlInput.classList.remove('invalid');
@@ -5190,13 +7027,33 @@
       toast({ type: 'error', title: 'URL del motor inválida', message: error.message });
       return;
     }
+    try {
+      userUrl = normalizeBaseUrl(els.userUrlInput.value);
+      els.userUrlInput.classList.remove('invalid');
+    } catch (error) {
+      els.userUrlInput.classList.add('invalid');
+      toast({ type: 'error', title: 'URL de cuentas inválida', message: error.message });
+      return;
+    }
+    try {
+      ratingUrl = normalizeBaseUrl(els.ratingUrlInput.value);
+      els.ratingUrlInput.classList.remove('invalid');
+    } catch (error) {
+      els.ratingUrlInput.classList.add('invalid');
+      toast({ type: 'error', title: 'URL de valoraciones inválida', message: error.message });
+      return;
+    }
 
     const selectedMode = els.modeRealRadio.checked ? 'real' : 'sim';
-    const changedUrls = levelUrl !== state.api.level || engineUrl !== state.api.engine;
+    const changedUrls = levelUrl !== state.api.level || engineUrl !== state.api.engine || userUrl !== state.api.user || ratingUrl !== state.api.rating;
     state.api.level = levelUrl;
     state.api.engine = engineUrl;
+    state.api.user = userUrl;
+    state.api.rating = ratingUrl;
+    state.ratings = {};
+    state.ratingsWarningShown = false;
     state.mode = selectedMode;
-    state.health = { level: 'unknown', engine: 'unknown' };
+    state.health = { level: 'unknown', engine: 'unknown', user: 'unknown' };
     persistSettings();
     closeModal('settingsModal');
     updateModeUI();
@@ -5212,7 +7069,7 @@
 
   function toggleMode() {
     state.mode = state.mode === 'sim' ? 'real' : 'sim';
-    state.health = { level: 'unknown', engine: 'unknown' };
+    state.health = { level: 'unknown', engine: 'unknown', user: 'unknown' };
     persistSettings();
     updateModeUI();
     renderHealth();
@@ -5228,7 +7085,7 @@
   }
 
   /* =======================================================================
-     10. PUBLICACIÓN DE NUEVOS CASOS
+     10. EDITOR DE CASOS, TEST PLAY Y PUBLICACIÓN
      ======================================================================= */
   const EDITOR_PLACEHOLDERS = {
     SUSPECT: { title: 'Nombre del sospechoso', description: 'Coartada, móvil, relación con la víctima…' },
@@ -5237,293 +7094,817 @@
     CLUE: { title: 'Pista o testimonio', description: 'El detalle que confirma o desmonta una hipótesis…' }
   };
 
-  function newEditorTemplate() {
-    return [
-      { type: 'SUSPECT', title: '', description: '', solution: true, hidden: false, aliases: '' },
-      { type: 'WEAPON', title: '', description: '', solution: true, hidden: false, aliases: '' },
-      { type: 'LOCATION', title: '', description: '', solution: true, hidden: false, aliases: '' },
-      { type: 'CLUE', title: '', description: '', solution: true, hidden: false, aliases: '' }
-    ];
+  const TEST_SOURCE_LABELS = {
+    engine: 'Motor de juego · POST /api/engine/validate',
+    local: 'Validación local del borrador · el motor aún no conoce este nivel sin publicar',
+    'local-sim': 'Validación local del borrador · modo simulación'
+  };
+
+  function splitAliases(value) {
+    return String(value || '')
+      .split(',')
+      .map((alias) => alias.trim())
+      .filter(Boolean);
   }
 
-  function renderCardEditor() {
-    els.cardEditor.innerHTML = state.editorRows.map((row, index) => {
-      const meta = typeMeta(row.type);
-      const placeholders = EDITOR_PLACEHOLDERS[row.type] || EDITOR_PLACEHOLDERS.CLUE;
-      return `
-        <div class="editor-row" data-type="${esc(row.type)}" data-index="${index}">
-          <div class="editor-grid">
-            <select class="select" data-field="type" aria-label="Tipo de la tarjeta ${index + 1}">
-              ${TYPE_ORDER.map((type) => `<option value="${type}" ${row.type === type ? 'selected' : ''}>${esc(typeMeta(type).label)}</option>`).join('')}
-            </select>
-            <input class="input" type="text" data-field="title" maxlength="120" value="${esc(row.title)}" placeholder="${esc(placeholders.title)}" aria-label="Título de la tarjeta ${index + 1}" />
-            <label class="editor-solution" title="Incluir esta tarjeta en la solución">
-              <input type="checkbox" data-field="solution" ${row.solution ? 'checked' : ''} />
-              En la solución
-            </label>
-            <button class="editor-remove" type="button" data-remove-row aria-label="Eliminar tarjeta ${index + 1}">${ICON('trash')}</button>
-          </div>
-          <textarea class="textarea" data-field="description" maxlength="4000" rows="2" placeholder="${esc(placeholders.description)}" aria-label="Descripción de la tarjeta ${index + 1}">${esc(row.description)}</textarea>
-          <div class="editor-flags">
-            <label class="editor-hidden" title="La ficha no aparece hasta recuperarla desde el archivador">
-              <input type="checkbox" data-field="hidden" ${row.hidden ? 'checked' : ''} />
-              Ficha oculta
-            </label>
-            <input class="input editor-aliases" type="text" data-field="aliases" maxlength="400" value="${esc(row.aliases || '')}" placeholder="Alias separados por comas: copa, champán, calle falsa 123" aria-label="Alias de búsqueda de la tarjeta ${index + 1}" />
-          </div>
-          <span class="sr-only">${esc(meta.kicker)}</span>
-        </div>`;
-    }).join('');
-    els.cardEditorCount.textContent = `${state.editorRows.length} ${state.editorRows.length === 1 ? 'tarjeta' : 'tarjetas'}`;
+  function updateEditorAuthor() {
+    if (!els.editorAuthorName) return;
+    els.editorAuthorName.textContent = state.auth.username || 'Invitado';
   }
 
-  function syncEditorRows() {
-    state.editorRows = $$('.editor-row', els.cardEditor).map((row) => ({
-      type: row.querySelector('[data-field="type"]').value,
-      title: row.querySelector('[data-field="title"]').value,
-      description: row.querySelector('[data-field="description"]').value,
-      solution: row.querySelector('[data-field="solution"]').checked,
-      hidden: row.querySelector('[data-field="hidden"]').checked,
-      aliases: row.querySelector('[data-field="aliases"]').value
-    }));
+  function updateComposerTypeUI() {
+    if (!els.composerType || !els.composerTitle || !els.composerDescription) return;
+    const type = els.composerType.value;
+    const placeholders = EDITOR_PLACEHOLDERS[type] || EDITOR_PLACEHOLDERS.CLUE;
+    els.composerTitle.placeholder = placeholders.title;
+    els.composerDescription.placeholder = placeholders.description;
+    const hidden = Boolean(els.composerHidden?.checked);
+    els.composerAliasesField?.classList.toggle('is-required', hidden);
+    if (els.composerAliases) {
+      els.composerAliases.placeholder = hidden
+        ? 'Obligatorio: escribe al menos un alias para recuperarla del archivador'
+        : 'copa, champán, calle falsa 123';
+    }
   }
 
-  function openNewCaseModal() {
-    els.newCaseForm.reset();
-    els.newCaseTitleInput.value = '';
-    els.newCaseDescription.value = '';
-    els.newCaseLevelId.value = '';
-    els.newCaseDifficulty.value = 'easy';
-    els.newCaseError.hidden = true;
-    els.cardEditor.querySelectorAll('.invalid').forEach((element) => element.classList.remove('invalid'));
-    state.editorRows = newEditorTemplate();
-    renderCardEditor();
-    els.newCaseModeNote.textContent = state.mode === 'real'
-      ? 'Se publicará mediante POST /api/levels/ en el backend real.'
-      : 'Se guardará en el archivo local del navegador.';
-    openModal('newCaseModal');
+  function showComposerError(message) {
+    if (!els.composerError) return;
+    els.composerError.hidden = false;
+    if (els.composerErrorText) els.composerErrorText.textContent = message;
   }
 
-  function addEditorRow() {
-    syncEditorRows();
-    const nextType = TYPE_ORDER[state.editorRows.length % TYPE_ORDER.length];
-    state.editorRows.push({ type: nextType, title: '', description: '', solution: false, hidden: false, aliases: '' });
-    renderCardEditor();
-    const rows = $$('.editor-row', els.cardEditor);
-    const last = rows[rows.length - 1];
-    last?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    last?.querySelector('[data-field="title"]')?.focus({ preventScroll: true });
+  function hideComposerError() {
+    if (els.composerError) els.composerError.hidden = true;
   }
 
-  function removeEditorRow(button) {
-    syncEditorRows();
-    const row = button.closest('.editor-row');
-    const index = Number(row?.dataset.index);
-    if (!Number.isInteger(index)) return;
-    state.editorRows.splice(index, 1);
-    if (!state.editorRows.length) state.editorRows.push({ type: 'SUSPECT', title: '', description: '', solution: true, hidden: false, aliases: '' });
-    renderCardEditor();
-  }
-
-  function showNewCaseError(message, field) {
-    els.newCaseError.hidden = false;
-    els.newCaseErrorText.textContent = message;
+  function showEditorError(message, field = null) {
+    if (!els.editorError) return;
+    els.editorError.hidden = false;
+    if (els.editorErrorText) els.editorErrorText.textContent = message;
     if (field) {
-      field.classList.add('invalid');
-      field.focus({ preventScroll: false });
-      field.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      field.classList?.add('invalid');
+      try { field.focus?.({ preventScroll: false }); } catch (error) { /* noop */ }
+      field.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
     }
-    els.newCaseError.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    els.editorError.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
-  function buildCaseLevel() {
-    syncEditorRows();
-    els.newCaseError.hidden = true;
-    $$('.invalid', els.newCaseForm).forEach((element) => element.classList.remove('invalid'));
+  function hideEditorError() {
+    if (els.editorError) els.editorError.hidden = true;
+    [els.editorTitleInput, els.editorDescription, els.editorDifficulty, els.editorLevelId,
+      els.composerTitle, els.composerAliases, els.solutionSelector].forEach((element) => {
+      element?.classList?.remove('invalid');
+    });
+  }
 
-    const title = els.newCaseTitleInput.value.trim();
+  function resetComposer() {
+    state.editorEditingId = null;
+    els.cardComposer?.reset();
+    if (els.composerType) {
+      els.composerType.value = TYPE_ORDER[state.editorCards.length % TYPE_ORDER.length] || 'SUSPECT';
+    }
+    if (els.composerModeLabel) els.composerModeLabel.textContent = 'Nueva tarjeta';
+    if (els.composerSaveLabel) els.composerSaveLabel.textContent = 'Añadir al tablón';
+    if (els.composerCancelBtn) els.composerCancelBtn.hidden = true;
+    hideComposerError();
+    updateComposerTypeUI();
+  }
+
+  function makeEditorCardId(type, title) {
+    const prefix = String(type || 'CLUE').toLowerCase();
+    const base = `${prefix}-${slugify(title) || 'tarjeta'}`.slice(0, 58);
+    const used = new Set(state.editorCards.map((card) => card.id));
+    let id = base;
+    let suffix = 2;
+    while (!id || id.length < 2 || used.has(id)) {
+      id = `${base.slice(0, 54)}-${suffix}`;
+      suffix += 1;
+      if (suffix > 500) break;
+    }
+    return id;
+  }
+
+  function editorDraftFingerprint() {
+    return JSON.stringify({
+      title: (els.editorTitleInput?.value || '').trim(),
+      description: (els.editorDescription?.value || '').trim(),
+      difficulty: els.editorDifficulty?.value || 'easy',
+      levelId: (els.editorLevelId?.value || '').trim(),
+      cards: state.editorCards.map((card) => ({
+        id: card.id,
+        type: card.type,
+        title: String(card.title || '').trim(),
+        description: String(card.description || '').trim(),
+        hidden: Boolean(card.hidden),
+        aliases: splitAliases(card.aliases).join('|'),
+        solution: Boolean(card.inSolution)
+      }))
+    });
+  }
+
+  function isEditorVerified() {
+    return Boolean(
+      state.editorVerified
+      && state.editorVerifiedFingerprint
+      && state.editorVerifiedFingerprint === editorDraftFingerprint()
+    );
+  }
+
+  function invalidateEditorVerification() {
+    if (state.editorVerified) state.editorVerificationStale = true;
+    state.editorVerified = false;
+    state.editorVerifiedFingerprint = '';
+    state.editorVerifiedSource = '';
+    state.editorLastVerdict = null;
+    updateEditorStatus();
+  }
+
+  function updateEditorStatus() {
+    if (!els.editorStatus || !els.editorPublishBtn) return;
+    const verified = isEditorVerified();
+    let tone = 'neutral';
+    let message = '🔒 Publicación bloqueada · supera el Test Play resolviendo tu propio caso para desbloquear la publicación.';
+
+    if (state.editorPublishing) {
+      tone = 'publishing';
+      message = 'Publicando expediente en la plataforma…';
+    } else if (verified) {
+      tone = 'verified';
+      message = '✓ Nivel verificado y listo para publicar';
+    } else if (state.editorVerificationStale) {
+      tone = 'warning';
+      message = '⚠ El borrador cambió desde la última prueba. Repite el Test Play para verificar de nuevo el caso.';
+    } else if (state.editorLastVerdict && state.editorLastVerdict.solved === false) {
+      tone = 'error';
+      message = '✗ El Test Play no coincide con la solución secreta. Corrige las tarjetas o la solución y vuelve a probar.';
+    }
+
+    els.editorStatus.className = `editor-status ${tone}`;
+    els.editorStatus.textContent = message;
+    els.editorPublishBtn.disabled = !verified || state.editorPublishing;
+    els.editorTestPlayBtn.disabled = state.editorPublishing;
+  }
+
+  function renderEditorCards() {
+    if (!els.editorCardGrid) return;
+    const cards = state.editorCards;
+    els.editorCardCount.textContent = `${cards.length} ${cards.length === 1 ? 'tarjeta' : 'tarjetas'}`;
+    if (els.editorCardEmpty) els.editorCardEmpty.hidden = cards.length > 0;
+    els.editorCardGrid.innerHTML = cards.map((card) => {
+      const meta = typeMeta(card.type);
+      return `
+        <article class="editor-card-tile" data-type="${esc(card.type)}">
+          <div class="editor-card-top">
+            <span class="type-chip">${ICON(meta.icon)} ${esc(meta.label.toUpperCase())}</span>
+            <span class="editor-card-id" title="${esc(card.id)}">${esc(card.id)}</span>
+          </div>
+          <h4>${esc(card.title || 'Sin título')}</h4>
+          <p>${esc(card.description || 'Sin descripción archivada.')}</p>
+          <div class="editor-card-badges">
+            ${card.inSolution ? `<span class="editor-tile-badge solution">${ICON('check')} Solución</span>` : ''}
+            ${card.hidden ? `<span class="editor-tile-badge hidden">${ICON('lock')} Oculta</span>` : ''}
+          </div>
+          <div class="editor-card-tile-actions">
+            <button class="editor-tile-btn" type="button" data-edit-card="${esc(card.id)}">${ICON('file-text')} Editar</button>
+            <button class="editor-tile-btn danger" type="button" data-delete-card="${esc(card.id)}" aria-label="Eliminar ${esc(card.title || 'tarjeta')}">${ICON('trash')}</button>
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  function renderSolutionSelector() {
+    if (!els.solutionSelector) return;
+    const total = state.editorCards.length;
+    const selected = state.editorCards.filter((card) => card.inSolution).length;
+    if (els.solutionCount) {
+      els.solutionCount.textContent = `${selected} ${selected === 1 ? 'seleccionada' : 'seleccionadas'}`;
+    }
+    if (els.solutionSummary) {
+      els.solutionSummary.textContent = total
+        ? `${selected} de ${total} tarjetas forman la solución secreta. El Test Play debe acertarlas todas, ni una más ni una menos. Las tarjetas ocultas también cuentan.`
+        : 'Añade tarjetas al taller antes de configurar la solución secreta.';
+    }
+    if (!total) {
+      els.solutionSelector.innerHTML = '<span class="editor-empty-note">No hay tarjetas para seleccionar todavía.</span>';
+      return;
+    }
+    els.solutionSelector.innerHTML = state.editorCards.map((card) => {
+      const meta = typeMeta(card.type);
+      return `
+        <button class="solution-chip ${card.inSolution ? 'is-on' : ''}" type="button"
+          data-solution-toggle="${esc(card.id)}" data-type="${esc(card.type)}"
+          aria-pressed="${Boolean(card.inSolution)}">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="chip-title">${esc(card.title || 'Sin título')}</span>
+          ${card.hidden ? '<span class="chip-hidden">OCULTA</span>' : ''}
+          ${ICON('check', 'chip-check')}
+        </button>`;
+    }).join('');
+  }
+
+  function renderEditorWorkspace() {
+    updateEditorAuthor();
+    renderEditorCards();
+    renderSolutionSelector();
+    updateComposerTypeUI();
+    updateEditorStatus();
+  }
+
+  function resetEditorDraft() {
+    state.editorCards = [];
+    state.editorEditingId = null;
+    state.editorVerified = false;
+    state.editorVerifiedFingerprint = '';
+    state.editorVerifiedSource = '';
+    state.editorVerificationStale = false;
+    state.editorLastVerdict = null;
+    state.editorTestSnapshot = null;
+    state.editorTestFingerprint = '';
+    state.editorTestSelected = new Set();
+    state.editorTestBusy = false;
+    state.editorTestVerdict = null;
+    state.editorPublishing = false;
+    if (els.editorTitleInput) els.editorTitleInput.value = '';
+    if (els.editorDescription) els.editorDescription.value = '';
+    if (els.editorDifficulty) els.editorDifficulty.value = 'easy';
+    if (els.editorLevelId) els.editorLevelId.value = '';
+    hideEditorError();
+    hideComposerError();
+    resetComposer();
+    renderEditorWorkspace();
+  }
+
+  function openEditor() {
+    if (!requireAuth('design')) return;
+    state.boardVisible = false;
+    resetEditorDraft();
+    showScreen('editor');
+    document.title = 'CRIME BOARD // Editor de Casos';
+    updateModeUI();
+    renderAuthUI();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    setTimeout(() => els.editorTitleInput?.focus({ preventScroll: true }), 80);
+  }
+
+  function closeEditor() {
+    resetEditorDraft();
+    state.boardVisible = false;
+    showScreen('landing');
+    document.title = 'CRIME BOARD // Dosier Policial';
+    renderGallery();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  function editEditorCard(cardId) {
+    const card = state.editorCards.find((item) => item.id === cardId);
+    if (!card) return;
+    state.editorEditingId = card.id;
+    if (els.composerType) els.composerType.value = card.type;
+    if (els.composerTitle) els.composerTitle.value = card.title;
+    if (els.composerDescription) els.composerDescription.value = card.description || '';
+    if (els.composerHidden) els.composerHidden.checked = Boolean(card.hidden);
+    if (els.composerSolution) els.composerSolution.checked = Boolean(card.inSolution);
+    if (els.composerAliases) els.composerAliases.value = card.aliases || '';
+    if (els.composerModeLabel) els.composerModeLabel.textContent = `Editando «${card.title || card.id}»`;
+    if (els.composerSaveLabel) els.composerSaveLabel.textContent = 'Guardar cambios';
+    if (els.composerCancelBtn) els.composerCancelBtn.hidden = false;
+    hideComposerError();
+    updateComposerTypeUI();
+    els.cardComposer?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    setTimeout(() => els.composerTitle?.focus({ preventScroll: true }), 120);
+  }
+
+  function removeEditorCard(cardId) {
+    const index = state.editorCards.findIndex((card) => card.id === cardId);
+    if (index < 0) return;
+    state.editorCards.splice(index, 1);
+    if (state.editorEditingId === cardId) resetComposer();
+    invalidateEditorVerification();
+    renderEditorWorkspace();
+  }
+
+  function saveComposerCard(event) {
+    event?.preventDefault();
+    if (!isAuthenticated()) {
+      openAuthModal('login', 'editor');
+      return;
+    }
+    const title = (els.composerTitle?.value || '').trim();
+    const type = els.composerType?.value || 'CLUE';
+    const description = (els.composerDescription?.value || '').trim();
+    const hidden = Boolean(els.composerHidden?.checked);
+    const inSolution = Boolean(els.composerSolution?.checked);
+    const aliases = splitAliases(els.composerAliases?.value);
+
     if (!title) {
-      showNewCaseError('El expediente necesita un título.', els.newCaseTitleInput);
-      return null;
+      showComposerError('La tarjeta necesita un título.');
+      els.composerTitle?.focus();
+      return;
+    }
+    if (hidden && !aliases.length) {
+      showComposerError('Una ficha oculta necesita al menos un alias para recuperarla desde el archivador.');
+      els.composerAliases?.focus();
+      return;
+    }
+    const normalizedAliases = aliases.map((alias) => normalizeArchiveText(alias));
+    if (normalizedAliases.some((alias) => !alias || alias.length < 2)) {
+      showComposerError('Cada alias necesita al menos dos caracteres.');
+      els.composerAliases?.focus();
+      return;
+    }
+    if (new Set(normalizedAliases).size !== normalizedAliases.length) {
+      showComposerError('Esta tarjeta tiene un alias repetido.');
+      els.composerAliases?.focus();
+      return;
     }
 
-    const rows = state.editorRows.filter((row) => row.title.trim() || row.description.trim());
-    if (!rows.length) {
-      showNewCaseError('Añade al menos una tarjeta al tablón.', els.cardEditor.querySelector('[data-field="title"]'));
-      return null;
+    if (state.editorEditingId) {
+      const card = state.editorCards.find((item) => item.id === state.editorEditingId);
+      if (!card) {
+        resetComposer();
+        showComposerError('La tarjeta ya no existe en el borrador.');
+        return;
+      }
+      Object.assign(card, {
+        type,
+        title: title.slice(0, 120),
+        description: description.slice(0, 4000),
+        hidden,
+        aliases: aliases.join(', '),
+        inSolution
+      });
+    } else {
+      state.editorCards.push({
+        id: makeEditorCardId(type, title),
+        type,
+        title: title.slice(0, 120),
+        description: description.slice(0, 4000),
+        hidden,
+        aliases: aliases.join(', '),
+        inSolution
+      });
     }
 
-    const emptyTitle = rows.find((row) => !row.title.trim());
-    if (emptyTitle) {
-      const index = state.editorRows.indexOf(emptyTitle);
-      const field = els.cardEditor.querySelector(`.editor-row[data-index="${index}"] [data-field="title"]`);
-      showNewCaseError('Todas las tarjetas necesitan un título.', field);
-      return null;
+    hideEditorError();
+    resetComposer();
+    invalidateEditorVerification();
+    renderEditorWorkspace();
+  }
+
+  function collectEditorDraft() {
+    const title = (els.editorTitleInput?.value || '').trim();
+    if (!title) {
+      return { ok: false, message: 'El expediente necesita un título antes de probarlo o publicarlo.', field: els.editorTitleInput };
+    }
+    if (!state.editorCards.length) {
+      return { ok: false, message: 'Añade al menos una tarjeta al taller antes de probar o publicar el caso.', field: els.composerTitle };
+    }
+
+    const missingTitle = state.editorCards.find((card) => !String(card.title || '').trim());
+    if (missingTitle) {
+      return { ok: false, message: 'Todas las tarjetas necesitan un título.', field: els.composerTitle };
     }
 
     const counts = { SUSPECT: 0, WEAPON: 0, LOCATION: 0, CLUE: 0 };
-    rows.forEach((row) => { if (counts[row.type] !== undefined) counts[row.type] += 1; });
+    state.editorCards.forEach((card) => {
+      if (counts[card.type] !== undefined) counts[card.type] += 1;
+    });
     const missingTypes = TYPE_ORDER.filter((type) => counts[type] === 0);
     if (missingTypes.length) {
-      showNewCaseError(`Falta al menos una tarjeta de tipo ${missingTypes.map((type) => typeMeta(type).label).join(', ')}. El tablón necesita sospechosos, armas, lugares y pistas para jugar.`);
-      return null;
+      return {
+        ok: false,
+        message: `Falta al menos una tarjeta de tipo ${missingTypes.map((type) => typeMeta(type).label).join(', ')}. El tablón necesita sospechosos, armas, lugares y pistas.`,
+        field: els.composerType
+      };
     }
 
-    if (!rows.some((row) => row.solution)) {
-      showNewCaseError('Marca al menos una tarjeta como “En la solución”.');
-      return null;
-    }
-
-    if (!rows.some((row) => !row.hidden)) {
-      showNewCaseError('El expediente necesita al menos una tarjeta visible para abrir el tablón.');
-      return null;
+    if (!state.editorCards.some((card) => !card.hidden)) {
+      return { ok: false, message: 'El expediente necesita al menos una tarjeta visible para poder abrir el tablón.', field: els.composerHidden };
     }
 
     const aliasOwner = new Map();
-    const rowsWithAliases = rows.map((row) => {
-      const aliases = String(row.aliases || '')
-        .split(',')
-        .map((alias) => alias.trim())
-        .filter(Boolean);
-      if (row.hidden && !aliases.length) {
-        const index = state.editorRows.indexOf(row);
-        const field = els.cardEditor.querySelector(`.editor-row[data-index="${index}"] [data-field="aliases"]`);
-        showNewCaseError(`La ficha oculta «${row.title.trim()}» necesita al menos un alias de búsqueda.`, field);
-        return null;
+    const cards = [];
+    for (const card of state.editorCards) {
+      const aliases = splitAliases(card.aliases);
+      if (card.hidden && !aliases.length) {
+        return {
+          ok: false,
+          message: `La ficha oculta «${String(card.title || card.id).trim()}» necesita al menos un alias de búsqueda.`,
+          field: els.composerAliases
+        };
       }
       for (const alias of aliases) {
         const normalized = normalizeArchiveText(alias);
-        if (!normalized) continue;
-        if (normalized.length < 2) {
-          showNewCaseError(`El alias «${alias}» necesita al menos dos caracteres.`);
-          return null;
+        if (!normalized || normalized.length < 2) {
+          return { ok: false, message: `El alias «${alias}» necesita al menos dos caracteres.`, field: els.composerAliases };
         }
         if (aliasOwner.has(normalized)) {
-          showNewCaseError(`El alias «${alias}» está repetido con «${aliasOwner.get(normalized)}».`);
-          return null;
+          return {
+            ok: false,
+            message: `El alias «${alias}» está repetido entre «${aliasOwner.get(normalized)}» y «${card.title}».`,
+            field: els.composerAliases
+          };
         }
-        aliasOwner.set(normalized, row.title.trim());
+        aliasOwner.set(normalized, String(card.title || card.id).trim());
       }
-      return { ...row, aliases };
-    });
-    if (rowsWithAliases.some((row) => !row)) return null;
+      cards.push({
+        id: card.id,
+        type: card.type,
+        title: String(card.title).trim().slice(0, 120),
+        description: String(card.description || '').trim().slice(0, 4000),
+        hidden: Boolean(card.hidden),
+        aliases
+      });
+    }
 
-    const usedIds = new Set();
-    const prepared = rowsWithAliases.map((row) => {
-      const prefix = row.type.toLowerCase();
-      const slug = slugify(row.title) || 'sin-titulo';
-      const base = `${prefix}-${slug}`.slice(0, 58);
-      let id = base;
-      let suffix = 2;
-      while (usedIds.has(id)) {
-        id = `${base.slice(0, 54)}-${suffix}`;
-        suffix += 1;
-      }
-      usedIds.add(id);
+    const solution = state.editorCards.filter((card) => card.inSolution).map((card) => card.id);
+    if (!solution.length) {
       return {
-        id,
-        type: row.type,
-        title: row.title.trim().slice(0, 120),
-        description: row.description.trim().slice(0, 4000),
-        hidden: Boolean(row.hidden),
-        aliases: row.hidden ? row.aliases : [],
-        solution: Boolean(row.solution)
+        ok: false,
+        message: 'Marca al menos una tarjeta en la solución secreta. Sin combinación ganadora el caso no se puede probar ni publicar.',
+        field: els.solutionSelector
       };
-    });
+    }
 
-    const solution = prepared.filter((row) => row.solution).map((row) => row.id);
-    const baseLevelId = slugify(els.newCaseLevelId.value) || slugify(title) || `caso-${Date.now().toString(36)}`;
+    let baseLevelId = slugify(els.editorLevelId?.value || '') || slugify(title) || 'caso';
+    if (baseLevelId.length < 2) baseLevelId = `caso-${baseLevelId || 'local'}`;
+    baseLevelId = baseLevelId.slice(0, 58);
     const existing = new Set([
       ...state.levels.map((level) => level.level_id),
       ...Object.keys(allMockLevels())
     ]);
-    let levelId = baseLevelId.slice(0, 64);
-    if (levelId.length < 2) levelId = `caso-${levelId || 'local'}`.slice(0, 64);
+    let levelId = baseLevelId;
     let suffix = 2;
     while (existing.has(levelId)) {
-      levelId = `${baseLevelId.slice(0, 58)}-${suffix}`;
+      levelId = `${baseLevelId}-${suffix}`.slice(0, 64);
       suffix += 1;
     }
 
-    const cards = prepared.map(({ id, type, title: cardTitle, description, hidden, aliases }) => ({ id, type, title: cardTitle, description, hidden, aliases }));
-    const payload = {
-      level_id: levelId,
-      title: title.slice(0, 120),
-      description: els.newCaseDescription.value.trim().slice(0, 4000),
-      difficulty: els.newCaseDifficulty.value,
-      cards,
-      solution_card_ids: solution
-    };
-
     return {
-      payload,
-      localLevel: {
-        ...payload,
-        card_count: cards.length,
-        created_at: nowISO()
+      ok: true,
+      payload: {
+        level_id: levelId,
+        title: title.slice(0, 120),
+        description: (els.editorDescription?.value || '').trim().slice(0, 4000),
+        difficulty: els.editorDifficulty?.value || 'easy',
+        cards,
+        solution_card_ids: solution
       }
     };
   }
 
-  function finishCaseCreation(level, source, { local = false } = {}) {
-    const solution = Array.isArray(level.solution_card_ids) ? level.solution_card_ids.slice() : [];
-    state.knownSolutions[level.level_id] = solution;
-    if (local) saveUserLevel(level);
-    upsertSummary(level);
-    renderLevelPicker();
-    activateLevel(level, source, { solution });
-    closeModal('newCaseModal');
-    toast({
-      type: 'success',
-      title: 'Expediente publicado',
-      message: `${level.title} ya está clavado en el tablón${local ? ' y guardado en el archivo local' : ' y disponible en el catálogo'}.`
-    });
+  function validateDraftLocally(level, cardIds) {
+    const started = performance.now();
+    const selected = new Set(cardIds);
+    const solution = new Set(level.solution_card_ids || []);
+    const matched = [...selected].filter((id) => solution.has(id)).length;
+    const extra = [...selected].filter((id) => !solution.has(id));
+    const missing = [...solution].filter((id) => !selected.has(id));
+    const solved = selected.size === solution.size && missing.length === 0;
+
+    let feedback;
+    if (solved) {
+      feedback = 'La acusación coincide exactamente con la solución secreta del borrador. El caso está listo para publicarse.';
+    } else {
+      feedback = `Tu acusación de prueba no coincide con la solución secreta del borrador. ${matched} de ${selected.size} tarjetas seleccionadas pertenecen a la combinación.`;
+      if (extra.length) feedback += ` Hay ${extra.length} tarjeta${extra.length === 1 ? '' : 's'} que no forma${extra.length === 1 ? '' : 'n'} parte de la solución.`;
+      if (missing.length) feedback += ` Falta${missing.length === 1 ? '' : 'n'} ${missing.length} tarjeta${missing.length === 1 ? '' : 's'} de la combinación secreta.`;
+      feedback += ' Vuelve al editor, corrige las tarjetas o la solución y repite el Test Play.';
+    }
+
+    return {
+      solved,
+      feedback_message: feedback,
+      elapsed_ms: Math.round(performance.now() - started)
+    };
   }
 
-  async function submitNewCase(event) {
-    event.preventDefault();
-    if (state.publishing) return;
+  function testCardHtml(card, index) {
+    const meta = typeMeta(card.type);
+    const selected = state.editorTestSelected.has(card.id);
+    return `
+      <button class="test-card ${selected ? 'selected' : ''}" type="button"
+        data-test-card="${esc(card.id)}" data-type="${esc(card.type)}"
+        aria-pressed="${selected}" aria-label="${esc(meta.label)}: ${esc(card.title)}${selected ? '. Seleccionada' : ''}">
+        <span class="test-card-top">
+          <span class="type-chip">${ICON(meta.icon)} ${esc(meta.label.toUpperCase())}</span>
+          ${card.hidden ? '<span class="test-hidden-badge">OCULTA</span>' : ''}
+        </span>
+        <strong class="test-card-title">${esc(card.title)}</strong>
+        <span class="test-card-desc">${esc(card.description || 'Sin descripción archivada.')}</span>
+        <span class="test-card-code">${esc(meta.code)}-${String(index + 1).padStart(2, '0')} · ${selected ? 'SELECCIONADA' : 'SELECCIONAR'}</span>
+        ${selected ? `<span class="test-card-check">${ICON('check')}</span>` : ''}
+      </button>`;
+  }
 
-    const built = buildCaseLevel();
-    if (!built) return;
-    const { payload, localLevel } = built;
+  function renderTestVerdict() {
+    if (!els.testVerdict) return;
+    if (state.editorTestBusy) {
+      els.testVerdict.hidden = false;
+      els.testVerdict.className = 'test-verdict loading';
+      els.testVerdictTitle.textContent = 'Contrastando la acusación…';
+      els.testVerdictText.textContent = 'El motor compara tu selección con la solución secreta del borrador.';
+      els.testVerdictSource.textContent = '';
+      els.testVerifiedLine.hidden = true;
+      els.testBackToEditorBtn.innerHTML = `${ICON('arrow-left')} Volver al editor`;
+      return;
+    }
 
-    state.publishing = true;
-    els.publishCaseBtn.disabled = true;
-    els.publishCaseBtn.classList.add('is-loading');
+    const verdict = state.editorTestVerdict;
+    if (!verdict) {
+      els.testVerdict.hidden = true;
+      return;
+    }
+
+    els.testVerdict.hidden = false;
+    if (verdict.error) {
+      els.testVerdict.className = 'test-verdict error';
+      els.testVerdictTitle.textContent = 'SIN VEREDICTO';
+      els.testVerdictText.textContent = verdict.message || 'No se pudo validar la acusación de prueba. Revisa la conexión con el motor e inténtalo de nuevo.';
+      els.testVerdictSource.textContent = '';
+      els.testVerifiedLine.hidden = true;
+      els.testBackToEditorBtn.innerHTML = `${ICON('arrow-left')} Volver al editor y corregir`;
+      return;
+    }
+
+    if (verdict.solved) {
+      els.testVerdict.className = 'test-verdict success';
+      els.testVerdictTitle.textContent = 'CASO RESUELTO';
+      els.testVerdictText.textContent = verdict.feedback || 'La acusación coincide con la solución secreta. La publicación queda desbloqueada.';
+      els.testVerdictSource.textContent = `Fuente: ${TEST_SOURCE_LABELS[verdict.source] || 'validación del borrador'}.`;
+      els.testVerifiedLine.hidden = false;
+      els.testBackToEditorBtn.innerHTML = `${ICON('arrow-left')} Volver al editor y publicar`;
+    } else {
+      els.testVerdict.className = 'test-verdict fail';
+      els.testVerdictTitle.textContent = 'SOLUCIÓN INCORRECTA';
+      els.testVerdictText.textContent = `${verdict.feedback || 'La acusación no coincide con la solución secreta.'} Revisa las tarjetas y la solución en el editor antes de repetir el Test Play.`;
+      els.testVerdictSource.textContent = `Fuente: ${TEST_SOURCE_LABELS[verdict.source] || 'validación del borrador'}.`;
+      els.testVerifiedLine.hidden = true;
+      els.testBackToEditorBtn.innerHTML = `${ICON('arrow-left')} Volver al editor y corregir`;
+    }
+  }
+
+  function renderTestPlay() {
+    const snapshot = state.editorTestSnapshot;
+    if (!els.testBoard || !snapshot) return;
+    const selected = state.editorTestSelected.size;
+    if (els.testLevelTitle) els.testLevelTitle.textContent = `Test Play · ${snapshot.title}`;
+    if (els.testBoardMeta) {
+      els.testBoardMeta.textContent = `EXP. ${String(snapshot.level_id || '').toUpperCase()} · ${snapshot.cards.length} FICHAS`;
+    }
+    els.testBoard.innerHTML = snapshot.cards.map(testCardHtml).join('');
+    if (els.testSelectionCount) {
+      els.testSelectionCount.textContent = `${selected} ${selected === 1 ? 'tarjeta seleccionada' : 'tarjetas seleccionadas'}`;
+    }
+    if (els.testSubmitBtn) {
+      els.testSubmitBtn.disabled = state.editorTestBusy || selected === 0;
+      els.testSubmitBtn.classList.toggle('is-loading', state.editorTestBusy);
+    }
+    if (els.testClearBtn) els.testClearBtn.hidden = selected === 0 || state.editorTestBusy;
+    if (els.testModeBadge) {
+      els.testModeBadge.textContent = state.mode === 'real' ? 'BACKEND REAL' : 'SIMULACIÓN LOCAL';
+      els.testModeBadge.classList.toggle('real', state.mode === 'real');
+    }
+    if (els.testModeHint) {
+      els.testModeHint.textContent = state.mode === 'real'
+        ? 'El motor validará el borrador; si aún no existe en el catálogo, se usará la validación local.'
+        : 'Validación local del borrador con la solución secreta.';
+    }
+    renderTestVerdict();
+  }
+
+  function openTestPlay() {
+    if (!isAuthenticated()) {
+      openAuthModal('login', 'design');
+      return;
+    }
+    const built = collectEditorDraft();
+    if (!built.ok) {
+      showEditorError(built.message, built.field);
+      return;
+    }
+    hideEditorError();
+    state.editorTestSnapshot = built.payload;
+    state.editorTestFingerprint = editorDraftFingerprint();
+    state.editorTestSelected = new Set();
+    state.editorTestVerdict = null;
+    state.editorTestBusy = false;
+    showScreen('test');
+    document.title = 'CRIME BOARD // Test Play del caso';
+    renderTestPlay();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  function backToEditorFromTest() {
+    showScreen('editor');
+    document.title = 'CRIME BOARD // Editor de Casos';
+    renderEditorWorkspace();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  async function submitTestPlay() {
+    if (state.editorTestBusy) return;
+    const snapshot = state.editorTestSnapshot;
+    if (!snapshot) return;
+    const selected = [...state.editorTestSelected];
+    if (!selected.length) {
+      toast({ type: 'warn', title: 'Acusación vacía', message: 'Selecciona al menos una tarjeta del tablero de pruebas.' });
+      return;
+    }
+
+    state.editorTestBusy = true;
+    state.editorTestVerdict = null;
+    renderTestPlay();
+
+    let result = null;
+    let source = 'local-sim';
+    try {
+      if (state.mode === 'real') {
+        try {
+          result = await api.validate({
+            level_id: snapshot.level_id,
+            selected_card_ids: selected,
+            guest: false
+          });
+          source = 'engine';
+        } catch (error) {
+          if (error instanceof ApiError && (error.status === 404 || isAvailabilityError(error))) {
+            if (isAvailabilityError(error)) {
+              setHealth('engine', 'offline');
+              notifyFallback('Test Play del borrador');
+            }
+            await sleep(220);
+            result = validateDraftLocally(snapshot, selected);
+            source = 'local';
+          } else {
+            throw error;
+          }
+        }
+      } else {
+        await sleep(520);
+        result = validateDraftLocally(snapshot, selected);
+        source = 'local-sim';
+      }
+
+      if (!result || typeof result.solved !== 'boolean') {
+        throw new ApiError('El motor devolvió un veredicto inválido.', 502);
+      }
+
+      const solved = Boolean(result.solved);
+      const feedback = String(result.feedback_message || '').trim();
+      state.editorTestVerdict = { solved, feedback, source, error: false };
+
+      if (solved) {
+        const current = editorDraftFingerprint();
+        if (current !== state.editorTestFingerprint) {
+          state.editorTestVerdict = {
+            solved: false,
+            feedback: 'El borrador cambió durante la prueba. Vuelve al editor y repite el Test Play.',
+            source,
+            error: false
+          };
+          state.editorVerified = false;
+          state.editorVerifiedFingerprint = '';
+          state.editorVerifiedSource = '';
+          state.editorVerificationStale = true;
+          state.editorLastVerdict = null;
+        } else {
+          state.editorVerified = true;
+          state.editorVerifiedFingerprint = state.editorTestFingerprint;
+          state.editorVerifiedSource = source;
+          state.editorVerificationStale = false;
+          state.editorLastVerdict = null;
+        }
+      } else {
+        state.editorVerified = false;
+        state.editorVerifiedFingerprint = '';
+        state.editorVerifiedSource = '';
+        state.editorVerificationStale = false;
+        state.editorLastVerdict = { solved: false, message: feedback };
+      }
+    } catch (error) {
+      state.editorTestVerdict = {
+        solved: false,
+        feedback: '',
+        source: '',
+        error: true,
+        message: error.message || 'No se pudo validar la acusación de prueba.'
+      };
+      state.editorVerified = false;
+      state.editorVerifiedFingerprint = '';
+      state.editorVerifiedSource = '';
+      state.editorVerificationStale = false;
+      state.editorLastVerdict = null;
+    } finally {
+      state.editorTestBusy = false;
+      renderTestPlay();
+      updateEditorStatus();
+    }
+  }
+
+  async function publishEditorCase() {
+    if (state.editorPublishing) return;
+    if (!isAuthenticated()) {
+      openAuthModal('login', 'editor');
+      return;
+    }
+    const built = collectEditorDraft();
+    if (!built.ok) {
+      showEditorError(built.message, built.field);
+      return;
+    }
+    if (!isEditorVerified()) {
+      updateEditorStatus();
+      toast({
+        type: 'warn',
+        title: 'Publicación bloqueada',
+        message: 'Supera el Test Play resolviendo tu propio caso antes de publicarlo.'
+      });
+      return;
+    }
+
+    state.editorPublishing = true;
+    hideEditorError();
+    updateEditorStatus();
 
     try {
       if (state.mode === 'sim') {
         await sleep(420);
-        finishCaseCreation(localLevel, 'sim', { local: true });
+        const localLevel = {
+          ...built.payload,
+          creator_username: state.auth.username || 'Anónimo',
+          card_count: built.payload.cards.length,
+          created_at: nowISO()
+        };
+        finishEditorPublish(localLevel, built.payload.solution_card_ids, { local: true });
         return;
       }
 
+      let created;
       try {
-        const response = await api.createLevel(payload);
-        const created = {
-          ...localLevel,
-          ...response,
-          level_id: response.level_id || payload.level_id,
-          cards: Array.isArray(response.cards) && response.cards.length ? response.cards : payload.cards,
-          solution_card_ids: Array.isArray(response.solution_card_ids) && response.solution_card_ids.length
-            ? response.solution_card_ids
-            : payload.solution_card_ids,
-          created_at: response.created_at || nowISO()
-        };
-        finishCaseCreation(created, 'real', { local: false });
+        created = await api.createLevel(built.payload, state.auth.token);
       } catch (error) {
-        if (!isAvailabilityError(error)) throw error;
-        notifyFallback('publicación de nivel');
-        finishCaseCreation(localLevel, 'sim', { local: true });
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          state.auth = { token: '', username: '', userId: '' };
+          persistAuth();
+          renderAuthUI();
+          openAuthModal('login', 'editor');
+          throw new ApiError('Tu sesión ya no es válida. Inicia sesión de nuevo para publicar el caso; el borrador no se ha perdido.', error.status, error.payload);
+        }
+        throw error;
       }
+
+      const createdLevel = {
+        ...built.payload,
+        ...(created && typeof created === 'object' ? created : {}),
+        level_id: created?.level_id || built.payload.level_id,
+        title: created?.title || built.payload.title,
+        description: created?.description ?? built.payload.description,
+        difficulty: created?.difficulty || built.payload.difficulty,
+        creator_username: created?.creator_username || state.auth.username || 'Anónimo',
+        cards: Array.isArray(created?.cards) && created.cards.length ? created.cards : built.payload.cards,
+        solution_card_ids: Array.isArray(created?.solution_card_ids) && created.solution_card_ids.length
+          ? created.solution_card_ids
+          : built.payload.solution_card_ids,
+        card_count: Number(created?.card_count) || built.payload.cards.length,
+        created_at: created?.created_at || nowISO()
+      };
+      finishEditorPublish(createdLevel, built.payload.solution_card_ids, { local: false });
     } catch (error) {
-      showNewCaseError(error.message || 'No se pudo publicar el expediente.');
+      showEditorError(error.message || 'No se pudo publicar el expediente en la plataforma.');
+      toast({ type: 'error', title: 'Publicación fallida', message: error.message || 'El backend no confirmó la publicación.' });
     } finally {
-      state.publishing = false;
-      els.publishCaseBtn.disabled = false;
-      els.publishCaseBtn.classList.remove('is-loading');
+      state.editorPublishing = false;
+      updateEditorStatus();
     }
+  }
+
+  function finishEditorPublish(level, solution, { local = false } = {}) {
+    const published = {
+      ...level,
+      solution_card_ids: Array.isArray(solution) && solution.length
+        ? solution.slice()
+        : (Array.isArray(level.solution_card_ids) ? level.solution_card_ids.slice() : []),
+      card_count: Number(level.card_count) || (Array.isArray(level.cards) ? level.cards.length : 0),
+      created_at: level.created_at || nowISO()
+    };
+
+    state.knownSolutions[published.level_id] = published.solution_card_ids.slice();
+    if (local) saveUserLevel(published);
+    upsertSummary(published);
+    state.highlightLevelId = published.level_id;
+    state.boardVisible = false;
+    resetEditorDraft();
+    showScreen('landing');
+    document.title = 'CRIME BOARD // Dosier Policial';
+    renderGallery();
+    renderLevelPicker();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    toast({
+      type: 'success',
+      title: local ? 'Nivel guardado en el catálogo local' : 'Nivel publicado en la plataforma',
+      message: `${published.title} ya aparece en el dosier${local ? ' y se conserva en este navegador' : ' y está disponible en el catálogo'}.`
+    });
   }
 
   /* =======================================================================
@@ -5532,6 +7913,15 @@
   async function manualRefresh() {
     const previousId = state.level?.level_id;
     const levels = await refreshCatalog({ silent: false });
+    renderGallery();
+    if (!state.boardVisible) {
+      toast({
+        type: 'info',
+        title: 'Dosier actualizado',
+        message: `${plural(levels.length, 'expediente disponible', 'expedientes disponibles')}${state.catalogFallback ? ' · archivo local' : ''}.`
+      });
+      return;
+    }
     if (!state.level && levels.length) {
       await loadLevel(levels[0].level_id, { silent: true });
     } else if (previousId && !levels.some((level) => level.level_id === previousId) && levels.length) {
@@ -5557,6 +7947,52 @@
       openSettingsModal();
       testSettingsConnections();
     });
+    els.healthUser.addEventListener('click', () => {
+      openSettingsModal();
+      testSettingsConnections();
+    });
+
+    els.landingSettingsBtn?.addEventListener('click', openSettingsModal);
+    els.landingHealthLevel?.addEventListener('click', () => {
+      openSettingsModal();
+      testSettingsConnections();
+    });
+    els.landingHealthEngine?.addEventListener('click', () => {
+      openSettingsModal();
+      testSettingsConnections();
+    });
+    els.landingHealthUser?.addEventListener('click', () => {
+      openSettingsModal();
+      testSettingsConnections();
+    });
+    els.landingRefreshBtn?.addEventListener('click', manualRefresh);
+    els.designCaseBtn?.addEventListener('click', openEditor);
+    els.emptyDesignCaseBtn?.addEventListener('click', openEditor);
+    els.backToGalleryBtn?.addEventListener('click', backToGallery);
+
+    els.caseGallery?.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-play-level]');
+      if (!button) return;
+      openBoard(button.dataset.playLevel);
+    });
+
+    const toggleAuth = () => {
+      if (isAuthenticated()) logout();
+      else openAuthModal('login');
+    };
+    els.authActionBtn?.addEventListener('click', toggleAuth);
+    els.boardAuthBtn?.addEventListener('click', toggleAuth);
+
+    els.authForm?.addEventListener('submit', submitAuth);
+    [els.authLoginTab, els.authRegisterTab].forEach((tab) => {
+      tab?.addEventListener('click', () => setAuthMode(tab.dataset.authMode));
+    });
+    [els.authUsername, els.authPassword, els.authEmail].forEach((input) => {
+      input?.addEventListener('input', () => {
+        if (els.authError) els.authError.hidden = true;
+        input.classList.remove('invalid');
+      });
+    });
 
     els.levelSelect.addEventListener('change', () => {
       if (els.levelSelect.value && els.levelSelect.value !== state.level?.level_id) {
@@ -5565,12 +8001,13 @@
     });
     els.refreshCatalogBtn.addEventListener('click', manualRefresh);
 
-    els.newCaseBtn.addEventListener('click', openNewCaseModal);
-    els.emptyNewCaseBtn.addEventListener('click', openNewCaseModal);
+    els.newCaseBtn.addEventListener('click', openEditor);
+    els.emptyNewCaseBtn.addEventListener('click', openEditor);
     els.archiveBtn.addEventListener('click', openArchiveModal);
     els.viewCluesBtn.addEventListener('click', openCluesModal);
     els.accuseBtn.addEventListener('click', openAccusationModal);
     els.confirmAccuseBtn.addEventListener('click', confirmAccusation);
+    els.caseRatingBtn?.addEventListener('click', openRatingModal);
 
     els.archiveForm.addEventListener('submit', handleArchiveSubmit);
     els.archiveHistory.addEventListener('click', (event) => {
@@ -5599,10 +8036,14 @@
 
     els.testConnectionsBtn.addEventListener('click', testSettingsConnections);
     els.saveSettingsBtn.addEventListener('click', saveSettings);
-    [els.levelUrlInput, els.engineUrlInput].forEach((input) => {
+    [els.levelUrlInput, els.engineUrlInput, els.userUrlInput, els.ratingUrlInput].forEach((input) => {
       input.addEventListener('input', () => {
         input.classList.remove('invalid');
-        resetTestResult(input === els.levelUrlInput ? 'level' : 'engine');
+        const service = input === els.levelUrlInput ? 'level'
+          : input === els.engineUrlInput ? 'engine'
+          : input === els.ratingUrlInput ? 'rating'
+          : 'user';
+        resetTestResult(service);
       });
     });
     [els.modeSimRadio, els.modeRealRadio].forEach((radio) => {
@@ -5611,36 +8052,92 @@
       });
     });
 
-    els.newCaseForm.addEventListener('submit', submitNewCase);
-    els.addCardRowBtn.addEventListener('click', addEditorRow);
-    els.cardEditor.addEventListener('click', (event) => {
-      const remove = event.target.closest('[data-remove-row]');
+    // Editor de casos: metadatos, taller de tarjetas y solución secreta.
+    els.editorBackBtn?.addEventListener('click', closeEditor);
+    els.editorTestPlayBtn?.addEventListener('click', openTestPlay);
+    els.editorPublishBtn?.addEventListener('click', publishEditorCase);
+    els.cardComposer?.addEventListener('submit', saveComposerCard);
+    els.composerCancelBtn?.addEventListener('click', () => {
+      resetComposer();
+      hideComposerError();
+    });
+    els.composerType?.addEventListener('change', updateComposerTypeUI);
+    els.composerHidden?.addEventListener('change', updateComposerTypeUI);
+    [els.composerTitle, els.composerDescription, els.composerAliases].forEach((input) => {
+      input?.addEventListener('input', () => {
+        input.classList.remove('invalid');
+        hideComposerError();
+      });
+    });
+
+    els.editorCardGrid?.addEventListener('click', (event) => {
+      const edit = event.target.closest('[data-edit-card]');
+      if (edit) {
+        event.preventDefault();
+        editEditorCard(edit.dataset.editCard);
+        return;
+      }
+      const remove = event.target.closest('[data-delete-card]');
       if (remove) {
         event.preventDefault();
-        removeEditorRow(remove);
+        removeEditorCard(remove.dataset.deleteCard);
       }
     });
-    els.cardEditor.addEventListener('change', (event) => {
-      if (event.target.matches('[data-field="type"]')) {
-        const row = event.target.closest('.editor-row');
-        const type = event.target.value;
-        row.dataset.type = type;
-        const placeholders = EDITOR_PLACEHOLDERS[type] || EDITOR_PLACEHOLDERS.CLUE;
-        row.querySelector('[data-field="title"]').placeholder = placeholders.title;
-        row.querySelector('[data-field="description"]').placeholder = placeholders.description;
-      }
+
+    els.solutionSelector?.addEventListener('click', (event) => {
+      const toggle = event.target.closest('[data-solution-toggle]');
+      if (!toggle) return;
+      const card = state.editorCards.find((item) => item.id === toggle.dataset.solutionToggle);
+      if (!card) return;
+      card.inSolution = !card.inSolution;
+      els.solutionSelector.classList.remove('invalid');
+      invalidateEditorVerification();
+      renderEditorWorkspace();
     });
-    els.cardEditor.addEventListener('input', (event) => {
-      event.target.classList.remove('invalid');
-      if (!els.newCaseError.hidden) els.newCaseError.hidden = true;
+
+    [els.editorTitleInput, els.editorDescription, els.editorDifficulty, els.editorLevelId].forEach((input) => {
+      const handler = () => {
+        input?.classList.remove('invalid');
+        if (els.editorError) els.editorError.hidden = true;
+        invalidateEditorVerification();
+      };
+      input?.addEventListener('input', handler);
+      input?.addEventListener('change', handler);
     });
-    els.newCaseTitleInput.addEventListener('input', () => {
-      els.newCaseTitleInput.classList.remove('invalid');
-      if (!els.newCaseError.hidden) els.newCaseError.hidden = true;
+
+    // Test Play: selección de tarjetas y acusación de prueba.
+    els.testBackBtn?.addEventListener('click', backToEditorFromTest);
+    els.testBackToEditorBtn?.addEventListener('click', backToEditorFromTest);
+    els.testBoard?.addEventListener('click', (event) => {
+      const card = event.target.closest('[data-test-card]');
+      if (!card || !state.editorTestSnapshot) return;
+      const id = card.dataset.testCard;
+      if (state.editorTestSelected.has(id)) state.editorTestSelected.delete(id);
+      else state.editorTestSelected.add(id);
+      state.editorTestVerdict = null;
+      renderTestPlay();
     });
-    els.newCaseLevelId.addEventListener('input', () => els.newCaseLevelId.classList.remove('invalid'));
+    els.testClearBtn?.addEventListener('click', () => {
+      state.editorTestSelected = new Set();
+      state.editorTestVerdict = null;
+      renderTestPlay();
+    });
+    els.testSubmitBtn?.addEventListener('click', submitTestPlay);
 
     document.addEventListener('click', (event) => {
+      const ratingSubmit = event.target.closest('[data-rating-submit]');
+      if (ratingSubmit) {
+        event.preventDefault();
+        submitRating(ratingSubmit.closest('[data-rating-widget]'));
+        return;
+      }
+      const ratingAuth = event.target.closest('[data-open-auth-from-rating]');
+      if (ratingAuth) {
+        event.preventDefault();
+        closeModal('ratingModal');
+        openAuthModal('login', 'rating');
+        return;
+      }
       const closer = event.target.closest('[data-close-modal]');
       if (closer) {
         const layer = closer.closest('.modal-layer');
@@ -5690,13 +8187,18 @@
   function init() {
     state.lastLevel = STORED_SETTINGS.lastLevel || 'tutorial-001';
     state.lastHealthCheck = 0;
+    state.boardVisible = false;
+    showScreen('landing');
     els.sessionIdText.textContent = sessionId;
     els.sessionTag.textContent = `#${sessionId.slice(-8).toUpperCase()}`;
     bindBoardEvents();
     bindUiEvents();
+    renderAuthUI();
+    renderGallery();
     renderAll();
     updateModeUI();
     renderHealth();
+    restoreAuth();
     try {
       if (window.lucide?.createIcons) window.lucide.createIcons({ attrs: { 'stroke-width': 1.8 } });
     } catch (error) {

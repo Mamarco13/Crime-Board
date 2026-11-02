@@ -10,6 +10,10 @@ Flujo de una partida:
 3. ``POST /api/engine/validate``: el jugador envía su acusación. El motor pide
    la solución al catálogo interno, la compara y devuelve veredicto + feedback.
 
+Todas las acciones aceptan partidas de **invitado** (``guest=true`` o sin
+``session_id``): el motor no exige token. La identidad solo es necesaria para
+publicar casos en Level Management, no para jugar.
+
 La solución nunca se expone en las respuestas de este servicio.
 """
 

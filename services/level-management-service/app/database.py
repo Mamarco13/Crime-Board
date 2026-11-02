@@ -7,6 +7,7 @@ por migraciones de Alembic.
 
 from __future__ import annotations
 
+from sqlalchemy import text
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -47,6 +48,30 @@ async def init_database(
     try:
         async with engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
+            # Migraciones ligeras e idempotentes para volúmenes creados con una
+            # versión anterior del esquema. En un proyecto con más historia este
+            # paso se sustituiría por una migración de Alembic.
+            migrations = (
+                # Autoría de los casos (Hito 3).
+                (
+                    "ALTER TABLE levels "
+                    "ADD COLUMN IF NOT EXISTS creator_username "
+                    "VARCHAR(64) NOT NULL DEFAULT 'Anónimo'"
+                ),
+                # Tarjetas recuperables desde el archivador (Hito 2).
+                (
+                    "ALTER TABLE cards "
+                    "ADD COLUMN IF NOT EXISTS hidden "
+                    "BOOLEAN NOT NULL DEFAULT FALSE"
+                ),
+                (
+                    "ALTER TABLE cards "
+                    "ADD COLUMN IF NOT EXISTS aliases "
+                    "JSON NOT NULL DEFAULT '[]'::json"
+                ),
+            )
+            for statement in migrations:
+                await connection.execute(text(statement))
     except Exception:
         await engine.dispose()
         raise

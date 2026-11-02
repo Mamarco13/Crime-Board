@@ -42,6 +42,11 @@ class Settings:
     # Clave compartida con Playground Engine para el endpoint de solución.
     # Si no se define, el endpoint interno queda abierto (solo desarrollo).
     internal_api_key: str | None
+    # Clave y parámetros para verificar los JWT emitidos por User Service.
+    # Si no hay clave, la publicación autenticada queda deshabilitada.
+    jwt_secret_key: str | None
+    jwt_algorithm: str
+    jwt_issuer: str
     # Carga el nivel de demostración al arrancar si el catálogo está vacío.
     seed_demo_data: bool
     # Orígenes autorizados para el frontend (CORS).
@@ -56,6 +61,11 @@ class Settings:
             internal_api_key=os.getenv("INTERNAL_API_KEY")
             or os.getenv("APP_SECRET_KEY")
             or None,
+            jwt_secret_key=os.getenv("JWT_SECRET_KEY")
+            or os.getenv("APP_SECRET_KEY")
+            or None,
+            jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256").upper(),
+            jwt_issuer=os.getenv("JWT_ISSUER", "crime-board-user-service"),
             seed_demo_data=_as_bool(os.getenv("SEED_DEMO_DATA"), default=True),
             cors_allow_origins=_as_origins(os.getenv("CORS_ALLOW_ORIGINS")),
         )

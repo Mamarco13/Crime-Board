@@ -5,11 +5,20 @@
 # Topología:
 #
 #   host :8000 ──> level-management-service ──┐
-#                                             ├── backend-net (inter-servicios)
-#   host :8001 ──> playground-engine-service ─┘
+#   host :8001 ──> playground-engine-service ─┼── backend-net (inter-servicios)
+#   host :8002 ──> user-service ──────────────┤
+#   host :8003 ──> rating-service ────────────┘
 #
 #   level-management-service ── db-net (internal) ──> postgres
+#   user-service ───────────── db-net (internal) ──> postgres
+#   rating-service ─────────── db-net (internal) ──> postgres
 #   playground-engine-service ─ cache-net (internal) ──> redis
+#
+# Autenticación: user-service emite los JWT (login/registro). Level Management
+# y Rating Service los verifican con la misma clave compartida
+# (JWT_SECRET_KEY): el primero para atribuir la autoría de cada caso y el
+# segundo para aceptar votos. Los invitados pueden jugar y leer valoraciones
+# sin cuenta.
 #
 # Uso:
 #   cp .env.example .env
@@ -85,7 +94,13 @@ services:
       # Usa una contraseña con caracteres seguros para URL ([A-Za-z0-9_-]).
       DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
       PLAYGROUND_ENGINE_SERVICE_URL: ${PLAYGROUND_ENGINE_SERVICE_URL:-http://playground-engine-service:8000}
+      USER_SERVICE_URL: ${USER_SERVICE_URL:-http://user-service:8000}
       APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}
+      # Verificación local de los JWT emitidos por user-service. Comparten
+      # secreto, algoritmo e issuer; no hay llamada síncrona entre servicios.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
       # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
       CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
     ports:
@@ -138,7 +153,89 @@ services:
     healthcheck: *app-healthcheck
 
   # ---------------------------------------------------------------------------
-  # PostgreSQL — persistencia de Level Management
+  # Microservicio de cuentas, login y emisión de JWT
+  # ---------------------------------------------------------------------------
+  user-service:
+    <<: *app-hardening
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: crime-board/user-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: user-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # Misma instancia que el catálogo, pero con su propia tabla `users`.
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
+      # Firma de los JWT. Level Management verifica con estos mismos valores.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-720}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+    ports:
+      # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
+      - "${BIND_ADDRESS:-127.0.0.1}:${USER_SERVICE_HOST_PORT:-8002}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - db-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # Microservicio de valoraciones (1-5 estrellas) de los niveles
+  # ---------------------------------------------------------------------------
+  rating-service:
+    <<: *app-hardening
+    build:
+      context: ./services/rating-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: crime-board/rating-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: rating-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # Tabla `level_ratings` propia; el servicio no toca esquemas ajenos.
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
+      # Verificación local de los JWT emitidos por user-service. Los invitados
+      # pueden leer medias, pero necesitan sesión para votar.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+    ports:
+      # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
+      - "${BIND_ADDRESS:-127.0.0.1}:${RATING_SERVICE_HOST_PORT:-8003}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - db-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — persistencia de Level Management, User Service y Rating Service
   # ---------------------------------------------------------------------------
   postgres:
     image: postgres:17-alpine
@@ -219,8 +316,9 @@ networks:
   backend-net:
     driver: bridge
 
-  # Aísla PostgreSQL: solo level-management-service puede alcanzarlo.
-  # `internal: true` elimina la puerta de enlace por defecto (sin egress).
+  # Aísla PostgreSQL: solo level-management-service, user-service y
+  # rating-service pueden alcanzarlo. `internal: true` elimina la puerta de
+  # enlace (sin egress).
   db-net:
     driver: bridge
     internal: true

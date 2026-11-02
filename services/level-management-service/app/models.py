@@ -43,6 +43,7 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -110,6 +111,15 @@ class LevelModel(Base):
     difficulty: Mapped[Difficulty] = mapped_column(
         _enum_column(Difficulty, "difficulty"),
         nullable=False,
+    )
+    # Identidad del detective que publicó el caso. Los casos históricos y el
+    # seed usan el valor por defecto; las publicaciones nuevas lo reciben del
+    # JWT validado en el endpoint, nunca del cuerpo de la petición.
+    creator_username: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default="Anónimo",
+        server_default=text("'Anónimo'"),
     )
     # Lista de ids que forman la combinación ganadora. JSON es suficiente para
     # el MVP; si la solución necesitara consultas relacionales, se normalizaría
@@ -362,6 +372,11 @@ class LevelSummary(BaseModel):
     title: str
     description: str
     difficulty: Difficulty
+    creator_username: str = Field(
+        default="Anónimo",
+        max_length=64,
+        description="Detective que publicó el caso.",
+    )
     card_count: int = Field(ge=0)
     created_at: datetime
 
@@ -378,6 +393,11 @@ class LevelDetail(BaseModel):
     title: str
     description: str
     difficulty: Difficulty
+    creator_username: str = Field(
+        default="Anónimo",
+        max_length=64,
+        description="Detective que publicó el caso.",
+    )
     cards: list[Card]
     card_count: int = Field(ge=0)
     created_at: datetime
