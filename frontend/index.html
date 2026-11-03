@@ -512,6 +512,9 @@
     #board.connect-mode { cursor: crosshair; }
     #board.connect-mode .card-wrap { cursor: crosshair; }
     #board.connect-mode .card-wrap .evidence-card { box-shadow: var(--shadow-card), 0 0 0 1px rgba(230, 57, 70, .28); }
+    #board.accuse-mode { cursor: pointer; }
+    #board.accuse-mode .card-wrap { cursor: pointer; }
+    #board.accuse-mode .card-wrap .evidence-card { box-shadow: var(--shadow-card), 0 0 0 1px rgba(212, 175, 55, .32); }
 
     #threads {
       position: absolute; inset: 0; z-index: 2;
@@ -596,6 +599,9 @@
     }
     .connect-banner .i { color: var(--red); width: 14px; height: 14px; animation: pulseOpacity 1.5s infinite; }
     .connect-banner b { color: #ff9aa2; font-weight: 700; }
+    .connect-banner.accuse { border-color: rgba(212, 175, 55, .7); box-shadow: 0 10px 30px rgba(0, 0, 0, .7), inset 0 0 20px rgba(212, 175, 55, .08); }
+    .connect-banner.accuse .i { color: var(--gold); }
+    .connect-banner.accuse b { color: #ffe28a; }
 
     .solved-stamp {
       position: absolute; right: 7%; bottom: 7%; z-index: 4;
@@ -751,6 +757,42 @@
       box-shadow: var(--shadow-card), 0 0 0 5px rgba(230, 57, 70, .12), 0 0 32px rgba(230, 57, 70, .24);
     }
     .card-wrap.fresh .evidence-card { animation: freshClue 3.2s ease-out 1; }
+
+    /* Tarjeta tachada: sigue en el tablón, pero marcada como descartada. */
+    .card-wrap.is-crossed-out .evidence-card {
+      opacity: .58;
+      filter: grayscale(.45) contrast(.92);
+    }
+    .card-wrap.is-crossed-out:hover .evidence-card { opacity: .78; }
+    .cross-out-mark {
+      position: absolute; inset: 0; z-index: 5; pointer-events: none;
+      background:
+        linear-gradient(to top right,
+          transparent calc(50% - 1.2px),
+          rgba(230, 57, 70, .72) calc(50% - 1.2px),
+          rgba(230, 57, 70, .72) calc(50% + 1.2px),
+          transparent calc(50% + 1.2px)),
+        linear-gradient(to bottom right,
+          transparent calc(50% - 1.2px),
+          rgba(230, 57, 70, .72) calc(50% - 1.2px),
+          rgba(230, 57, 70, .72) calc(50% + 1.2px),
+          transparent calc(50% + 1.2px));
+    }
+    .card-eyebrow-right { display: inline-flex; align-items: center; gap: 5px; }
+    .card-strike {
+      width: 18px; height: 18px; padding: 0;
+      display: inline-grid; place-items: center;
+      border: 1px solid rgba(255, 255, 255, .18); border-radius: 2px;
+      background: rgba(0, 0, 0, .2);
+      color: rgba(255, 255, 255, .55);
+      cursor: pointer;
+      transition: color .16s, border-color .16s, background .16s;
+    }
+    .card-strike .i { width: 9px; height: 9px; }
+    .card-strike:hover { color: #ffe28a; border-color: rgba(212, 175, 55, .55); background: rgba(212, 175, 55, .12); }
+    .type-clue .card-strike { border-color: rgba(90, 69, 38, .3); background: rgba(255, 255, 255, .2); color: rgba(36, 28, 21, .55); }
+    .type-clue .card-strike:hover { color: #6d5428; border-color: rgba(109, 84, 40, .55); }
+    .card-wrap.is-crossed-out .card-strike { color: #ffe28a; border-color: rgba(212, 175, 55, .5); }
 
     .card-eyebrow {
       display: flex; align-items: center; justify-content: space-between; gap: 6px;
@@ -947,6 +989,31 @@
       color: var(--muted-2); text-transform: uppercase;
     }
     .case-stats b { color: var(--paper-2); font-weight: 400; }
+    .case-actions { display: flex; align-items: center; gap: 10px; margin-top: 9px; }
+    .case-actions .link-btn { font-size: 7.5px; }
+    .solution-composition {
+      margin-top: 10px; padding-top: 9px;
+      border-top: 1px dashed rgba(212, 175, 55, .18);
+    }
+    .solution-composition .field-label {
+      display: block; margin-bottom: 5px;
+      font-family: var(--font-type); font-size: 7px; font-weight: 700;
+      letter-spacing: .14em; color: var(--gold-dim); text-transform: uppercase;
+    }
+    .composition-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .composition-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 5px; border: 1px solid rgba(212, 175, 55, .24);
+      background: rgba(0, 0, 0, .16);
+      font-family: var(--font-type); font-size: 7.5px; letter-spacing: .04em;
+      color: var(--paper-2);
+    }
+    .composition-chip .i { width: 9px; height: 9px; color: var(--gold); }
+    .composition-chip b { color: #ffe28a; font-weight: 700; }
+    .composition-hidden {
+      font-family: var(--font-type); font-size: 8.5px; line-height: 1.5;
+      color: var(--muted-2); font-style: italic;
+    }
 
     .tabs {
       display: flex; gap: 2px; padding: 0 12px;
@@ -2714,7 +2781,7 @@
         <button class="btn" id="viewCluesBtn" type="button"><i data-lucide="book-open"></i><span>Ver Archivo</span><span class="btn-badge" id="clueCountBadge" hidden>0</span></button>
         <button class="btn ghost" id="arrangeBtn" type="button" title="Reorganizar el tablero con la altura real de las tarjetas"><i data-lucide="layout-grid"></i><span>Ordenar</span></button>
         <button class="btn" id="connectBtn" type="button" aria-pressed="false"><i data-lucide="link-2"></i><span>Conectar Hilo</span></button>
-        <button class="btn primary" id="accuseBtn" type="button"><i data-lucide="gavel"></i><span>Realizar Acusación</span><span class="btn-badge" id="accuseCount" hidden>0</span></button>
+        <button class="btn primary" id="accuseBtn" type="button"><i data-lucide="gavel"></i><span id="accuseLabel">Realizar Acusación</span><span class="btn-badge" id="accuseCount" hidden>0</span></button>
       </nav>
     </div>
 
@@ -2774,7 +2841,8 @@
           </p>
           <div class="status-right">
             <span id="selectionInfo">0 pruebas seleccionadas</span>
-            <button class="link-btn" id="clearSelectionBtn" type="button" hidden>Limpiar</button>
+            <button class="link-btn" id="reviewAccusationBtn" type="button" hidden>Revisar acusación</button>
+            <button class="link-btn" id="clearSelectionBtn" type="button" hidden>Limpiar acusación</button>
           </div>
         </div>
       </section>
@@ -2798,6 +2866,13 @@
               <span><b id="caseCardCount">0</b> en el tablero</span>
               <span><b id="caseClueCount">0</b> archivadas</span>
               <span><b id="caseThreadCount">0</b> hilos</span>
+            </div>
+            <div class="solution-composition" id="solutionComposition" hidden>
+              <span class="field-label">Composición de la solución</span>
+              <div class="composition-chips" id="solutionCompositionChips"></div>
+            </div>
+            <div class="case-actions">
+              <button class="link-btn" id="restartCaseBtn" type="button">Reiniciar caso</button>
             </div>
             <div class="case-rating is-empty" id="caseRating">
               <span class="stars" id="caseRatingStars" aria-hidden="true">☆☆☆☆☆</span>
@@ -3255,13 +3330,14 @@
         <div id="accusationEmpty" hidden>
           <div class="accusation-empty">
             <svg class="i"><use href="#i-search"></use></svg>
-            No hay pruebas en la acusación. Selecciona tarjetas en el tablón o conecta evidencias con hilos rojos y vuelve a intentarlo.
+            No hay pruebas en la acusación. Pulsa «Realizar Acusación» y selecciona en el tablón las tarjetas que sostienen tu hipótesis.
           </div>
         </div>
         <div class="accusation-summary" id="accusationSummary"></div>
       </div>
       <div class="modal-foot">
         <span class="danger-note" id="accusationSource">Origen: —</span>
+        <button class="btn ghost" id="clearAccusationModalBtn" type="button">Limpiar acusación</button>
         <button class="btn ghost" type="button" data-close-modal>Cancelar</button>
         <button class="btn primary" id="confirmAccuseBtn" type="button"><svg class="i"><use href="#i-gavel"></use></svg> Sellar acusación</button>
       </div>
@@ -3771,6 +3847,8 @@
     pendingCards: new Set(),
     threads: [],
     selected: new Set(),
+    // Tarjetas descartadas visualmente: se tachan pero siguen en el tablón.
+    crossedOut: new Set(),
     unlocked: {},
     interrogations: [],
     searches: [],
@@ -3783,7 +3861,10 @@
     attempts: [],
     solved: false,
     activeTab: 'clues',
+    // Modos exclusivos del tablón: inspeccionar, tender hilos o acusar.
+    boardMode: 'inspect',
     connectMode: false,
+    accuseMode: false,
     connectSource: null,
     freshCardId: null,
     animatedThreadId: null,
@@ -3889,6 +3970,7 @@
     accuseBtn: $('#accuseBtn'),
     clueCountBadge: $('#clueCountBadge'),
     accuseCount: $('#accuseCount'),
+    accuseLabel: $('#accuseLabel'),
     board: $('#board'),
     threads: $('#threads'),
     cardsLayer: $('#cardsLayer'),
@@ -3904,6 +3986,7 @@
     boardHint: $('#boardHint'),
     selectionInfo: $('#selectionInfo'),
     clearSelectionBtn: $('#clearSelectionBtn'),
+    reviewAccusationBtn: $('#reviewAccusationBtn'),
     caseDifficulty: $('#caseDifficulty'),
     caseSolvedTag: $('#caseSolvedTag'),
     caseMetaTitle: $('#caseMetaTitle'),
@@ -3912,6 +3995,9 @@
     caseCardCount: $('#caseCardCount'),
     caseClueCount: $('#caseClueCount'),
     caseThreadCount: $('#caseThreadCount'),
+    restartCaseBtn: $('#restartCaseBtn'),
+    solutionComposition: $('#solutionComposition'),
+    solutionCompositionChips: $('#solutionCompositionChips'),
     caseRating: $('#caseRating'),
     caseRatingStars: $('#caseRatingStars'),
     caseRatingVotes: $('#caseRatingVotes'),
@@ -4025,6 +4111,7 @@
     accusationEmpty: $('#accusationEmpty'),
     accusationSummary: $('#accusationSummary'),
     accusationSource: $('#accusationSource'),
+    clearAccusationModalBtn: $('#clearAccusationModalBtn'),
     confirmAccuseBtn: $('#confirmAccuseBtn'),
     resultModal: $('#resultModal'),
     ratingModal: $('#ratingModal'),
@@ -5061,8 +5148,22 @@
     state.examined = saved.examined && typeof saved.examined === 'object' ? saved.examined : {};
     state.attempts = Array.isArray(saved.attempts) ? saved.attempts.filter(Boolean).slice(0, 80) : [];
     state.solved = Boolean(saved.solved);
+    state.crossedOut = new Set(
+      (Array.isArray(saved.crossedOut) ? saved.crossedOut : [])
+        .filter((cardId) => cardMap.has(cardId))
+    );
+    // La acusación es explícita: solo se restaura lo que el jugador marcó en
+    // modo acusación. Si el caso ya está cerrado no se reabre la selección.
+    state.selected = new Set(
+      state.solved
+        ? []
+        : (Array.isArray(saved.accusation) ? saved.accusation : [])
+          .filter((cardId) => cardMap.has(cardId) && !state.crossedOut.has(cardId))
+    );
     state.freshCardId = null;
+    state.boardMode = 'inspect';
     state.connectMode = false;
+    state.accuseMode = false;
     state.connectSource = null;
   }
 
@@ -5079,6 +5180,8 @@
       boardWidth: state.boardWidth,
       attempts: state.attempts.slice(0, 80),
       solved: state.solved,
+      crossedOut: Array.from(state.crossedOut),
+      accusation: Array.from(state.selected),
       updatedAt: nowISO()
     };
     saveJSON(STORAGE.progress, PROGRESS);
@@ -5142,9 +5245,11 @@
       ? savedWidth
       : BOARD_MIN_WIDTH;
     state.selected.clear();
+    state.boardMode = 'inspect';
     state.connectMode = false;
+    state.accuseMode = false;
     state.connectSource = null;
-    setConnectMode(false, { silent: true });
+    setBoardMode('inspect', { silent: true });
     ensurePositions(state.level.cards);
     renderAll();
     setBoardLoading(false);
@@ -5500,6 +5605,64 @@
     updateModeUI();
   }
 
+  function renderSolutionComposition() {
+    if (!els.solutionComposition || !els.solutionCompositionChips) return;
+    const level = state.level;
+    if (!level) {
+      els.solutionComposition.hidden = true;
+      return;
+    }
+
+    // El backend puede ocultar la composición a propósito (casos difíciles).
+    if (level.solution_composition_hidden) {
+      els.solutionComposition.hidden = false;
+      els.solutionCompositionChips.innerHTML = '<span class="composition-hidden">Composición oculta · caso de dificultad difícil.</span>';
+      return;
+    }
+
+    let counts = null;
+    const declared = level.solution_composition;
+    if (declared && typeof declared === 'object') {
+      counts = declared;
+    } else if (Array.isArray(state.solution) && state.solution.length) {
+      // Solo hay copia local de la solución en los casos de simulación o en
+      // los publicados desde este navegador. Nunca se deduce de un nivel real.
+      counts = {};
+      const byId = new Map();
+      level.cards.forEach((card) => byId.set(card.id, card));
+      // La solución puede incluir tarjetas ocultas en el archivador o pistas
+      // antiguas que aún no están sobre el tablón.
+      (state.archiveDefinitions || []).forEach(({ card }) => byId.set(card.id, card));
+      Object.values(state.legacyClues || {}).forEach((card) => byId.set(card.id, card));
+      state.solution.forEach((cardId) => {
+        const card = byId.get(cardId);
+        if (card) counts[card.type] = (counts[card.type] || 0) + 1;
+      });
+    }
+
+    if (!counts || !Object.keys(counts).length) {
+      els.solutionComposition.hidden = true;
+      return;
+    }
+
+    const plurals = {
+      SUSPECT: ['sospechoso', 'sospechosos'],
+      WEAPON: ['arma', 'armas'],
+      LOCATION: ['lugar', 'lugares'],
+      CLUE: ['pista', 'pistas']
+    };
+    els.solutionComposition.hidden = false;
+    els.solutionCompositionChips.innerHTML = TYPE_ORDER
+      .filter((type) => Number(counts[type]) > 0)
+      .map((type) => {
+        const meta = typeMeta(type);
+        const count = Number(counts[type]);
+        const [singular, pluralForm] = plurals[type] || [meta.label.toLowerCase(), `${meta.label.toLowerCase()}s`];
+        return `<span class="composition-chip">${ICON(meta.icon)}<b>${count}</b> ${count === 1 ? singular : pluralForm}</span>`;
+      })
+      .join('');
+  }
+
   function renderChrome() {
     const level = state.level;
     const onBoard = level ? level.cards.length : 0;
@@ -5527,7 +5690,12 @@
       els.caseThreadCount.textContent = state.threads.length;
       els.caseSolvedTag.hidden = !state.solved;
       els.accuseBtn.disabled = state.solved;
-      els.accuseBtn.title = state.solved ? 'El caso ya está cerrado.' : 'Revisar y sellar la acusación';
+      els.accuseBtn.title = state.solved ? 'El caso ya está cerrado.' : 'Activar el modo acusación';
+      if (els.restartCaseBtn) {
+        els.restartCaseBtn.hidden = false;
+        els.restartCaseBtn.textContent = state.solved ? 'Jugar de nuevo' : 'Reiniciar caso';
+      }
+      renderSolutionComposition();
     } else {
       els.caseSubtitle.innerHTML = 'UNIDAD DE CASOS SIN RESOLVER · <span class="case-ref">EXP. —</span>';
       els.boardPlaque.textContent = 'EXP. —';
@@ -5542,6 +5710,8 @@
       els.caseThreadCount.textContent = '0';
       els.caseSolvedTag.hidden = true;
       els.accuseBtn.disabled = true;
+      if (els.restartCaseBtn) els.restartCaseBtn.hidden = true;
+      if (els.solutionComposition) els.solutionComposition.hidden = true;
     }
 
     els.threadsCount.textContent = state.threads.length;
@@ -5576,6 +5746,7 @@
     const position = state.positions[card.id] || { x: .01, y: .02 };
     const tilt = tiltFor(card.id);
     const selected = state.selected.has(card.id);
+    const crossed = state.crossedOut.has(card.id);
     const isSource = state.connectSource === card.id;
     const examined = Boolean(state.examined[card.id]);
     const suspected = card.type === 'SUSPECT'
@@ -5585,11 +5756,13 @@
     const classes = [
       `type-${card.type.toLowerCase()}`,
       selected ? 'selected' : '',
+      crossed ? 'is-crossed-out' : '',
       isSource ? 'connect-source' : '',
       fresh ? 'fresh' : ''
     ].filter(Boolean).join(' ');
     const style = `left:${(position.x * 100).toFixed(3)}%;top:${(position.y * 100).toFixed(3)}%;`;
-    const common = `class="card-wrap ${classes}" data-card-id="${esc(card.id)}" data-type="${esc(card.type)}" style="${style}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${esc(meta.label)}: ${esc(card.title)}${selected ? '. Seleccionada para la acusación' : ''}"`;
+    const aria = `${meta.label}: ${card.title}${crossed ? '. Tachada como descartada' : ''}${selected ? '. Seleccionada para la acusación' : ''}`;
+    const common = `class="card-wrap ${classes}" data-card-id="${esc(card.id)}" data-type="${esc(card.type)}" style="${style}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${esc(aria)}"`;
 
     let footer;
     if (card.type === 'SUSPECT') {
@@ -5612,12 +5785,18 @@
         <div class="evidence-card" style="--tilt:${tilt}deg">
           <div class="card-eyebrow">
             <span class="type-chip">${ICON(meta.icon)} ${esc(meta.label.toUpperCase())}</span>
-            <span class="card-no">${serial}</span>
+            <span class="card-eyebrow-right">
+              <span class="card-no">${serial}</span>
+              <button class="card-strike" type="button" data-action="strike" data-card-id="${esc(card.id)}" title="${crossed ? 'Destachar tarjeta' : 'Tachar tarjeta como descartada'}" aria-label="${crossed ? 'Destachar tarjeta' : 'Tachar tarjeta como descartada'}">
+                ${ICON(crossed ? 'refresh' : 'x')}
+              </button>
+            </span>
           </div>
           <h3 class="card-title" title="${esc(card.title)}">${esc(card.title)}</h3>
           <p class="card-desc" title="${esc(card.description || '')}">${esc(card.description || 'Sin descripción archivada.')}</p>
           ${ICON(meta.icon, 'card-watermark')}
           <div class="card-footer">${footer}</div>
+          ${crossed ? '<span class="cross-out-mark" aria-hidden="true"></span>' : ''}
         </div>
         ${selected ? `<span class="selected-marker" aria-hidden="true">${ICON('check')}</span>` : ''}
         ${isSource ? `<span class="connect-marker" aria-hidden="true">1</span>` : ''}
@@ -5646,7 +5825,7 @@
     els.boardEmpty.hidden = true;
     els.solvedStamp.hidden = !state.solved;
     els.board.classList.toggle('solved', Boolean(state.solved));
-    els.connectBanner.hidden = !state.connectMode;
+    els.connectBanner.hidden = state.boardMode === 'inspect';
     updateBoardHint();
 
     requestAnimationFrame(() => {
@@ -5889,20 +6068,32 @@
   function updateBoardHint() {
     if (!state.level) {
       els.boardHint.textContent = 'Selecciona un expediente para empezar la investigación.';
+      els.connectBanner.hidden = true;
       return;
     }
-    if (state.connectMode) {
+    if (state.boardMode === 'connect') {
       els.boardHint.textContent = state.connectSource
         ? 'Primera evidencia fijada · elige la segunda tarjeta para tender el hilo.'
         : 'Selecciona la primera tarjeta del hilo · pulsa Esc para salir.';
       els.connectBanner.hidden = false;
+      els.connectBanner.classList.remove('accuse');
       els.connectBannerText.innerHTML = state.connectSource
         ? 'Primera evidencia fijada · <b>elige la segunda tarjeta</b>'
         : 'Selecciona <b>dos tarjetas</b> para tender el hilo';
       return;
     }
-    els.boardHint.textContent = 'Arrastra las tarjetas · Haz clic para seleccionar pruebas · Conectar Hilo para tender líneas.';
+    if (state.boardMode === 'accuse') {
+      els.boardHint.textContent = 'Modo acusación · haz clic en las tarjetas que quieras imputar · pulsa Esc para salir.';
+      els.connectBanner.hidden = false;
+      els.connectBanner.classList.add('accuse');
+      els.connectBannerText.innerHTML = state.selected.size
+        ? `<b>${state.selected.size}</b> ${state.selected.size === 1 ? 'prueba en la acusación' : 'pruebas en la acusación'} · revisa o limpia la selección`
+        : 'Selecciona <b>las tarjetas</b> que sostienen tu acusación';
+      return;
+    }
+    els.boardHint.textContent = 'Arrastra las tarjetas · Pulsa «Realizar Acusación» para imputar pruebas · Conectar Hilo para tender líneas.';
     els.connectBanner.hidden = true;
+    els.connectBanner.classList.remove('accuse');
   }
 
   function selectedCards() {
@@ -5910,20 +6101,13 @@
     return state.level.cards.filter((card) => state.selected.has(card.id));
   }
 
-  function threadCardIds() {
-    const ids = new Set();
-    state.threads.forEach((thread) => { ids.add(thread.a); ids.add(thread.b); });
-    return ids;
-  }
-
   function accusationCards() {
     if (!state.level) return { cards: [], origin: 'none' };
     if (state.selected.size) {
-      return { cards: state.level.cards.filter((card) => state.selected.has(card.id)), origin: 'selection' };
-    }
-    const ids = threadCardIds();
-    if (ids.size) {
-      return { cards: state.level.cards.filter((card) => ids.has(card.id)), origin: 'threads' };
+      return {
+        cards: state.level.cards.filter((card) => state.selected.has(card.id) && !state.crossedOut.has(card.id)),
+        origin: 'selection'
+      };
     }
     return { cards: [], origin: 'none' };
   }
@@ -5932,8 +6116,12 @@
     if (!state.level) {
       els.selectionInfo.textContent = '0 pruebas seleccionadas';
       els.clearSelectionBtn.hidden = true;
+      els.reviewAccusationBtn.hidden = true;
       els.accuseCount.hidden = true;
       els.accuseBtn.disabled = true;
+      if (els.accuseLabel) els.accuseLabel.textContent = 'Realizar Acusación';
+      els.accuseBtn.classList.remove('active');
+      els.accuseBtn.setAttribute('aria-pressed', 'false');
       return;
     }
     $$('.card-wrap', els.cardsLayer).forEach((wrap) => {
@@ -5957,33 +6145,74 @@
       }
     });
     const count = state.selected.size;
-    els.selectionInfo.textContent = `${plural(count, 'prueba seleccionada', 'pruebas seleccionadas')}`;
-    els.clearSelectionBtn.hidden = count === 0;
+    const accusing = state.boardMode === 'accuse';
+    els.selectionInfo.textContent = count
+      ? `${count} ${count === 1 ? 'prueba en la acusación' : 'pruebas en la acusación'}`
+      : (accusing ? 'Acusación vacía' : '0 pruebas seleccionadas');
+    els.clearSelectionBtn.hidden = !accusing || count === 0;
+    els.reviewAccusationBtn.hidden = !accusing || count === 0;
     els.accuseCount.hidden = count === 0;
     els.accuseCount.textContent = count;
     els.accuseBtn.disabled = state.solved || !state.level;
+    els.accuseBtn.classList.toggle('active', accusing);
+    els.accuseBtn.setAttribute('aria-pressed', String(accusing));
+    if (els.accuseLabel) {
+      els.accuseLabel.textContent = accusing
+        ? (count ? 'Revisar Acusación' : 'Salir de Acusación')
+        : 'Realizar Acusación';
+    }
+    els.accuseBtn.title = state.solved
+      ? 'El caso ya está cerrado.'
+      : (accusing
+        ? (count ? 'Revisar las pruebas imputadas' : 'Salir del modo acusación')
+        : 'Activar el modo acusación');
+    updateBoardHint();
   }
 
-  function setConnectMode(enabled, { silent = false } = {}) {
-    if (enabled && !state.level) {
-      toast({ type: 'warn', title: 'Sin expediente', message: 'Abre un caso antes de conectar evidencias.' });
+  function setBoardMode(mode, { silent = false } = {}) {
+    const nextMode = mode === 'connect' || mode === 'accuse' ? mode : 'inspect';
+    if (nextMode !== 'inspect' && !state.level) {
+      toast({ type: 'warn', title: 'Sin expediente', message: 'Abre un caso antes de usar el tablón.' });
       return;
     }
-    state.connectMode = Boolean(enabled);
+    if (nextMode !== 'inspect' && state.solved) {
+      toast({ type: 'info', title: 'Caso cerrado', message: 'Este expediente ya fue resuelto. Reinícialo para jugar de nuevo.' });
+      return;
+    }
+    state.boardMode = nextMode;
+    // Alias de compatibilidad para el resto de la interfaz.
+    state.connectMode = nextMode === 'connect';
+    state.accuseMode = nextMode === 'accuse';
     state.connectSource = null;
     els.connectBtn.classList.toggle('active', state.connectMode);
     els.connectBtn.setAttribute('aria-pressed', String(state.connectMode));
     els.board.classList.toggle('connect-mode', state.connectMode);
-    els.connectBanner.hidden = !state.connectMode;
+    els.board.classList.toggle('accuse-mode', state.accuseMode);
+    els.connectBanner.hidden = nextMode === 'inspect';
+    els.connectBanner.classList.toggle('accuse', state.accuseMode);
     syncSelectionUI();
-    updateBoardHint();
-    if (state.connectMode && !silent) {
+    if (nextMode === 'connect' && !silent) {
       toast({
         type: 'info',
         title: 'Modo hilo activado',
         message: 'Haz clic en dos tarjetas para tender un hilo rojo. Pulsa Esc para salir.'
       });
     }
+    if (nextMode === 'accuse' && !silent) {
+      toast({
+        type: 'info',
+        title: 'Modo acusación activado',
+        message: 'Haz clic en las tarjetas que quieras imputar. Usa «Limpiar acusación» para vaciar la selección.'
+      });
+    }
+  }
+
+  function setConnectMode(enabled, options = {}) {
+    setBoardMode(enabled ? 'connect' : 'inspect', options);
+  }
+
+  function setAccuseMode(enabled, options = {}) {
+    setBoardMode(enabled ? 'accuse' : 'inspect', options);
   }
 
   /* =======================================================================
@@ -5997,7 +6226,7 @@
     const card = state.level.cards.find((item) => item.id === cardId);
     if (!card) return;
 
-    if (state.connectMode) {
+    if (state.boardMode === 'connect') {
       if (!state.connectSource) {
         state.connectSource = card.id;
         syncSelectionUI();
@@ -6036,9 +6265,48 @@
       return;
     }
 
+    if (state.boardMode !== 'accuse') {
+      // En inspección, el clic no imputa nada: la acusación es explícita.
+      return;
+    }
+
+    if (state.crossedOut.has(card.id)) {
+      toast({
+        type: 'warn',
+        title: 'Tarjeta tachada',
+        message: 'Destáchala antes de incluirla en la acusación.'
+      });
+      return;
+    }
+
     if (state.selected.has(card.id)) state.selected.delete(card.id);
     else state.selected.add(card.id);
+    saveProgress();
     syncSelectionUI();
+  }
+
+  function toggleCardCrossed(cardId) {
+    if (!state.level) return;
+    const card = state.level.cards.find((item) => item.id === cardId);
+    if (!card) return;
+    const wasCrossed = state.crossedOut.has(cardId);
+    if (wasCrossed) {
+      state.crossedOut.delete(cardId);
+    } else {
+      state.crossedOut.add(cardId);
+      // Una tarjeta descartada no puede seguir imputada.
+      state.selected.delete(cardId);
+    }
+    saveProgress();
+    renderBoard();
+    renderChrome();
+    toast({
+      type: 'info',
+      title: wasCrossed ? 'Tarjeta destachada' : 'Tarjeta tachada',
+      message: wasCrossed
+        ? `«${card.title}» vuelve a estar disponible.`
+        : `«${card.title}» queda descartada visualmente, sin salir del tablón.`
+    });
   }
 
   function onPointerDown(event) {
@@ -6154,6 +6422,12 @@
 
     els.cardsLayer.addEventListener('click', (event) => {
       const action = event.target.closest('[data-action]');
+      if (action && action.dataset.action === 'strike') {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleCardCrossed(action.dataset.cardId);
+        return;
+      }
       if (action && ['interrogate', 'examine'].includes(action.dataset.action)) {
         event.stopPropagation();
         openObservation(action.dataset.cardId, action);
@@ -6171,6 +6445,11 @@
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         handleCardClick(wrap.dataset.cardId);
+        return;
+      }
+      if (event.key === 'x' || event.key === 'X') {
+        event.preventDefault();
+        toggleCardCrossed(wrap.dataset.cardId);
       }
     });
 
@@ -6213,10 +6492,13 @@
       });
     });
 
-    els.connectBtn.addEventListener('click', () => setConnectMode(!state.connectMode));
+    els.connectBtn.addEventListener('click', () => setBoardMode(state.boardMode === 'connect' ? 'inspect' : 'connect'));
     els.clearSelectionBtn.addEventListener('click', () => {
       state.selected.clear();
+      saveProgress();
       syncSelectionUI();
+      updateBoardHint();
+      toast({ type: 'info', title: 'Acusación limpia', message: 'No queda ninguna prueba imputada.' });
     });
 
     $('#corkScroll').addEventListener('scroll', scheduleThreadUpdate, { passive: true });
@@ -6817,6 +7099,56 @@
     };
   }
 
+  async function restartCurrentCase() {
+    const level = state.level;
+    if (!level || state.loading) return;
+    const levelId = level.level_id;
+    const started = Boolean(
+      state.solved
+      || state.attempts.length
+      || state.interrogations.length
+      || state.threads.length
+      || state.unlocked && Object.keys(state.unlocked).length
+      || state.crossedOut.size
+    );
+    if (started) {
+      const confirmed = window.confirm(
+        'Se reiniciarán el tablero, los hilos, las pistas recuperadas y los intentos de esta partida.\n\nTu libreta y tus estadísticas de primera resolución se conservan. ¿Jugar de nuevo?'
+      );
+      if (!confirmed) return;
+    }
+
+    if (Array.isArray(state.solution)) {
+      state.knownSolutions[levelId] = state.solution.slice();
+    }
+    delete PROGRESS[levelId];
+    saveJSON(STORAGE.progress, PROGRESS);
+
+    state.solved = false;
+    state.attempts = [];
+    state.interrogations = [];
+    state.searches = [];
+    state.examined = {};
+    state.threads = [];
+    state.unlocked = {};
+    state.positions = {};
+    state.crossedOut.clear();
+    state.selected.clear();
+    state.boardMode = 'inspect';
+    state.connectMode = false;
+    state.accuseMode = false;
+    state.connectSource = null;
+
+    closeModal('resultModal');
+    closeModal('accusationModal');
+    await loadLevel(levelId, { silent: true });
+    toast({
+      type: 'success',
+      title: 'Nueva partida',
+      message: 'El expediente vuelve a estar en blanco. La primera resolución queda intacta.'
+    });
+  }
+
   function openAccusationModal() {
     if (!state.level) {
       toast({ type: 'warn', title: 'Sin expediente', message: 'Abre un caso antes de formular una acusación.' });
@@ -6836,14 +7168,14 @@
     els.accusationChips.hidden = cards.length === 0;
     els.confirmAccuseBtn.disabled = cards.length === 0;
     const originLabels = {
-      selection: 'Origen: selección manual del tablón.',
-      threads: 'Origen: tarjetas conectadas por hilos rojos (no hay selección manual).',
+      selection: 'Origen: selección explícita en modo acusación.',
       none: 'Origen: sin pruebas.'
     };
     els.accusationSource.textContent = originLabels[origin];
     els.accusationSummary.innerHTML = cards.length
       ? `<strong>${cards.length} ${cards.length === 1 ? 'evidencia' : 'evidencias'}</strong> en la acusación. El motor exige la combinación exacta: una tarjeta de más o de menos invalida el veredicto.`
-      : 'Aún no hay pruebas que enviar. Vuelve al tablón y selecciona las tarjetas que sostienen tu hipótesis.';
+      : 'Aún no hay pruebas que enviar. Activa «Realizar Acusación», marca las tarjetas en el tablón y vuelve a revisar la acusación.';
+    if (els.clearAccusationModalBtn) els.clearAccusationModalBtn.disabled = cards.length === 0;
     openModal('accusationModal');
   }
 
@@ -6954,8 +7286,11 @@
     state.attempts = state.attempts.slice(0, 80);
     saveProgress();
     if (solved) {
-      state.connectMode = false;
       state.connectSource = null;
+      state.boardMode = 'inspect';
+      state.connectMode = false;
+      state.accuseMode = false;
+      setBoardMode('inspect', { silent: true });
     }
     renderAll();
     showResultContent(attempt);
@@ -6988,13 +7323,18 @@
         </div>
         ${solved && state.level ? ratingWidgetHtml({ levelId: state.level.level_id, source: 'result', guest: !isAuthenticated() }) : ''}
         <div class="modal-foot">
-          ${solved ? '' : `<button class="btn ghost" type="button" data-result-clues>${ICON('book')} Revisar archivo</button>`}
+          ${solved
+            ? `<button class="btn ghost" type="button" data-result-restart>${ICON('refresh')} Jugar de nuevo</button>`
+            : `<button class="btn ghost" type="button" data-result-clues>${ICON('book')} Revisar archivo</button>`}
           <button class="btn ${solved ? 'gold' : 'primary'}" type="button" data-close-modal>${solved ? 'Cerrar expediente' : 'Volver al tablón'}</button>
         </div>
       </div>`;
     els.resultContent.querySelector('[data-result-clues]')?.addEventListener('click', () => {
       closeModal('resultModal');
       setTimeout(openCluesModal, 120);
+    });
+    els.resultContent.querySelector('[data-result-restart]')?.addEventListener('click', () => {
+      void restartCurrentCase();
     });
     openModal('resultModal');
   }
@@ -8241,7 +8581,28 @@
     els.emptyNewCaseBtn.addEventListener('click', openEditor);
     els.archiveBtn.addEventListener('click', openArchiveModal);
     els.viewCluesBtn.addEventListener('click', openCluesModal);
-    els.accuseBtn.addEventListener('click', openAccusationModal);
+    els.accuseBtn.addEventListener('click', () => {
+      if (state.solved) return;
+      if (state.boardMode !== 'accuse') {
+        setAccuseMode(true);
+        return;
+      }
+      if (state.selected.size) {
+        openAccusationModal();
+        return;
+      }
+      setAccuseMode(false);
+    });
+    els.reviewAccusationBtn?.addEventListener('click', openAccusationModal);
+    els.clearAccusationModalBtn?.addEventListener('click', () => {
+      state.selected.clear();
+      saveProgress();
+      syncSelectionUI();
+      updateBoardHint();
+      closeModal('accusationModal');
+      toast({ type: 'info', title: 'Acusación limpia', message: 'Puedes volver a seleccionar pruebas en el tablón.' });
+    });
+    els.restartCaseBtn?.addEventListener('click', restartCurrentCase);
     els.confirmAccuseBtn.addEventListener('click', confirmAccusation);
     els.caseRatingBtn?.addEventListener('click', openRatingModal);
 
@@ -8398,8 +8759,8 @@
           closeThreadMenu();
           return;
         }
-        if (state.connectMode) {
-          setConnectMode(false);
+        if (state.boardMode !== 'inspect') {
+          setBoardMode('inspect');
           return;
         }
       }
