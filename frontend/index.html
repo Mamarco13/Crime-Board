@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0f0d0e" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230f0d0e'/%3E%3Cpath d='M14 18h36M14 32h24M14 46h18' stroke='%23e63946' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" />
-  <meta name="description" content="Crime Board Cloud-Native — tablón de evidencias, interrogatorios y acusaciones." />
-  <title>CRIME BOARD // Dosier Policial</title>
+  <meta name="description" content="OpenCrime Cloud-Native — tablón de evidencias, interrogatorios y acusaciones." />
+  <title>OpenCrime // Dosier Policial</title>
 
   <!-- Tipografías: máquina de escribir para el expediente + sans para la interfaz -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -2773,12 +2773,12 @@
   <!-- =====================================================================
        Pantalla inicial: dosier de casos y estado del detective
        ===================================================================== -->
-  <section class="landing-screen" id="landingScreen" aria-label="Dosier de casos de Crime Board">
+  <section class="landing-screen" id="landingScreen" aria-label="Dosier de casos de OpenCrime">
     <header class="topbar landing-topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
         <div class="brand-copy">
-          <h1 class="brand-title">CRIME BOARD <span class="slash">//</span> <span class="dosier">DOSIER POLICIAL</span></h1>
+          <h1 class="brand-title">OpenCrime <span class="slash">//</span> <span class="dosier">DOSIER POLICIAL</span></h1>
           <p class="brand-sub">UNIDAD DE CASOS SIN RESOLVER · <span class="case-ref">ACCESO ABIERTO</span></p>
         </div>
       </div>
@@ -2858,7 +2858,7 @@
     </main>
 
     <footer class="app-footer">
-      <span>CRIME BOARD <span class="foot-sep">//</span> <b>CLOUD-NATIVE</b></span>
+      <span>OpenCrime <span class="foot-sep">//</span> <b>CLOUD-NATIVE</b></span>
       <span>API <b id="landingFooterLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="landingFooterEngineUrl">127.0.0.1:8001</b> <span class="foot-sep">/</span> <b id="landingFooterUserUrl">127.0.0.1:8002</b> <span class="foot-sep">/</span> <b id="landingFooterProgressUrl">127.0.0.1:8004</b></span>
       <span><b>INVITADO</b> o detective · elige un caso para empezar</span>
     </footer>
@@ -2870,7 +2870,7 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
         <div class="brand-copy">
-          <h1 class="brand-title">CRIME BOARD <span class="slash">//</span> <span class="dosier">PERFIL DEL DETECTIVE</span></h1>
+          <h1 class="brand-title">OpenCrime <span class="slash">//</span> <span class="dosier">PERFIL DEL DETECTIVE</span></h1>
           <p class="brand-sub">EXPEDIENTE PERSONAL · <span class="case-ref" id="profileUsername">DETECTIVE</span></p>
         </div>
       </div>
@@ -2965,7 +2965,7 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
         <div class="brand-copy">
-          <h1 class="brand-title">CRIME BOARD <span class="slash">//</span> <span class="dosier">DOSIER POLICIAL</span></h1>
+          <h1 class="brand-title">OpenCrime <span class="slash">//</span> <span class="dosier">DOSIER POLICIAL</span></h1>
           <p class="brand-sub" id="caseSubtitle">UNIDAD DE CASOS SIN RESOLVER · <span class="case-ref">EXP. —</span></p>
         </div>
       </div>
@@ -3150,7 +3150,7 @@
     </main>
 
     <footer class="app-footer">
-      <span>CRIME BOARD <span class="foot-sep">//</span> <b>CLOUD-NATIVE</b></span>
+      <span>OpenCrime <span class="foot-sep">//</span> <b>CLOUD-NATIVE</b></span>
       <span>API <b id="footerLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="footerEngineUrl">127.0.0.1:8001</b> <span class="foot-sep">/</span> <b id="footerUserUrl">127.0.0.1:8002</b> <span class="foot-sep">/</span> <b id="footerProgressUrl">127.0.0.1:8004</b></span>
       <span><b id="footerEvidence">0</b> EVIDENCIAS <span class="foot-sep">·</span> <b id="footerThreads">0</b> HILOS</span>
     </footer>
@@ -3177,7 +3177,7 @@
         <div class="modal-body">
           <div class="field" id="authEmailField" hidden>
             <label for="authEmail">Correo electrónico</label>
-            <input class="input" id="authEmail" type="email" autocomplete="email" maxlength="254" placeholder="detective@crimeboard.dev" />
+            <input class="input" id="authEmail" type="email" autocomplete="email" maxlength="254" placeholder="detective@opencrime.dev" />
           </div>
           <div class="field">
             <label for="authUsername">Nombre de detective</label>
@@ -3317,12 +3317,12 @@
   </div>
 
   <!-- Editor de casos: pantalla completa con tres bloques de trabajo -->
-  <section class="editor-screen" id="editorScreen" hidden aria-label="Editor de casos de Crime Board">
+  <section class="editor-screen" id="editorScreen" hidden aria-label="Editor de casos de OpenCrime">
     <header class="topbar editor-topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
         <div class="brand-copy">
-          <h1 class="brand-title">CRIME BOARD <span class="slash">//</span> <span class="dosier">EDITOR DE CASOS</span></h1>
+          <h1 class="brand-title">OpenCrime <span class="slash">//</span> <span class="dosier">EDITOR DE CASOS</span></h1>
           <p class="brand-sub">MESA DE MONTAJE · <span class="case-ref" id="editorModeBadge">SIMULACIÓN LOCAL</span></p>
         </div>
       </div>
@@ -3501,7 +3501,7 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><svg class="i"><use href="#i-fingerprint"></use></svg></div>
         <div class="brand-copy">
-          <h1 class="brand-title">CRIME BOARD <span class="slash">//</span> <span class="dosier">TEST PLAY</span></h1>
+          <h1 class="brand-title">OpenCrime <span class="slash">//</span> <span class="dosier">TEST PLAY</span></h1>
           <p class="brand-sub">CONTROL DE CALIDAD · <span class="case-ref" id="testModeBadge">SIMULACIÓN LOCAL</span></p>
         </div>
       </div>
@@ -3730,7 +3730,7 @@
 
   <noscript>
     <div style="position:fixed;inset:0;z-index:99999;background:#0f0d0e;color:#f4ead5;display:grid;place-items:center;padding:30px;font-family:monospace;text-align:center">
-      CRIME BOARD necesita JavaScript para reconstruir el tablón. Activa JavaScript y vuelve a cargar el expediente.
+      OpenCrime necesita JavaScript para reconstruir el tablón. Activa JavaScript y vuelve a cargar el expediente.
     </div>
   </noscript>
 
@@ -3754,10 +3754,11 @@
   const STORAGE = {
     settings: 'crimeboard.settings.v1',
     session: 'crimeboard.session.v1',
-    progress: 'crimeboard.progress.v1',
     notes: 'crimeboard.notes.v1',
-    levels: 'crimeboard.levels.v1',
-    auth: 'crimeboard.auth.v1'
+    auth: 'crimeboard.auth.v1',
+    // Nuevos stores aislados por owner bajo la marca OpenCrime.
+    progress: 'opencrime.progress.v2',
+    levels: 'opencrime.levels.v2'
   };
 
   const TYPE_META = {
@@ -3982,8 +3983,17 @@
     }
   }
 
-  const USER_LEVELS = loadJSON(STORAGE.levels, {});
-  const PROGRESS = loadJSON(STORAGE.progress, {});
+  function normalizeOwnerStore(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { owners: {} };
+    if (raw.owners && typeof raw.owners === 'object' && !Array.isArray(raw.owners)) return raw;
+    // Datos locales antiguos sin propietario explícito NO se migran a ningún
+    // perfil: podrían pertenecer a una cuenta anterior. Se conservan intactos
+    // en las claves legacy de localStorage y el store nuevo arranca vacío.
+    return { owners: {} };
+  }
+
+  const USER_LEVELS = normalizeOwnerStore(loadJSON(STORAGE.levels, {}));
+  const PROGRESS = normalizeOwnerStore(loadJSON(STORAGE.progress, {}));
   const NOTES = loadJSON(STORAGE.notes, {});
   const STORED_SETTINGS = loadJSON(STORAGE.settings, {});
 
@@ -4083,7 +4093,7 @@
   }
 
   function allMockLevels() {
-    return Object.assign({}, MOCK_LEVELS, USER_LEVELS);
+    return Object.assign({}, MOCK_LEVELS, userLevelsStore());
   }
 
   function getMockLevel(levelId) {
@@ -4107,7 +4117,8 @@
   }
 
   function saveUserLevel(level) {
-    USER_LEVELS[level.level_id] = clone(level);
+    const store = userLevelsStore();
+    store[level.level_id] = clone(level);
     saveJSON(STORAGE.levels, USER_LEVELS);
   }
 
@@ -4185,6 +4196,9 @@
     workspaceTimer: null,
     progressSessionId: '',
     progressOffline: false,
+    // Propietario al que pertenece el estado actual del tablero. Evita que
+    // guardados asíncronos tardíos escriban el estado de un perfil bajo otro.
+    boardOwner: '',
     // Perfil agregado con allSettled: cada servicio aporta su parte.
     profile: {
       loaded: false,
@@ -4901,6 +4915,7 @@
     try {
       const server = await api.progressNote(scope, state.auth.token);
       if (!server) return;
+      if (!isBoardOwnerCurrent()) return;
       const serverContent = String(server.content || '');
       const serverVersion = Number(server.version) || 0;
       if (!local.content && serverContent) {
@@ -4909,6 +4924,7 @@
         local.updatedAt = server.updated_at || null;
       } else if (local.content && !serverContent) {
         await pushNote(scope, serverVersion);
+        if (!isBoardOwnerCurrent()) return;
         renderNoteTextarea(scope);
         return;
       } else if (local.content === serverContent) {
@@ -4920,6 +4936,7 @@
         return;
       } else {
         await pushNote(scope, serverVersion);
+        if (!isBoardOwnerCurrent()) return;
         renderNoteTextarea(scope);
         return;
       }
@@ -4927,6 +4944,7 @@
       renderNoteTextarea(scope);
       setNoteStatus(scope, 'Sincronizado con tu cuenta.', 'ok');
     } catch (error) {
+      if (!isBoardOwnerCurrent()) return;
       renderNoteTextarea(scope);
       setNoteStatus(scope, 'Sin conexión: se muestra la copia local.', 'error');
     }
@@ -4971,6 +4989,7 @@
      --------------------------------------------------------------------- */
   function queueWorkspaceSync() {
     if (!isAuthenticated() || state.mode !== 'real' || !state.level || !state.workspaceSynced) return;
+    if (!isBoardOwnerCurrent()) return;
     clearTimeout(state.workspaceTimer);
     state.workspaceTimer = setTimeout(() => { void pushWorkspace(); }, 650);
   }
@@ -4978,6 +4997,7 @@
   async function pushWorkspace() {
     if (!state.level || !state.workspaceSynced) return;
     if (!isAuthenticated() || state.mode !== 'real') return;
+    if (!isBoardOwnerCurrent()) return;
     const levelId = state.level.level_id;
     const crossed = Array.from(state.crossedOut);
     const accusation = Array.from(state.selected);
@@ -5029,13 +5049,14 @@
         await pushWorkspace();
         return;
       }
+      state.workspaceSynced = true;
+      if (!isBoardOwnerCurrent()) return;
       state.crossedOut = new Set(serverCrossed.filter((id) => state.visibleIds.has(id)));
       state.selected = new Set(
         serverAccusation.filter((id) => state.visibleIds.has(id) && !state.crossedOut.has(id))
       );
       state.workspaceVersion = version;
       saveProgress();
-      state.workspaceSynced = true;
       renderAll();
     } catch (error) {
       state.workspaceSynced = true;
@@ -5232,7 +5253,7 @@
     state.profileReturn = els.boardShell && !els.boardShell.hidden ? 'board' : 'landing';
     state.boardVisible = state.profileReturn === 'board';
     showScreen('profile');
-    document.title = 'CRIME BOARD // Perfil del Detective';
+    document.title = 'OpenCrime // Perfil del Detective';
     renderProfile();
     if (!state.levels.length) await refreshCatalog({ silent: true });
     await syncNoteFromServer('general');
@@ -5245,10 +5266,10 @@
     showScreen(target);
     state.boardVisible = target === 'board';
     if (target === 'board') {
-      document.title = 'CRIME BOARD // Tablón de evidencias';
+      document.title = 'OpenCrime // Tablón de evidencias';
       renderAll();
     } else {
-      document.title = 'CRIME BOARD // Dosier Policial';
+      document.title = 'OpenCrime // Dosier Policial';
       renderGallery();
       refreshCatalog({ silent: true });
     }
@@ -5521,6 +5542,26 @@
 
   function isAuthenticated() {
     return Boolean(state.auth.token);
+  }
+
+  function currentOwner() {
+    return (state && state.auth && state.auth.userId) || 'guest';
+  }
+
+  function isBoardOwnerCurrent() {
+    return state.boardOwner && state.boardOwner === currentOwner();
+  }
+
+  function progressStore() {
+    const owner = currentOwner();
+    if (!PROGRESS.owners[owner]) PROGRESS.owners[owner] = {};
+    return PROGRESS.owners[owner];
+  }
+
+  function userLevelsStore() {
+    const owner = currentOwner();
+    if (!USER_LEVELS.owners[owner]) USER_LEVELS.owners[owner] = {};
+    return USER_LEVELS.owners[owner];
   }
 
   /* =======================================================================
@@ -5852,12 +5893,14 @@
     if (els.authErrorText) els.authErrorText.textContent = message;
   }
 
-  function logout() {
+  async function logout() {
     const inEditor = (els.editorScreen && !els.editorScreen.hidden)
       || (els.testPlayScreen && !els.testPlayScreen.hidden);
     const inProfile = els.profileScreen && !els.profileScreen.hidden;
     Object.values(state.noteTimers || {}).forEach((timer) => clearTimeout(timer));
     state.noteTimers = {};
+    clearTimeout(state.workspaceTimer);
+    state.workspaceTimer = null;
     state.auth = { token: '', username: '', userId: '' };
     state.profile = {
       loaded: false,
@@ -5870,11 +5913,12 @@
     };
     state.noteConflict = null;
     persistAuth();
+    if (state.level) reapplyCurrentProgress();
     if (inEditor) closeEditor();
     if (inProfile) closeProfile();
     renderAuthUI();
-    renderGallery();
-    if (state.level) {
+    await refreshCatalog({ silent: true });
+    if (state.level && state.mode === 'real') {
       void syncNoteFromServer(state.level.level_id);
       void syncWorkspaceFromServer(state.level.level_id);
     }
@@ -5934,13 +5978,17 @@
       const session = await api.login({ username, password });
       Object.values(state.noteTimers || {}).forEach((timer) => clearTimeout(timer));
       state.noteTimers = {};
+      clearTimeout(state.workspaceTimer);
+      state.workspaceTimer = null;
       state.auth = {
         token: String(session.access_token || ''),
         username: String(session.username || username),
         userId: String(session.user_id || '')
       };
       persistAuth();
+      if (state.level) reapplyCurrentProgress();
       renderAuthUI();
+      await refreshCatalog({ silent: true });
       closeModal('authModal');
       toast({
         type: 'success',
@@ -5963,7 +6011,7 @@
       } else if (typeof pending === 'string' && pending.startsWith('play:')) {
         openBoard(pending.slice(5));
       }
-      if (state.level && state.mode === 'real' && !els.boardShell.hidden) {
+      if (state.level && state.mode === 'real') {
         void syncNoteFromServer(state.level.level_id);
         void syncWorkspaceFromServer(state.level.level_id);
       }
@@ -5984,17 +6032,35 @@
       return;
     }
     renderAuthUI();
+    const tokenAtStart = state.auth.token;
     try {
-      const me = await api.me(state.auth.token);
+      const me = await api.me(tokenAtStart);
+      if (state.auth.token !== tokenAtStart) return;
+      const previousOwner = state.auth.userId || 'guest';
       state.auth.username = String(me.username || state.auth.username);
       state.auth.userId = String(me.user_id || state.auth.userId);
+      const ownerChanged = (state.auth.userId || 'guest') !== previousOwner;
       persistAuth();
+      if (ownerChanged) {
+        Object.values(state.noteTimers || {}).forEach((timer) => clearTimeout(timer));
+        state.noteTimers = {};
+        clearTimeout(state.workspaceTimer);
+        state.workspaceTimer = null;
+        if (state.level) reapplyCurrentProgress();
+      }
       renderAuthUI();
     } catch (error) {
+      if (state.auth.token !== tokenAtStart) return;
       if (error instanceof ApiError && error.status === 401) {
+        Object.values(state.noteTimers || {}).forEach((timer) => clearTimeout(timer));
+        state.noteTimers = {};
+        clearTimeout(state.workspaceTimer);
+        state.workspaceTimer = null;
         state.auth = { token: '', username: '', userId: '' };
         persistAuth();
+        if (state.level) reapplyCurrentProgress();
         renderAuthUI();
+        await refreshCatalog({ silent: true });
         toast({
           type: 'warn',
           title: 'Sesión caducada',
@@ -6021,7 +6087,7 @@
     if (!levelId) return;
     state.boardVisible = true;
     showScreen('board');
-    document.title = 'CRIME BOARD // Tablón de evidencias';
+    document.title = 'OpenCrime // Tablón de evidencias';
     try {
       await loadLevel(levelId);
     } finally {
@@ -6032,7 +6098,7 @@
   async function backToGallery() {
     state.boardVisible = false;
     showScreen('landing');
-    document.title = 'CRIME BOARD // Dosier Policial';
+    document.title = 'OpenCrime // Dosier Policial';
     renderGallery();
     window.scrollTo({ top: 0, behavior: 'auto' });
     refreshCatalog({ silent: true });
@@ -6074,7 +6140,8 @@
   }
 
   function applyProgress(level) {
-    const saved = PROGRESS[level.level_id] || {};
+    const store = progressStore();
+    const saved = store[level.level_id] || {};
     const cards = Array.isArray(level.cards) ? level.cards : [];
     const cardMap = new Map(cards.map((card) => [card.id, card]));
 
@@ -6160,7 +6227,9 @@
 
   function saveProgress() {
     if (!state.level) return;
-    PROGRESS[state.level.level_id] = {
+    if (!isBoardOwnerCurrent()) return;
+    const store = progressStore();
+    store[state.level.level_id] = {
       positions: state.positions,
       threads: state.threads,
       unlocked: state.unlocked,
@@ -6177,6 +6246,28 @@
     };
     saveJSON(STORAGE.progress, PROGRESS);
     queueWorkspaceSync();
+  }
+
+  function applyBoardDimensions() {
+    if (!state.level) return;
+    const store = progressStore();
+    const savedHeight = Number((store[state.level.level_id] || {}).boardHeight);
+    state.boardHeight = Number.isFinite(savedHeight) && savedHeight >= BOARD_MIN_HEIGHT
+      ? savedHeight
+      : 0;
+    const savedWidth = Number((store[state.level.level_id] || {}).boardWidth);
+    state.boardWidth = Number.isFinite(savedWidth) && savedWidth >= BOARD_MIN_WIDTH
+      ? savedWidth
+      : BOARD_MIN_WIDTH;
+  }
+
+  function reapplyCurrentProgress() {
+    if (!state.level) return;
+    state.boardOwner = currentOwner();
+    applyProgress(state.level);
+    applyBoardDimensions();
+    ensurePositions(state.level.cards);
+    renderAll();
   }
 
   function activateLevel(level, source, options = {}) {
@@ -6227,15 +6318,9 @@
     state.solution = Array.isArray(solution) ? solution.slice() : null;
     if (state.solution) state.knownSolutions[state.level.level_id] = state.solution.slice();
 
+    state.boardOwner = currentOwner();
     applyProgress(state.level);
-    const savedHeight = Number((PROGRESS[state.level.level_id] || {}).boardHeight);
-    state.boardHeight = Number.isFinite(savedHeight) && savedHeight >= BOARD_MIN_HEIGHT
-      ? savedHeight
-      : 0;
-    const savedWidth = Number((PROGRESS[state.level.level_id] || {}).boardWidth);
-    state.boardWidth = Number.isFinite(savedWidth) && savedWidth >= BOARD_MIN_WIDTH
-      ? savedWidth
-      : BOARD_MIN_WIDTH;
+    applyBoardDimensions();
     state.selected.clear();
     state.boardMode = 'inspect';
     state.connectMode = false;
@@ -6294,13 +6379,6 @@
       void syncWorkspaceFromServer(level.level_id);
       void syncNoteFromServer(level.level_id);
       void ensureLevelRating(level.level_id);
-      if (!silent) {
-        toast({
-          type: 'info',
-          title: 'Expediente abierto',
-          message: `${level.title} · ${level.cards.length} evidencias en el tablón.`
-        });
-      }
     } catch (error) {
       setBoardLoading(false);
       renderLevelPicker();
@@ -8158,8 +8236,9 @@
       || state.crossedOut.size
     );
     if (started) {
+      const solvedText = state.solved ? ' Este caso ya fue resuelto; el reinicio borra el tablero actual pero conserva la primera resolución.' : '';
       const confirmed = window.confirm(
-        'Se reiniciarán el tablero, los hilos, las pistas recuperadas y los intentos de esta partida.\n\nTu libreta y tus estadísticas de primera resolución se conservan. ¿Jugar de nuevo?'
+        `Vas a reiniciar el expediente desde cero.${solvedText} Se eliminarán el progreso, el tablero, los hilos, las pistas recuperadas y los intentos de esta partida en este perfil.\n\nTu libreta y tus estadísticas de primera resolución se conservan. ¿Empezar de nuevo?`
       );
       if (!confirmed) return;
     }
@@ -8184,7 +8263,8 @@
       }
     }
 
-    delete PROGRESS[levelId];
+    const store = progressStore();
+    delete store[levelId];
     saveJSON(STORAGE.progress, PROGRESS);
 
     state.solved = false;
@@ -9041,7 +9121,7 @@
     state.boardVisible = false;
     resetEditorDraft();
     showScreen('editor');
-    document.title = 'CRIME BOARD // Editor de Casos';
+    document.title = 'OpenCrime // Editor de Casos';
     updateModeUI();
     renderAuthUI();
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -9052,7 +9132,7 @@
     resetEditorDraft();
     state.boardVisible = false;
     showScreen('landing');
-    document.title = 'CRIME BOARD // Dosier Policial';
+    document.title = 'OpenCrime // Dosier Policial';
     renderGallery();
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
@@ -9425,14 +9505,14 @@
     state.editorTestVerdict = null;
     state.editorTestBusy = false;
     showScreen('test');
-    document.title = 'CRIME BOARD // Test Play del caso';
+    document.title = 'OpenCrime // Test Play del caso';
     renderTestPlay();
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
   function backToEditorFromTest() {
     showScreen('editor');
-    document.title = 'CRIME BOARD // Editor de Casos';
+    document.title = 'OpenCrime // Editor de Casos';
     renderEditorWorkspace();
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
@@ -9580,9 +9660,15 @@
         created = await api.createLevel(built.payload, state.auth.token);
       } catch (error) {
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          Object.values(state.noteTimers || {}).forEach((timer) => clearTimeout(timer));
+          state.noteTimers = {};
+          clearTimeout(state.workspaceTimer);
+          state.workspaceTimer = null;
           state.auth = { token: '', username: '', userId: '' };
           persistAuth();
+          if (state.level) reapplyCurrentProgress();
           renderAuthUI();
+          await refreshCatalog({ silent: true });
           openAuthModal('login', 'editor');
           throw new ApiError('Tu sesión ya no es válida. Inicia sesión de nuevo para publicar el caso; el borrador no se ha perdido.', error.status, error.payload);
         }
@@ -9631,7 +9717,7 @@
     state.boardVisible = false;
     resetEditorDraft();
     showScreen('landing');
-    document.title = 'CRIME BOARD // Dosier Policial';
+    document.title = 'OpenCrime // Dosier Policial';
     renderGallery();
     renderLevelPicker();
     window.scrollTo({ top: 0, behavior: 'auto' });

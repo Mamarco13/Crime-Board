@@ -44,7 +44,7 @@ class LevelCatalog:
     ) -> None:
         headers = {
             "Accept": "application/json",
-            "User-Agent": "crime-board-playground-engine/0.2",
+            "User-Agent": "open-crime-playground-engine/0.2",
         }
         if internal_api_key:
             headers["X-Internal-Api-Key"] = internal_api_key

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # =============================================================================
-# Crime Board — Playground Engine Service
+# OpenCrime — Playground Engine Service
 # Stack asumido: Python 3.12 + FastAPI + Uvicorn
 # Build context: services/playground-engine-service
 # =============================================================================
@@ -52,9 +52,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME=/home/app \
     APP_HOME=/app
 
-LABEL org.opencontainers.image.title="crime-board-playground-engine-service" \
-      org.opencontainers.image.description="Playground Engine Service de Crime Board" \
-      org.opencontainers.image.vendor="Crime Board"
+LABEL org.opencontainers.image.title="open-crime-playground-engine-service" \
+      org.opencontainers.image.description="Playground Engine Service de OpenCrime" \
+      org.opencontainers.image.vendor="OpenCrime"
 
 # Usuario no-root explícito. No se instalan paquetes de sistema porque el
 # servicio solo necesita Redis/Kafka vía red.

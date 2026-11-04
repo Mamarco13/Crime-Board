@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Genera el diagrama de arquitectura (SVG) del proyecto Crime Board Cloud-Native."""
+"""Genera el diagrama de arquitectura (SVG) del proyecto OpenCrime Cloud-Native."""
 import html
 import os
 
@@ -81,7 +81,7 @@ add(f'<rect x="0" y="0" width="{W}" height="{H}" fill="#FFFFFF"/>')
 
 # título
 add(f'<text x="90" y="58" font-family="{FONT}" font-size="30" font-weight="800" '
-    f'fill="{INK}">Crime Board Cloud-Native</text>')
+    f'fill="{INK}">OpenCrime Cloud-Native</text>')
 add(f'<text x="90" y="90" font-family="{FONT}" font-size="15.5" fill="{MUTED}">'
     f'Arquitectura de Microservicios — Componentes, Protocolos de Comunicación y Almacenamiento</text>')
 

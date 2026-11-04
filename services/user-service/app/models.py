@@ -62,7 +62,7 @@ class UserRegister(BaseModel):
         pattern=USERNAME_PATTERN,
         examples=["detective_miller"],
     )
-    email: str = Field(min_length=5, max_length=254, examples=["miller@crimeboard.dev"])
+    email: str = Field(min_length=5, max_length=254, examples=["miller@opencrime.dev"])
     password: str = Field(min_length=8, max_length=128)
 
     @field_validator("username")

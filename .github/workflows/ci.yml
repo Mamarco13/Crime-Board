@@ -1,5 +1,5 @@
 # =============================================================================
-# Crime Board — Integración Continua (CI)
+# OpenCrime — Integración Continua (CI)
 # Hito 2 · Fase 3
 # =============================================================================
 # Pipeline:
@@ -163,8 +163,8 @@ jobs:
             type=raw,value=latest
           labels: |
             org.opencontainers.image.title=${{ matrix.service }}
-            org.opencontainers.image.description=Crime Board — ${{ matrix.service }}
-            org.opencontainers.image.vendor=Crime Board
+            org.opencontainers.image.description=OpenCrime — ${{ matrix.service }}
+            org.opencontainers.image.vendor=OpenCrime
 
       - name: Construir y publicar imagen
         uses: docker/build-push-action@v5

@@ -135,10 +135,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Crime Board — Progress Service",
+    title="OpenCrime — Progress Service",
     description=(
         "Libreta privada, espacio de trabajo, sesiones, intentos y "
-        "estadísticas de Crime Board."
+        "estadísticas de OpenCrime."
     ),
     version="0.1.0",
     lifespan=lifespan,

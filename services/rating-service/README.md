@@ -1,6 +1,6 @@
 # Rating Service
 
-Microservicio de valoraciones (1-5 estrellas) de los niveles de Crime Board.
+Microservicio de valoraciones (1-5 estrellas) de los niveles de OpenCrime.
 
 - **Lectura pública** (incluidos invitados): media y número de votos de un
   nivel, individual o por lotes.

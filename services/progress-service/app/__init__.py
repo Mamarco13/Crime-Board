@@ -1,1 +1,1 @@
-"""Progress Service de Crime Board."""
+"""Progress Service de OpenCrime."""

@@ -29,7 +29,7 @@ async def purge_progress_data(settings: Settings, user_id: str) -> bool:
 
     headers = {
         "Accept": "application/json",
-        "User-Agent": "crime-board-user-service/1.1",
+        "User-Agent": "open-crime-user-service/1.1",
     }
     if settings.internal_api_key:
         headers["X-Internal-Api-Key"] = settings.internal_api_key

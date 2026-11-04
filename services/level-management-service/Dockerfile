@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # =============================================================================
-# Crime Board — Level Management Service
+# OpenCrime — Level Management Service
 # Stack asumido: Python 3.12 + FastAPI + Uvicorn
 # Build context: services/level-management-service
 # =============================================================================
@@ -54,9 +54,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME=/home/app \
     APP_HOME=/app
 
-LABEL org.opencontainers.image.title="crime-board-level-management-service" \
-      org.opencontainers.image.description="Level Management Service de Crime Board" \
-      org.opencontainers.image.vendor="Crime Board"
+LABEL org.opencontainers.image.title="open-crime-level-management-service" \
+      org.opencontainers.image.description="Level Management Service de OpenCrime" \
+      org.opencontainers.image.vendor="OpenCrime"
 
 # Solo librerías de sistema necesarias en ejecución (cliente libpq para PostgreSQL)
 #

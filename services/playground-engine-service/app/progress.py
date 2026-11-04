@@ -30,7 +30,7 @@ class ProgressClient:
     ) -> None:
         headers = {
             "Accept": "application/json",
-            "User-Agent": "crime-board-playground-engine/0.3",
+            "User-Agent": "open-crime-playground-engine/0.3",
         }
         if internal_api_key:
             headers["X-Internal-Api-Key"] = internal_api_key

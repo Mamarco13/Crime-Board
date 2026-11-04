@@ -98,9 +98,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Crime Board — Level Management Service",
+    title="OpenCrime — Level Management Service",
     description=(
-        "Catálogo de niveles y tarjetas de Crime Board. La solución del caso "
+        "Catálogo de niveles y tarjetas de OpenCrime. La solución del caso "
         "solo se expone en el endpoint interno autenticado."
     ),
     version="0.3.0",

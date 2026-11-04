@@ -1,6 +1,6 @@
 # Archivador — término libre → ficha oculta → tablero
 
-Mecánica del Crime Board que sustituye el desbloqueo automático de pistas. El
+Mecánica de OpenCrime que sustituye el desbloqueo automático de pistas. El
 diseñador marca una tarjeta como oculta y declara sus **alias** (códigos,
 direcciones o palabras). El jugador lee una declaración, abre el archivador,
 teclea un término y, si coincide con una ficha oculta, esta aparece en el
@@ -188,7 +188,7 @@ que las tarjetas se declararon en el nivel.
 Claves en Redis (o memoria si Redis no está disponible), con el TTL de
 `INTERROGATION_TTL_SECONDS`:
 
-- `crime-board:state:archive:{level}:{session}:{card}`: ficha ya recuperada en
+- `open-crime:state:archive:{level}:{session}:{card}`: ficha ya recuperada en
   esa partida.
 
 No se guarda la consulta libre en el backend. El frontend conserva el historial

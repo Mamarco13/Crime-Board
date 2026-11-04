@@ -122,7 +122,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Crime Board — Playground Engine Service",
+    title="OpenCrime — Playground Engine Service",
     description=(
         "Interrogatorios y validación de acusaciones del tablero. El estado "
         "efímero se guarda en Redis y la solución se consulta al catálogo "

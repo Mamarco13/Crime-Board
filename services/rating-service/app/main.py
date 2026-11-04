@@ -96,7 +96,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Crime Board — Rating Service",
+    title="OpenCrime — Rating Service",
     description=(
         "Valoraciones de 1 a 5 estrellas de los niveles. Expone medias y "
         "conteos públicos para las tarjetas de la galería."

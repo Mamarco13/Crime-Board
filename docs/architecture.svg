@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1640" height="1010" viewBox="0 0 1640 1010" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif">
 <defs><marker id="arrowS" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L9,3.5 L0,7 z" fill="#455A64"/></marker><marker id="arrowD" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L9,3.5 L0,7 z" fill="#AD1457"/></marker></defs>
 <rect x="0" y="0" width="1640" height="1010" fill="#FFFFFF"/>
-<text x="90" y="58" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#22313F">Crime Board Cloud-Native</text>
+<text x="90" y="58" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#22313F">OpenCrime Cloud-Native</text>
 <text x="90" y="90" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" fill="#5A6B7B">Arquitectura de Microservicios — Componentes, Protocolos de Comunicación y Almacenamiento</text>
 <rect x="1170" y="26" width="392" height="82" rx="10" fill="#F8FAFC" stroke="#D6DEE6"/>
 <line x1="1194" y1="54" x2="1252" y2="54" stroke="#455A64" stroke-width="2.4" marker-end="url(#arrowS)"/>

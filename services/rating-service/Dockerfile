@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # =============================================================================
-# Crime Board — Rating Service
+# OpenCrime — Rating Service
 # Stack: Python 3.12 + FastAPI + Uvicorn + SQLAlchemy/asyncpg + JWT
 # Build context: services/rating-service
 # =============================================================================
@@ -54,9 +54,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME=/home/app \
     APP_HOME=/app
 
-LABEL org.opencontainers.image.title="crime-board-rating-service" \
-      org.opencontainers.image.description="Rating Service de Crime Board" \
-      org.opencontainers.image.vendor="Crime Board"
+LABEL org.opencontainers.image.title="open-crime-rating-service" \
+      org.opencontainers.image.description="Rating Service de OpenCrime" \
+      org.opencontainers.image.vendor="OpenCrime"
 
 # Solo librerías de sistema necesarias en ejecución (cliente libpq para
 # PostgreSQL) y creación del usuario no-root UID/GID 10001.

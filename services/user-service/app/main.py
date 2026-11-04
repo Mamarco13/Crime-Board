@@ -85,7 +85,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Crime Board — User Service",
+    title="OpenCrime — User Service",
     description=(
         "Registro y autenticación de detectives. Emite los JWT que autorizan "
         "la publicación de casos en Level Management."

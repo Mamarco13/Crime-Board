@@ -24,8 +24,8 @@ from redis.exceptions import RedisError
 logger = logging.getLogger(__name__)
 
 # Prefijos para que caché y estado compartan instancia sin colisionar.
-CACHE_PREFIX = "crime-board:cache:"
-STATE_PREFIX = "crime-board:state:"
+CACHE_PREFIX = "open-crime:cache:"
+STATE_PREFIX = "open-crime:state:"
 
 
 class JsonStore(Protocol):

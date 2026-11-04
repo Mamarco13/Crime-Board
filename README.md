@@ -1,4 +1,4 @@
-# Crime Board Cloud-Native
+# OpenCrime Cloud-Native
 
 ## 1. Descripción del Dominio y Casos de Uso
 Plataforma interactiva para resolver misterios lógicos...

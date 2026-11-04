@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # =============================================================================
-# Crime Board — Progress Service
+# OpenCrime — Progress Service
 # Stack: Python 3.12 + FastAPI + Uvicorn + SQLAlchemy/asyncpg
 # Build context: services/progress-service
 # =============================================================================
@@ -54,9 +54,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME=/home/app \
     APP_HOME=/app
 
-LABEL org.opencontainers.image.title="crime-board-progress-service" \
-      org.opencontainers.image.description="Progress Service de Crime Board" \
-      org.opencontainers.image.vendor="Crime Board"
+LABEL org.opencontainers.image.title="open-crime-progress-service" \
+      org.opencontainers.image.description="Progress Service de OpenCrime" \
+      org.opencontainers.image.vendor="OpenCrime"
 
 # Solo librerías de sistema necesarias en ejecución (cliente libpq para
 # PostgreSQL) y creación del usuario no-root UID/GID 10001.

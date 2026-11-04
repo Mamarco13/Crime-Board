@@ -1,1 +1,1 @@
-"""User Service — autenticación y cuentas de Crime Board."""
+"""User Service — autenticación y cuentas de OpenCrime."""

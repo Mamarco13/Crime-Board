@@ -1,5 +1,5 @@
 # =============================================================================
-# Crime Board — Orquestación del entorno local reproducible
+# OpenCrime — Orquestación del entorno local reproducible
 # Hito 2 · Fase 2
 # =============================================================================
 # Topología:
@@ -33,7 +33,7 @@
 # Compose carga automáticamente el archivo .env del directorio del proyecto.
 # =============================================================================
 
-name: ${COMPOSE_PROJECT_NAME:-crime-board}
+name: ${COMPOSE_PROJECT_NAME:-open-crime}
 
 # -----------------------------------------------------------------------------
 # Extensiones reutilizables (anclas YAML)
@@ -80,7 +80,7 @@ services:
       context: ./services/level-management-service
       dockerfile: Dockerfile
       target: runtime
-    image: crime-board/level-management-service:${IMAGE_TAG:-local}
+    image: open-crime/level-management-service:${IMAGE_TAG:-local}
     environment:
       SERVICE_NAME: level-management-service
       ENVIRONMENT: ${ENVIRONMENT:-development}
@@ -127,7 +127,7 @@ services:
       context: ./services/playground-engine-service
       dockerfile: Dockerfile
       target: runtime
-    image: crime-board/playground-engine-service:${IMAGE_TAG:-local}
+    image: open-crime/playground-engine-service:${IMAGE_TAG:-local}
     environment:
       SERVICE_NAME: playground-engine-service
       ENVIRONMENT: ${ENVIRONMENT:-development}
@@ -172,7 +172,7 @@ services:
       context: ./services/user-service
       dockerfile: Dockerfile
       target: runtime
-    image: crime-board/user-service:${IMAGE_TAG:-local}
+    image: open-crime/user-service:${IMAGE_TAG:-local}
     environment:
       SERVICE_NAME: user-service
       ENVIRONMENT: ${ENVIRONMENT:-development}
@@ -217,7 +217,7 @@ services:
       context: ./services/rating-service
       dockerfile: Dockerfile
       target: runtime
-    image: crime-board/rating-service:${IMAGE_TAG:-local}
+    image: open-crime/rating-service:${IMAGE_TAG:-local}
     environment:
       SERVICE_NAME: rating-service
       ENVIRONMENT: ${ENVIRONMENT:-development}
@@ -258,7 +258,7 @@ services:
       context: ./services/progress-service
       dockerfile: Dockerfile
       target: runtime
-    image: crime-board/progress-service:${IMAGE_TAG:-local}
+    image: open-crime/progress-service:${IMAGE_TAG:-local}
     environment:
       SERVICE_NAME: progress-service
       ENVIRONMENT: ${ENVIRONMENT:-development}

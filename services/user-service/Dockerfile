@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # =============================================================================
-# Crime Board — User Service
+# OpenCrime — User Service
 # Stack: Python 3.12 + FastAPI + Uvicorn + SQLAlchemy/asyncpg + JWT
 # Build context: services/user-service
 # =============================================================================
@@ -54,9 +54,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME=/home/app \
     APP_HOME=/app
 
-LABEL org.opencontainers.image.title="crime-board-user-service" \
-      org.opencontainers.image.description="User Service de Crime Board" \
-      org.opencontainers.image.vendor="Crime Board"
+LABEL org.opencontainers.image.title="open-crime-user-service" \
+      org.opencontainers.image.description="User Service de OpenCrime" \
+      org.opencontainers.image.vendor="OpenCrime"
 
 # Solo librerías de sistema necesarias en ejecución (cliente libpq para
 # PostgreSQL) y creación del usuario no-root UID/GID 10001.
