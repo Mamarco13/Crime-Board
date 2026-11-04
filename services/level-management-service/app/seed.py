@@ -34,6 +34,7 @@ DEMO_LEVEL = LevelCreate(
         "reconstruye la escena antes de acusar."
     ),
     difficulty=Difficulty.TUTORIAL,
+    reveal_solution_composition=True,
     cards=[
         # ------------------- Tarjetas visibles (3) -------------------
         CardCreate(
@@ -233,13 +234,34 @@ DEMO_LEVEL = LevelCreate(
 )
 
 
+# Variante difícil del mismo expediente: oculta la composición en el dosier y
+# activa el feedback estricto del motor. Sirve para probar #6 sin publicar un
+# caso nuevo desde el editor.
+HARD_DEMO_LEVEL = DEMO_LEVEL.model_copy(
+    update={
+        "level_id": "tutorial-002",
+        "title": "El último brindis · edición difícil",
+        "description": (
+            "El mismo misterio de Villa Aurora, pero sin la composición de la "
+            "solución en el dosier. El motor no revelará coincidencias "
+            "parciales: tendrás que reconstruir la acusación completa."
+        ),
+        "difficulty": Difficulty.HARD,
+        "reveal_solution_composition": False,
+    }
+)
+
+DEMO_LEVELS = (DEMO_LEVEL, HARD_DEMO_LEVEL)
+
+
 async def seed_demo_level(repository: LevelRepository) -> None:
-    """Inserta el nivel de demostración si todavía no existe."""
-    try:
-        if await repository.get(DEMO_LEVEL.level_id) is not None:
-            return
-        await repository.create(DEMO_LEVEL)
-        logger.info("Nivel de demostración '%s' cargado", DEMO_LEVEL.level_id)
-    except LevelAlreadyExistsError:
-        # Otra réplica ganó la carrera: el estado final es el mismo.
-        logger.debug("El nivel de demostración ya había sido creado")
+    """Inserta los niveles de demostración si todavía no existen."""
+    for level in DEMO_LEVELS:
+        try:
+            if await repository.get(level.level_id) is not None:
+                continue
+            await repository.create(level)
+            logger.info("Nivel de demostración '%s' cargado", level.level_id)
+        except LevelAlreadyExistsError:
+            # Otra réplica ganó la carrera: el estado final es el mismo.
+            logger.debug("El nivel de demostración ya había sido creado")

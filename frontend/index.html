@@ -2281,6 +2281,11 @@
     }
     .composer-check input:checked::after { content: '✓'; font-size: 9px; line-height: 1; color: currentColor; }
     .composer-check:has(input:checked) { color: var(--gold); border-color: rgba(212, 175, 55, .5); background: rgba(212, 175, 55, .07); }
+    .editor-toggle {
+      max-width: 100%; white-space: normal; align-items: flex-start;
+      text-align: left; line-height: 1.45;
+    }
+    .editor-toggle input { flex: none; margin-top: 1px; }
     .composer-aliases-field { flex: 1 1 240px; min-width: 170px; margin: 0 !important; }
     .composer-aliases-field.is-required { padding: 5px 7px; border: 1px solid rgba(230, 57, 70, .35); background: rgba(230, 57, 70, .05); }
     .composer-aliases-field.is-required > label { color: #ff9aa2; }
@@ -3116,6 +3121,15 @@
           </div>
 
           <div class="field">
+            <label class="composer-check editor-toggle" for="editorRevealComposition">
+              <input type="checkbox" id="editorRevealComposition" checked />
+              Mostrar la composición de la solución en el dosier
+            </label>
+            <p class="hint" id="editorCompositionHint" hidden>Ocultar la composición exige dificultad difícil. El motor tampoco revelará coincidencias parciales.</p>
+            <p class="hint">El dosier mostrará un recuento por tipo (por ejemplo, «1 arma · 2 pistas») sin revelar qué tarjetas concretas forman la solución.</p>
+          </div>
+
+          <div class="field">
             <label for="editorDescription">Descripción del caso</label>
             <textarea class="textarea" id="editorDescription" maxlength="4000" rows="4" placeholder="La escena, la víctima y lo que el expediente deja entrever…"></textarea>
             <p class="hint">El identificador y los ids de las tarjetas usan el formato slug del backend. Si lo dejas vacío, se genera automáticamente a partir del título.</p>
@@ -3277,6 +3291,11 @@
               <li>Si aciertas, el editor desbloquea la publicación. Si fallas, corrige el caso y repite.</li>
             </ol>
             <p class="hint">Las fichas ocultas aparecen aquí para que puedas probar la combinación completa; en la partida real se recuperan desde el archivador con sus alias.</p>
+          </div>
+
+          <div class="test-side-block" id="testCompositionBlock" hidden>
+            <h3>Composición de la solución</h3>
+            <div class="composition-chips" id="testCompositionChips"></div>
           </div>
 
           <div class="test-verdict" id="testVerdict" hidden>
@@ -3493,6 +3512,7 @@
       title: 'El último brindis en Villa Aurora',
       description: 'Durante la cena de fin de año, el anfitrión brindó y cayó sin vida. El reloj de la biblioteca se detuvo a las 23:15. Interroga a los sospechosos, busca los términos que mencionan en el archivador y reconstruye la escena antes de acusar.',
       difficulty: 'tutorial',
+      reveal_solution_composition: true,
       created_at: '2026-01-12T21:15:00Z',
       card_count: 16,
       cards: [
@@ -3580,7 +3600,8 @@
       level_id: 'faro-002',
       title: 'Ecos en el faro de Punta Ánimas',
       description: 'El farero no acudió al cambio de guardia. En la linterna solo quedaron una radio abierta, sal y una cuerda cortada. La marea ha borrado parte de la escena, pero no todas las mentiras.',
-      difficulty: 'medium',
+      difficulty: 'hard',
+      reveal_solution_composition: false,
       created_at: '2026-02-03T18:40:00Z',
       card_count: 13,
       cards: [
@@ -3882,6 +3903,7 @@
     // Editor de casos: borrador, compositor de tarjetas y verificación previa.
     editorCards: [],
     editorEditingId: null,
+    editorPreviousDifficulty: '',
     editorVerified: false,
     editorVerifiedFingerprint: '',
     editorVerifiedSource: '',
@@ -4050,6 +4072,8 @@
     editorTitleInput: $('#editorTitleInput'),
     editorDescription: $('#editorDescription'),
     editorDifficulty: $('#editorDifficulty'),
+    editorRevealComposition: $('#editorRevealComposition'),
+    editorCompositionHint: $('#editorCompositionHint'),
     editorLevelId: $('#editorLevelId'),
     editorAuthorName: $('#editorAuthorName'),
     editorCardGrid: $('#editorCardGrid'),
@@ -4084,6 +4108,8 @@
     testLevelTitle: $('#testLevelTitle'),
     testBoard: $('#testBoard'),
     testBoardMeta: $('#testBoardMeta'),
+    testCompositionBlock: $('#testCompositionBlock'),
+    testCompositionChips: $('#testCompositionChips'),
     testSelectionCount: $('#testSelectionCount'),
     testClearBtn: $('#testClearBtn'),
     testSubmitBtn: $('#testSubmitBtn'),
@@ -5605,6 +5631,37 @@
     updateModeUI();
   }
 
+  const COMPOSITION_PLURALS = {
+    SUSPECT: ['sospechoso', 'sospechosos'],
+    WEAPON: ['arma', 'armas'],
+    LOCATION: ['lugar', 'lugares'],
+    CLUE: ['pista', 'pistas']
+  };
+
+  function compositionCounts(cardIds, cards) {
+    const byId = new Map();
+    (cards || []).forEach((card) => byId.set(card.id, card));
+    const counts = {};
+    (cardIds || []).forEach((cardId) => {
+      const card = byId.get(cardId);
+      if (card) counts[card.type] = (counts[card.type] || 0) + 1;
+    });
+    return counts;
+  }
+
+  function compositionChipsHtml(counts) {
+    return TYPE_ORDER
+      .filter((type) => Number(counts[type]) > 0)
+      .map((type) => {
+        const meta = typeMeta(type);
+        const count = Number(counts[type]);
+        const [singular, pluralForm] = COMPOSITION_PLURALS[type]
+          || [meta.label.toLowerCase(), `${meta.label.toLowerCase()}s`];
+        return `<span class="composition-chip">${ICON(meta.icon)}<b>${count}</b> ${count === 1 ? singular : pluralForm}</span>`;
+      })
+      .join('');
+  }
+
   function renderSolutionComposition() {
     if (!els.solutionComposition || !els.solutionCompositionChips) return;
     const level = state.level;
@@ -5614,7 +5671,7 @@
     }
 
     // El backend puede ocultar la composición a propósito (casos difíciles).
-    if (level.solution_composition_hidden) {
+    if (level.solution_composition_hidden || level.reveal_solution_composition === false) {
       els.solutionComposition.hidden = false;
       els.solutionCompositionChips.innerHTML = '<span class="composition-hidden">Composición oculta · caso de dificultad difícil.</span>';
       return;
@@ -5627,17 +5684,13 @@
     } else if (Array.isArray(state.solution) && state.solution.length) {
       // Solo hay copia local de la solución en los casos de simulación o en
       // los publicados desde este navegador. Nunca se deduce de un nivel real.
-      counts = {};
       const byId = new Map();
       level.cards.forEach((card) => byId.set(card.id, card));
       // La solución puede incluir tarjetas ocultas en el archivador o pistas
       // antiguas que aún no están sobre el tablón.
       (state.archiveDefinitions || []).forEach(({ card }) => byId.set(card.id, card));
       Object.values(state.legacyClues || {}).forEach((card) => byId.set(card.id, card));
-      state.solution.forEach((cardId) => {
-        const card = byId.get(cardId);
-        if (card) counts[card.type] = (counts[card.type] || 0) + 1;
-      });
+      counts = compositionCounts(state.solution, [...byId.values()]);
     }
 
     if (!counts || !Object.keys(counts).length) {
@@ -5645,22 +5698,8 @@
       return;
     }
 
-    const plurals = {
-      SUSPECT: ['sospechoso', 'sospechosos'],
-      WEAPON: ['arma', 'armas'],
-      LOCATION: ['lugar', 'lugares'],
-      CLUE: ['pista', 'pistas']
-    };
     els.solutionComposition.hidden = false;
-    els.solutionCompositionChips.innerHTML = TYPE_ORDER
-      .filter((type) => Number(counts[type]) > 0)
-      .map((type) => {
-        const meta = typeMeta(type);
-        const count = Number(counts[type]);
-        const [singular, pluralForm] = plurals[type] || [meta.label.toLowerCase(), `${meta.label.toLowerCase()}s`];
-        return `<span class="composition-chip">${ICON(meta.icon)}<b>${count}</b> ${count === 1 ? singular : pluralForm}</span>`;
-      })
-      .join('');
+    els.solutionCompositionChips.innerHTML = compositionChipsHtml(counts);
   }
 
   function renderChrome() {
@@ -7688,6 +7727,32 @@
     els.editorAuthorName.textContent = state.auth.username || 'Invitado';
   }
 
+  function syncEditorCompositionUI({ reset = false } = {}) {
+    if (!els.editorRevealComposition || !els.editorDifficulty) return;
+    const reveal = Boolean(els.editorRevealComposition.checked);
+    const difficulty = els.editorDifficulty;
+    const options = Array.from(difficulty.options || []);
+    options.forEach((option) => { option.disabled = false; });
+
+    if (reveal) {
+      if (!reset && state.editorPreviousDifficulty) {
+        const canRestore = options.some((option) => (
+          option.value === state.editorPreviousDifficulty && !option.disabled
+        ));
+        if (canRestore) difficulty.value = state.editorPreviousDifficulty;
+      }
+      state.editorPreviousDifficulty = '';
+    } else {
+      if (!state.editorPreviousDifficulty && difficulty.value !== 'hard') {
+        state.editorPreviousDifficulty = difficulty.value;
+      }
+      difficulty.value = 'hard';
+      options.forEach((option) => { option.disabled = option.value !== 'hard'; });
+    }
+
+    if (els.editorCompositionHint) els.editorCompositionHint.hidden = reveal;
+  }
+
   function updateComposerTypeUI() {
     if (!els.composerType || !els.composerTitle || !els.composerDescription) return;
     const type = els.composerType.value;
@@ -7765,6 +7830,7 @@
       title: (els.editorTitleInput?.value || '').trim(),
       description: (els.editorDescription?.value || '').trim(),
       difficulty: els.editorDifficulty?.value || 'easy',
+      revealComposition: els.editorRevealComposition ? Boolean(els.editorRevealComposition.checked) : true,
       levelId: (els.editorLevelId?.value || '').trim(),
       cards: state.editorCards.map((card) => ({
         id: card.id,
@@ -7903,6 +7969,9 @@
     if (els.editorTitleInput) els.editorTitleInput.value = '';
     if (els.editorDescription) els.editorDescription.value = '';
     if (els.editorDifficulty) els.editorDifficulty.value = 'easy';
+    if (els.editorRevealComposition) els.editorRevealComposition.checked = true;
+    state.editorPreviousDifficulty = '';
+    syncEditorCompositionUI({ reset: true });
     if (els.editorLevelId) els.editorLevelId.value = '';
     hideEditorError();
     hideComposerError();
@@ -8116,13 +8185,26 @@
       suffix += 1;
     }
 
+    const revealComposition = els.editorRevealComposition
+      ? Boolean(els.editorRevealComposition.checked)
+      : true;
+    const difficulty = els.editorDifficulty?.value || 'easy';
+    if (!revealComposition && difficulty !== 'hard') {
+      return {
+        ok: false,
+        message: 'Ocultar la composición exige dificultad difícil. Marca la casilla o cambia la dificultad.',
+        field: els.editorDifficulty
+      };
+    }
+
     return {
       ok: true,
       payload: {
         level_id: levelId,
         title: title.slice(0, 120),
         description: (els.editorDescription?.value || '').trim().slice(0, 4000),
-        difficulty: els.editorDifficulty?.value || 'easy',
+        difficulty,
+        reveal_solution_composition: revealComposition,
         cards,
         solution_card_ids: solution
       }
@@ -8141,6 +8223,10 @@
     let feedback;
     if (solved) {
       feedback = 'La acusación coincide exactamente con la solución secreta del borrador. El caso está listo para publicarse.';
+    } else if (level.reveal_solution_composition === false) {
+      // Mismo criterio que el motor: sin recuentos que permitan reconstruir
+      // la solución por fuerza bruta.
+      feedback = 'La acusación no encaja con las pruebas del caso.';
     } else {
       feedback = `Tu acusación de prueba no coincide con la solución secreta del borrador. ${matched} de ${selected.size} tarjetas seleccionadas pertenecen a la combinación.`;
       if (extra.length) feedback += ` Hay ${extra.length} tarjeta${extra.length === 1 ? '' : 's'} que no forma${extra.length === 1 ? '' : 'n'} parte de la solución.`;
@@ -8220,6 +8306,21 @@
     }
   }
 
+  function renderTestComposition(snapshot) {
+    if (!els.testCompositionBlock || !els.testCompositionChips) return;
+    if (!snapshot) {
+      els.testCompositionBlock.hidden = true;
+      return;
+    }
+    els.testCompositionBlock.hidden = false;
+    if (snapshot.reveal_solution_composition === false) {
+      els.testCompositionChips.innerHTML = '<span class="composition-hidden">Composición oculta · caso de dificultad difícil.</span>';
+      return;
+    }
+    const counts = compositionCounts(snapshot.solution_card_ids, snapshot.cards);
+    els.testCompositionChips.innerHTML = compositionChipsHtml(counts);
+  }
+
   function renderTestPlay() {
     const snapshot = state.editorTestSnapshot;
     if (!els.testBoard || !snapshot) return;
@@ -8228,6 +8329,7 @@
     if (els.testBoardMeta) {
       els.testBoardMeta.textContent = `EXP. ${String(snapshot.level_id || '').toUpperCase()} · ${snapshot.cards.length} FICHAS`;
     }
+    renderTestComposition(snapshot);
     els.testBoard.innerHTML = snapshot.cards.map(testCardHtml).join('');
     if (els.testSelectionCount) {
       els.testSelectionCount.textContent = `${selected} ${selected === 1 ? 'tarjeta seleccionada' : 'tarjetas seleccionadas'}`;
@@ -8700,6 +8802,12 @@
       };
       input?.addEventListener('input', handler);
       input?.addEventListener('change', handler);
+    });
+
+    els.editorRevealComposition?.addEventListener('change', () => {
+      syncEditorCompositionUI();
+      if (els.editorError) els.editorError.hidden = true;
+      invalidateEditorVerification();
     });
 
     // Test Play: selección de tarjetas y acusación de prueba.

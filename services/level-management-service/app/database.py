@@ -69,6 +69,12 @@ async def init_database(
                     "ADD COLUMN IF NOT EXISTS aliases "
                     "JSON NOT NULL DEFAULT '[]'::json"
                 ),
+                # Composición de la solución visible u oculta (Hito 3, #6).
+                (
+                    "ALTER TABLE levels "
+                    "ADD COLUMN IF NOT EXISTS reveal_solution_composition "
+                    "BOOLEAN NOT NULL DEFAULT TRUE"
+                ),
             )
             for statement in migrations:
                 await connection.execute(text(statement))

@@ -114,6 +114,15 @@ def evaluate_accusation(
             ),
         )
 
+    # Con la composición oculta, cualquier recuento de aciertos parciales
+    # permitiría reconstruir la solución por fuerza bruta. El veredicto sigue
+    # siendo binario y no revela cuántas tarjetas sobran o faltan.
+    if level.strict_feedback:
+        return AccusationOutcome(
+            solved=False,
+            feedback_message="La acusación no encaja con las pruebas del caso.",
+        )
+
     matched = len(selected & solution)
     if matched == 0:
         feedback = (

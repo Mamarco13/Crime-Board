@@ -28,6 +28,7 @@ from .database import init_database
 from .models import (
     Card,
     CardAdmin,
+    CardType,
     LevelAdmin,
     LevelCreate,
     LevelDetail,
@@ -220,6 +221,36 @@ async def require_internal_api_key(
 # ---------------------------------------------------------------------------
 # Conversores modelo ORM → esquema de salida
 # ---------------------------------------------------------------------------
+def _solution_composition(level: LevelModel) -> dict[str, int]:
+    """Recuento de la solución por tipo, en el orden estable de ``CardType``."""
+    card_types = {card.id: card.type for card in level.cards}
+    counts: dict[str, int] = {}
+    for card_id in level.solution_card_ids:
+        card_type = card_types.get(card_id)
+        if card_type is not None:
+            counts[card_type.value] = counts.get(card_type.value, 0) + 1
+    return {
+        card_type.value: counts[card_type.value]
+        for card_type in CardType
+        if counts.get(card_type.value)
+    }
+
+
+def _composition_fields(level: LevelModel) -> dict[str, object]:
+    """Campos derivados que se publican en el detalle o se ocultan por completo."""
+    if not level.reveal_solution_composition:
+        return {
+            "solution_composition": None,
+            "solution_total": None,
+            "solution_composition_hidden": True,
+        }
+    return {
+        "solution_composition": _solution_composition(level),
+        "solution_total": len(level.solution_card_ids),
+        "solution_composition_hidden": False,
+    }
+
+
 def _to_detail(level: LevelModel) -> LevelDetail:
     """Vista pública: solo tarjetas visibles y el total del expediente."""
     return LevelDetail(
@@ -233,6 +264,7 @@ def _to_detail(level: LevelModel) -> LevelDetail:
         ],
         card_count=len(level.cards),
         created_at=level.created_at,
+        **_composition_fields(level),
     )
 
 
@@ -247,7 +279,9 @@ def _to_admin(level: LevelModel) -> LevelAdmin:
         cards=[CardAdmin.model_validate(card) for card in level.cards],
         card_count=len(level.cards),
         solution_card_ids=list(level.solution_card_ids),
+        reveal_solution_composition=level.reveal_solution_composition,
         created_at=level.created_at,
+        **_composition_fields(level),
     )
 
 

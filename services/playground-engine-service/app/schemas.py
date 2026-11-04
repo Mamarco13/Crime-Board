@@ -193,6 +193,20 @@ class LevelSnapshot(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     cards: list[InternalCard] = Field(min_length=1, max_length=200)
     solution_card_ids: list[str] = Field(min_length=1, max_length=50)
+    solution_composition_hidden: bool = Field(
+        default=False,
+        description=(
+            "El autor oculta la composición en el dosier. El motor debe evitar "
+            "revelar coincidencias parciales."
+        ),
+    )
+    strict_feedback: bool = Field(
+        default=False,
+        description=(
+            "Feedback binario sin recuentos. Se deriva de "
+            "``solution_composition_hidden`` para no filtrar la solución."
+        ),
+    )
 
     @model_validator(mode="after")
     def _validate_integrity(self) -> LevelSnapshot:
@@ -225,4 +239,6 @@ class LevelSnapshot(BaseModel):
             )
         if len(set(self.solution_card_ids)) != len(self.solution_card_ids):
             raise ValueError("La solución contiene ids duplicados")
+        if self.solution_composition_hidden:
+            self.strict_feedback = True
         return self

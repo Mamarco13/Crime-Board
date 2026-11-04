@@ -125,6 +125,14 @@ class LevelModel(Base):
     # el MVP; si la solución necesitara consultas relacionales, se normalizaría
     # en una tabla intermedia.
     solution_card_ids: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    # El dosier puede mostrar un resumen por tipo de la solución. Ocultarlo es
+    # una decisión de diseño del caso y solo se permite en dificultad difícil.
+    reveal_solution_composition: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=text("TRUE"),
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -304,6 +312,13 @@ class LevelCreate(BaseModel):
     )
     description: str = Field(default="", max_length=4000)
     difficulty: Difficulty = Difficulty.EASY
+    reveal_solution_composition: bool = Field(
+        default=True,
+        description=(
+            "Muestra en el dosier un resumen por tipo de la solución. "
+            "Ocultarlo exige dificultad difícil y activa feedback estricto."
+        ),
+    )
     cards: list[CardCreate] = Field(min_length=1, max_length=200)
     solution_card_ids: list[str] = Field(
         min_length=1,
@@ -362,6 +377,8 @@ class LevelCreate(BaseModel):
                 "La solución referencia tarjetas inexistentes: "
                 + ", ".join(sorted(unknown))
             )
+        if not self.reveal_solution_composition and self.difficulty != Difficulty.HARD:
+            raise ValueError("Ocultar la composición exige dificultad difícil")
         return self
 
 
@@ -400,6 +417,22 @@ class LevelDetail(BaseModel):
     )
     cards: list[Card]
     card_count: int = Field(ge=0)
+    solution_composition: dict[str, int] | None = Field(
+        default=None,
+        description=(
+            "Recuento de tarjetas de la solución por tipo. Es ``null`` cuando "
+            "el autor oculta la composición."
+        ),
+    )
+    solution_total: int | None = Field(
+        default=None,
+        ge=0,
+        description="Número total de tarjetas de la solución; oculto si aplica.",
+    )
+    solution_composition_hidden: bool = Field(
+        default=False,
+        description="``true`` si el autor decidió no revelar la composición.",
+    )
     created_at: datetime
 
 
@@ -409,6 +442,10 @@ class LevelAdmin(LevelDetail):
     cards: list[CardAdmin]
     solution_card_ids: list[str] = Field(
         description="Combinación ganadora. Uso exclusivo interno.",
+    )
+    reveal_solution_composition: bool = Field(
+        default=True,
+        description="Preferencia del autor sobre la composición en el dosier.",
     )
 
 

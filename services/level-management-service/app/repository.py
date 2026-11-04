@@ -66,6 +66,7 @@ def _build_level_model(
         difficulty=payload.difficulty,
         creator_username=creator_username.strip()[:64] or "Anónimo",
         solution_card_ids=list(payload.solution_card_ids),
+        reveal_solution_composition=payload.reveal_solution_composition,
         cards=[
             CardModel(
                 level_id=level_id,
