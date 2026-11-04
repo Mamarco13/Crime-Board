@@ -7,11 +7,13 @@
 #   host :8000 ──> level-management-service ──┐
 #   host :8001 ──> playground-engine-service ─┼── backend-net (inter-servicios)
 #   host :8002 ──> user-service ──────────────┤
-#   host :8003 ──> rating-service ────────────┘
+#   host :8003 ──> rating-service ────────────┤
+#   host :8004 ──> progress-service ──────────┘
 #
 #   level-management-service ── db-net (internal) ──> postgres
 #   user-service ───────────── db-net (internal) ──> postgres
 #   rating-service ─────────── db-net (internal) ──> postgres
+#   progress-service ───────── db-net (internal) ──> postgres
 #   playground-engine-service ─ cache-net (internal) ──> redis
 #
 # Autenticación: user-service emite los JWT (login/registro). Level Management
@@ -138,7 +140,16 @@ services:
       # URL canónica construida a partir de las variables anteriores.
       REDIS_URL: "redis://:${REDIS_PASSWORD:?}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/${REDIS_DB:-0}"
       LEVEL_MANAGEMENT_SERVICE_URL: ${LEVEL_MANAGEMENT_SERVICE_URL:-http://level-management-service:8000}
+      # Registro fail-open de intentos autenticados en Progress Service.
+      PROGRESS_SERVICE_URL: ${PROGRESS_SERVICE_URL:-http://progress-service:8000}
+      PROGRESS_ENABLED: ${PROGRESS_ENABLED:-true}
+      PROGRESS_TIMEOUT_SECONDS: ${PROGRESS_TIMEOUT_SECONDS:-0.8}
       APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      # Verificación local de los JWT para atribuir intentos al detective.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
       # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
       CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
     ports:
@@ -179,6 +190,10 @@ services:
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-720}
+      # Purga best-effort del progreso al eliminar la cuenta (GDPR).
+      PROGRESS_SERVICE_URL: ${PROGRESS_SERVICE_URL:-http://progress-service:8000}
+      PROGRESS_TIMEOUT_SECONDS: ${PROGRESS_TIMEOUT_SECONDS:-0.8}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
       # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
       CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
     ports:
@@ -235,7 +250,50 @@ services:
     healthcheck: *app-healthcheck
 
   # ---------------------------------------------------------------------------
-  # PostgreSQL — persistencia de Level Management, User Service y Rating Service
+  # Microservicio de progreso: libreta, sesiones, intentos y estadísticas
+  # ---------------------------------------------------------------------------
+  progress-service:
+    <<: *app-hardening
+    build:
+      context: ./services/progress-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: crime-board/progress-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: progress-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # Tablas propias de progreso; no toca esquemas de otros servicios.
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
+      # Los endpoints públicos exigen un JWT de User Service; los internos usan
+      # la clave compartida con Playground Engine y User Service.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+    ports:
+      # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
+      - "${BIND_ADDRESS:-127.0.0.1}:${PROGRESS_SERVICE_HOST_PORT:-8004}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - db-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — persistencia de Level Management, User Service, Rating Service
+  # y Progress Service
   # ---------------------------------------------------------------------------
   postgres:
     image: postgres:17-alpine

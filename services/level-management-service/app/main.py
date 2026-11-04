@@ -374,8 +374,26 @@ async def list_levels(
         Query(ge=1, le=100, description="Máximo de niveles por página"),
     ] = 20,
     offset: Annotated[int, Query(ge=0, description="Niveles a saltar")] = 0,
+    creator_username: Annotated[
+        str | None,
+        Query(
+            min_length=1,
+            max_length=64,
+            description="Filtra el catálogo por el detective que publicó el caso",
+        ),
+    ] = None,
 ) -> LevelPage:
-    levels, total = await repository.list_page(limit=limit, offset=offset)
+    creator = creator_username.strip() if creator_username else None
+    if creator is not None and not creator:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="creator_username no puede estar vacío",
+        )
+    levels, total = await repository.list_page(
+        limit=limit,
+        offset=offset,
+        creator_username=creator,
+    )
     return LevelPage(
         items=[_to_summary(level) for level in levels],
         total=total,

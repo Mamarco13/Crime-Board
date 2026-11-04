@@ -28,6 +28,14 @@ def _as_int(raw: str | None, *, default: int) -> int:
     return value if value > 0 else default
 
 
+def _as_float(raw: str | None, *, default: float) -> float:
+    try:
+        value = float(raw or "")
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
 def _as_origins(raw: str | None) -> tuple[str, ...]:
     """Convierte CORS_ALLOW_ORIGINS en una tupla de orígenes."""
     if raw is None or not raw.strip():
@@ -50,6 +58,11 @@ class Settings:
     jwt_algorithm: str
     jwt_issuer: str
     access_token_expire_minutes: int
+    # Purga best-effort del progreso al borrar una cuenta. Sin URL el servicio
+    # elimina la cuenta y omite la llamada interna.
+    progress_service_url: str | None
+    internal_api_key: str | None
+    progress_timeout_seconds: float
     cors_allow_origins: tuple[str, ...]
 
     @classmethod
@@ -69,6 +82,16 @@ class Settings:
             access_token_expire_minutes=_as_int(
                 os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"),
                 default=720,
+            ),
+            progress_service_url=(
+                (os.getenv("PROGRESS_SERVICE_URL") or "").rstrip("/") or None
+            ),
+            internal_api_key=os.getenv("INTERNAL_API_KEY")
+            or os.getenv("APP_SECRET_KEY")
+            or None,
+            progress_timeout_seconds=_as_float(
+                os.getenv("PROGRESS_TIMEOUT_SECONDS"),
+                default=0.8,
             ),
             cors_allow_origins=_as_origins(os.getenv("CORS_ALLOW_ORIGINS")),
         )

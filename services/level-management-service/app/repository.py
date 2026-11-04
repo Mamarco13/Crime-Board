@@ -42,7 +42,11 @@ class LevelRepository(Protocol):
     async def get(self, level_id: str) -> LevelModel | None: ...
 
     async def list_page(
-        self, *, limit: int, offset: int
+        self,
+        *,
+        limit: int,
+        offset: int,
+        creator_username: str | None = None,
     ) -> tuple[list[LevelModel], int]: ...
 
 
@@ -118,13 +122,24 @@ class InMemoryLevelRepository:
         return self._levels.get(level_id)
 
     async def list_page(
-        self, *, limit: int, offset: int
+        self,
+        *,
+        limit: int,
+        offset: int,
+        creator_username: str | None = None,
     ) -> tuple[list[LevelModel], int]:
         ordered = sorted(
             self._levels.values(),
             key=lambda level: (level.created_at, level.level_id),
             reverse=True,
         )
+        if creator_username:
+            expected = creator_username.lower()
+            ordered = [
+                level
+                for level in ordered
+                if level.creator_username.lower() == expected
+            ]
         return ordered[offset : offset + limit], len(ordered)
 
 
@@ -173,7 +188,11 @@ class SqlLevelRepository:
             return await session.scalar(statement)
 
     async def list_page(
-        self, *, limit: int, offset: int
+        self,
+        *,
+        limit: int,
+        offset: int,
+        creator_username: str | None = None,
     ) -> tuple[list[LevelModel], int]:
         statement = (
             select(LevelModel)
@@ -183,6 +202,12 @@ class SqlLevelRepository:
             .limit(limit)
         )
         count_statement = select(func.count()).select_from(LevelModel)
+        if creator_username:
+            condition = func.lower(LevelModel.creator_username) == (
+                creator_username.lower()
+            )
+            statement = statement.where(condition)
+            count_statement = count_statement.where(condition)
 
         async with self._session_factory() as session:
             levels = list((await session.scalars(statement)).all())

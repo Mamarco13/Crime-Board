@@ -2669,6 +2669,10 @@
             <span class="status-dot" id="landingUserHealthDot" aria-hidden="true"></span>
             <span>CUENTAS</span>
           </button>
+          <button class="service-pill" id="landingHealthProgress" type="button" title="Estado del servicio de progreso">
+            <span class="status-dot" id="landingProgressHealthDot" aria-hidden="true"></span>
+            <span>PROGRESO</span>
+          </button>
         </div>
 
         <button class="icon-btn" id="landingSettingsBtn" type="button" title="Configuración de API" aria-label="Configuración de API">
@@ -2724,7 +2728,7 @@
 
     <footer class="app-footer">
       <span>CRIME BOARD <span class="foot-sep">//</span> <b>CLOUD-NATIVE</b></span>
-      <span>API <b id="landingFooterLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="landingFooterEngineUrl">127.0.0.1:8001</b> <span class="foot-sep">/</span> <b id="landingFooterUserUrl">127.0.0.1:8002</b></span>
+      <span>API <b id="landingFooterLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="landingFooterEngineUrl">127.0.0.1:8001</b> <span class="foot-sep">/</span> <b id="landingFooterUserUrl">127.0.0.1:8002</b> <span class="foot-sep">/</span> <b id="landingFooterProgressUrl">127.0.0.1:8004</b></span>
       <span><b>INVITADO</b> o detective · elige un caso para empezar</span>
     </footer>
   </section>
@@ -2757,6 +2761,10 @@
           <button class="service-pill" id="healthUser" type="button" title="Estado del servicio de cuentas">
             <span class="status-dot" id="userHealthDot" aria-hidden="true"></span>
             <span>CUENTAS</span>
+          </button>
+          <button class="service-pill" id="healthProgress" type="button" title="Estado del servicio de progreso">
+            <span class="status-dot" id="progressHealthDot" aria-hidden="true"></span>
+            <span>PROGRESO</span>
           </button>
         </div>
 
@@ -2910,7 +2918,7 @@
 
     <footer class="app-footer">
       <span>CRIME BOARD <span class="foot-sep">//</span> <b>CLOUD-NATIVE</b></span>
-      <span>API <b id="footerLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="footerEngineUrl">127.0.0.1:8001</b> <span class="foot-sep">/</span> <b id="footerUserUrl">127.0.0.1:8002</b></span>
+      <span>API <b id="footerLevelUrl">127.0.0.1:8000</b> <span class="foot-sep">/</span> <b id="footerEngineUrl">127.0.0.1:8001</b> <span class="foot-sep">/</span> <b id="footerUserUrl">127.0.0.1:8002</b> <span class="foot-sep">/</span> <b id="footerProgressUrl">127.0.0.1:8004</b></span>
       <span><b id="footerEvidence">0</b> EVIDENCIAS <span class="foot-sep">·</span> <b id="footerThreads">0</b> HILOS</span>
     </footer>
   </div>
@@ -3017,6 +3025,12 @@
         </div>
 
         <div class="field">
+          <label for="progressUrlInput">Progress Service <span class="opt">Base URL</span></label>
+          <input class="input" id="progressUrlInput" type="url" spellcheck="false" autocomplete="off" placeholder="http://127.0.0.1:8004" />
+          <p class="hint">Libreta, sesiones y estadísticas. Requiere sesión: <b>/api/progress/notes/{scope}</b> y <b>/api/progress/me/summary</b>.</p>
+        </div>
+
+        <div class="field">
           <span class="field-label">Diagnóstico de conexión</span>
           <div id="testResults">
             <div class="conn-row">
@@ -3038,6 +3052,11 @@
               <span class="status-dot" id="testRatingDot"></span>
               <span class="conn-name" id="testRatingName">Valoraciones · sin probar</span>
               <span class="conn-state" id="testRatingState">—</span>
+            </div>
+            <div class="conn-row">
+              <span class="status-dot" id="testProgressDot"></span>
+              <span class="conn-name" id="testProgressName">Progreso · sin probar</span>
+              <span class="conn-state" id="testProgressState">—</span>
             </div>
           </div>
           <button class="btn ghost" id="testConnectionsBtn" type="button" style="margin-top:8px">
@@ -3464,7 +3483,8 @@
     level: 'http://127.0.0.1:8000',
     engine: 'http://127.0.0.1:8001',
     user: 'http://127.0.0.1:8002',
-    rating: 'http://127.0.0.1:8003'
+    rating: 'http://127.0.0.1:8003',
+    progress: 'http://127.0.0.1:8004'
   };
 
   const STORAGE = {
@@ -3843,7 +3863,8 @@
       level: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.levelUrl || DEFAULT_API.level); } catch (error) { return DEFAULT_API.level; } })(),
       engine: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.engineUrl || DEFAULT_API.engine); } catch (error) { return DEFAULT_API.engine; } })(),
       user: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.userUrl || DEFAULT_API.user); } catch (error) { return DEFAULT_API.user; } })(),
-      rating: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.ratingUrl || DEFAULT_API.rating); } catch (error) { return DEFAULT_API.rating; } })()
+      rating: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.ratingUrl || DEFAULT_API.rating); } catch (error) { return DEFAULT_API.rating; } })(),
+      progress: (() => { try { return normalizeBaseUrl(STORED_SETTINGS.progressUrl || DEFAULT_API.progress); } catch (error) { return DEFAULT_API.progress; } })()
     },
     auth: {
       token: typeof STORED_AUTH.token === 'string' ? STORED_AUTH.token : '',
@@ -3891,7 +3912,7 @@
     animatedThreadId: null,
     loading: false,
     catalogFallback: false,
-    health: { level: 'unknown', engine: 'unknown', user: 'unknown' },
+    health: { level: 'unknown', engine: 'unknown', user: 'unknown', progress: 'unknown' },
     healthBusy: false,
     lastFallbackToast: 0,
     loadToken: 0,
@@ -3943,12 +3964,15 @@
     landingHealthLevel: $('#landingHealthLevel'),
     landingHealthEngine: $('#landingHealthEngine'),
     landingHealthUser: $('#landingHealthUser'),
+    landingHealthProgress: $('#landingHealthProgress'),
     landingLevelHealthDot: $('#landingLevelHealthDot'),
     landingEngineHealthDot: $('#landingEngineHealthDot'),
     landingUserHealthDot: $('#landingUserHealthDot'),
+    landingProgressHealthDot: $('#landingProgressHealthDot'),
     landingFooterLevelUrl: $('#landingFooterLevelUrl'),
     landingFooterEngineUrl: $('#landingFooterEngineUrl'),
     landingFooterUserUrl: $('#landingFooterUserUrl'),
+    landingFooterProgressUrl: $('#landingFooterProgressUrl'),
     authChip: $('#authChip'),
     authRole: $('#authRole'),
     authName: $('#authName'),
@@ -3976,9 +4000,11 @@
     healthLevel: $('#healthLevel'),
     healthEngine: $('#healthEngine'),
     healthUser: $('#healthUser'),
+    healthProgress: $('#healthProgress'),
     levelHealthDot: $('#levelHealthDot'),
     engineHealthDot: $('#engineHealthDot'),
     userHealthDot: $('#userHealthDot'),
+    progressHealthDot: $('#progressHealthDot'),
     settingsBtn: $('#settingsBtn'),
     caseSubtitle: $('#caseSubtitle'),
     levelSelect: $('#levelSelect'),
@@ -4035,6 +4061,7 @@
     footerLevelUrl: $('#footerLevelUrl'),
     footerEngineUrl: $('#footerEngineUrl'),
     footerUserUrl: $('#footerUserUrl'),
+    footerProgressUrl: $('#footerProgressUrl'),
     footerEvidence: $('#footerEvidence'),
     footerThreads: $('#footerThreads'),
     sessionTag: $('#sessionTag'),
@@ -4048,6 +4075,7 @@
     engineUrlInput: $('#engineUrlInput'),
     userUrlInput: $('#userUrlInput'),
     ratingUrlInput: $('#ratingUrlInput'),
+    progressUrlInput: $('#progressUrlInput'),
     modeSimRadio: $('#modeSimRadio'),
     modeRealRadio: $('#modeRealRadio'),
     testConnectionsBtn: $('#testConnectionsBtn'),
@@ -4063,6 +4091,9 @@
     testRatingDot: $('#testRatingDot'),
     testRatingName: $('#testRatingName'),
     testRatingState: $('#testRatingState'),
+    testProgressDot: $('#testProgressDot'),
+    testProgressName: $('#testProgressName'),
+    testProgressState: $('#testProgressState'),
     sessionIdText: $('#sessionIdText'),
     saveSettingsBtn: $('#saveSettingsBtn'),
     editorScreen: $('#editorScreen'),
@@ -4361,14 +4392,16 @@
     if (state.healthBusy) return;
     state.healthBusy = true;
     try {
-      const [level, engine, user] = await Promise.all([
+      const [level, engine, user, progress] = await Promise.all([
         probeService(state.api.level),
         probeService(state.api.engine),
-        probeService(state.api.user)
+        probeService(state.api.user),
+        probeService(state.api.progress)
       ]);
       setHealth('level', level.ok ? 'online' : 'offline');
       setHealth('engine', engine.ok ? 'online' : 'offline');
       setHealth('user', user.ok ? 'online' : 'offline');
+      setHealth('progress', progress.ok ? 'online' : 'offline');
       state.lastHealthCheck = Date.now();
     } finally {
       state.healthBusy = false;
@@ -4376,7 +4409,7 @@
   }
 
   function setHealth(service, status) {
-    if (!['level', 'engine', 'user'].includes(service)) return;
+    if (!['level', 'engine', 'user', 'progress'].includes(service)) return;
     if (!['online', 'offline', 'checking', 'unknown'].includes(status)) return;
     state.health[service] = status;
     renderHealth();
@@ -4386,7 +4419,8 @@
     const map = [
       { key: 'level', dot: els.levelHealthDot, pill: els.healthLevel, label: 'Catálogo', landingDot: els.landingLevelHealthDot, landingPill: els.landingHealthLevel },
       { key: 'engine', dot: els.engineHealthDot, pill: els.healthEngine, label: 'Motor', landingDot: els.landingEngineHealthDot, landingPill: els.landingHealthEngine },
-      { key: 'user', dot: els.userHealthDot, pill: els.healthUser, label: 'Cuentas', landingDot: els.landingUserHealthDot, landingPill: els.landingHealthUser }
+      { key: 'user', dot: els.userHealthDot, pill: els.healthUser, label: 'Cuentas', landingDot: els.landingUserHealthDot, landingPill: els.landingHealthUser },
+      { key: 'progress', dot: els.progressHealthDot, pill: els.healthProgress, label: 'Progreso', landingDot: els.landingProgressHealthDot, landingPill: els.landingHealthProgress }
     ];
     map.forEach(({ key, dot, pill, label, landingDot, landingPill }) => {
       const status = state.health[key];
@@ -4394,7 +4428,10 @@
       if (dot) dot.className = dotClass;
       if (landingDot) landingDot.className = dotClass;
       const text = status === 'online' ? 'en línea' : status === 'offline' ? 'sin conexión' : 'comprobando';
-      const url = key === 'level' ? state.api.level : key === 'engine' ? state.api.engine : state.api.user;
+      const url = key === 'level' ? state.api.level
+        : key === 'engine' ? state.api.engine
+        : key === 'progress' ? state.api.progress
+        : state.api.user;
       [pill, landingPill].forEach((element) => {
         if (!element) return;
         element.title = `${label}: ${text} · ${url}`;
@@ -4404,12 +4441,15 @@
     const levelHost = prettyHost(state.api.level);
     const engineHost = prettyHost(state.api.engine);
     const userHost = prettyHost(state.api.user);
+    const progressHost = prettyHost(state.api.progress);
     if (els.footerLevelUrl) els.footerLevelUrl.textContent = levelHost;
     if (els.footerEngineUrl) els.footerEngineUrl.textContent = engineHost;
     if (els.footerUserUrl) els.footerUserUrl.textContent = userHost;
+    if (els.footerProgressUrl) els.footerProgressUrl.textContent = progressHost;
     if (els.landingFooterLevelUrl) els.landingFooterLevelUrl.textContent = levelHost;
     if (els.landingFooterEngineUrl) els.landingFooterEngineUrl.textContent = engineHost;
     if (els.landingFooterUserUrl) els.landingFooterUserUrl.textContent = userHost;
+    if (els.landingFooterProgressUrl) els.landingFooterProgressUrl.textContent = progressHost;
   }
 
   function toast({ type = 'info', title = 'Aviso', message = '', duration = 4600 } = {}) {
@@ -4458,6 +4498,7 @@
       engineUrl: state.api.engine,
       userUrl: state.api.user,
       ratingUrl: state.api.rating,
+      progressUrl: state.api.progress,
       lastLevel: state.level?.level_id || state.lastLevel || null
     });
   }
@@ -7499,6 +7540,7 @@
     els.engineUrlInput.value = state.api.engine;
     els.userUrlInput.value = state.api.user;
     els.ratingUrlInput.value = state.api.rating;
+    els.progressUrlInput.value = state.api.progress;
     els.modeSimRadio.checked = state.mode === 'sim';
     els.modeRealRadio.checked = state.mode === 'real';
     els.sessionIdText.textContent = sessionId;
@@ -7506,10 +7548,12 @@
     els.engineUrlInput.classList.remove('invalid');
     els.userUrlInput.classList.remove('invalid');
     els.ratingUrlInput.classList.remove('invalid');
+    els.progressUrlInput.classList.remove('invalid');
     resetTestResult('level');
     resetTestResult('engine');
     resetTestResult('user');
     resetTestResult('rating');
+    resetTestResult('progress');
     openModal('settingsModal');
   }
 
@@ -7522,6 +7566,9 @@
     }
     if (service === 'rating') {
       return { dot: els.testRatingDot, name: els.testRatingName, stateText: els.testRatingState, label: 'Valoraciones', input: els.ratingUrlInput };
+    }
+    if (service === 'progress') {
+      return { dot: els.testProgressDot, name: els.testProgressName, stateText: els.testProgressState, label: 'Progreso', input: els.progressUrlInput };
     }
     return { dot: els.testUserDot, name: els.testUserName, stateText: els.testUserState, label: 'Cuentas', input: els.userUrlInput };
   }
@@ -7552,6 +7599,7 @@
     let engineUrl;
     let userUrl;
     let ratingUrl;
+    let progressUrl;
     try {
       levelUrl = normalizeBaseUrl(els.levelUrlInput.value);
       els.levelUrlInput.classList.remove('invalid');
@@ -7584,10 +7632,18 @@
       toast({ type: 'error', title: 'URL de valoraciones inválida', message: error.message });
       return;
     }
+    try {
+      progressUrl = normalizeBaseUrl(els.progressUrlInput.value);
+      els.progressUrlInput.classList.remove('invalid');
+    } catch (error) {
+      els.progressUrlInput.classList.add('invalid');
+      toast({ type: 'error', title: 'URL de progreso inválida', message: error.message });
+      return;
+    }
 
     els.testConnectionsBtn.disabled = true;
     els.testConnectionsBtn.classList.add('is-loading');
-    ['level', 'engine', 'user', 'rating'].forEach((service) => {
+    ['level', 'engine', 'user', 'rating', 'progress'].forEach((service) => {
       const refs = testResultRefs(service);
       if (refs.dot) refs.dot.className = 'status-dot checking';
       if (refs.stateText) {
@@ -7596,23 +7652,25 @@
       }
     });
     try {
-      const [level, engine, user, rating] = await Promise.all([
+      const [level, engine, user, rating, progress] = await Promise.all([
         probeService(levelUrl),
         probeService(engineUrl),
         probeService(userUrl),
-        probeService(ratingUrl)
+        probeService(ratingUrl),
+        probeService(progressUrl)
       ]);
       setTestResult('level', level);
       setTestResult('engine', engine);
       setTestResult('user', user);
       setTestResult('rating', rating);
-      if (level.ok && engine.ok && user.ok && rating.ok) {
-        toast({ type: 'success', title: 'Enlace establecido', message: 'Catálogo, motor, cuentas y valoraciones responden correctamente.' });
+      setTestResult('progress', progress);
+      if (level.ok && engine.ok && user.ok && rating.ok && progress.ok) {
+        toast({ type: 'success', title: 'Enlace establecido', message: 'Catálogo, motor, cuentas, valoraciones y progreso responden correctamente.' });
       } else {
         toast({
           type: 'warn',
           title: 'Conexión parcial',
-          message: `${level.ok ? 'Catálogo OK' : 'Catálogo sin respuesta'} · ${engine.ok ? 'Motor OK' : 'Motor sin respuesta'} · ${user.ok ? 'Cuentas OK' : 'Cuentas sin respuesta'} · ${rating.ok ? 'Valoraciones OK' : 'Valoraciones sin respuesta'}.`
+          message: `${level.ok ? 'Catálogo OK' : 'Catálogo sin respuesta'} · ${engine.ok ? 'Motor OK' : 'Motor sin respuesta'} · ${user.ok ? 'Cuentas OK' : 'Cuentas sin respuesta'} · ${rating.ok ? 'Valoraciones OK' : 'Valoraciones sin respuesta'} · ${progress.ok ? 'Progreso OK' : 'Progreso sin respuesta'}.`
         });
       }
     } finally {
@@ -7626,6 +7684,7 @@
     let engineUrl;
     let userUrl;
     let ratingUrl;
+    let progressUrl;
     try {
       levelUrl = normalizeBaseUrl(els.levelUrlInput.value);
       els.levelUrlInput.classList.remove('invalid');
@@ -7658,17 +7717,26 @@
       toast({ type: 'error', title: 'URL de valoraciones inválida', message: error.message });
       return;
     }
+    try {
+      progressUrl = normalizeBaseUrl(els.progressUrlInput.value);
+      els.progressUrlInput.classList.remove('invalid');
+    } catch (error) {
+      els.progressUrlInput.classList.add('invalid');
+      toast({ type: 'error', title: 'URL de progreso inválida', message: error.message });
+      return;
+    }
 
     const selectedMode = els.modeRealRadio.checked ? 'real' : 'sim';
-    const changedUrls = levelUrl !== state.api.level || engineUrl !== state.api.engine || userUrl !== state.api.user || ratingUrl !== state.api.rating;
+    const changedUrls = levelUrl !== state.api.level || engineUrl !== state.api.engine || userUrl !== state.api.user || ratingUrl !== state.api.rating || progressUrl !== state.api.progress;
     state.api.level = levelUrl;
     state.api.engine = engineUrl;
     state.api.user = userUrl;
     state.api.rating = ratingUrl;
+    state.api.progress = progressUrl;
     state.ratings = {};
     state.ratingsWarningShown = false;
     state.mode = selectedMode;
-    state.health = { level: 'unknown', engine: 'unknown', user: 'unknown' };
+    state.health = { level: 'unknown', engine: 'unknown', user: 'unknown', progress: 'unknown' };
     persistSettings();
     closeModal('settingsModal');
     updateModeUI();
@@ -7684,7 +7752,7 @@
 
   function toggleMode() {
     state.mode = state.mode === 'sim' ? 'real' : 'sim';
-    state.health = { level: 'unknown', engine: 'unknown', user: 'unknown' };
+    state.health = { level: 'unknown', engine: 'unknown', user: 'unknown', progress: 'unknown' };
     persistSettings();
     updateModeUI();
     renderHealth();
@@ -8629,6 +8697,10 @@
       openSettingsModal();
       testSettingsConnections();
     });
+    els.healthProgress?.addEventListener('click', () => {
+      openSettingsModal();
+      testSettingsConnections();
+    });
 
     els.landingSettingsBtn?.addEventListener('click', openSettingsModal);
     els.landingHealthLevel?.addEventListener('click', () => {
@@ -8640,6 +8712,10 @@
       testSettingsConnections();
     });
     els.landingHealthUser?.addEventListener('click', () => {
+      openSettingsModal();
+      testSettingsConnections();
+    });
+    els.landingHealthProgress?.addEventListener('click', () => {
       openSettingsModal();
       testSettingsConnections();
     });
@@ -8735,12 +8811,13 @@
 
     els.testConnectionsBtn.addEventListener('click', testSettingsConnections);
     els.saveSettingsBtn.addEventListener('click', saveSettings);
-    [els.levelUrlInput, els.engineUrlInput, els.userUrlInput, els.ratingUrlInput].forEach((input) => {
+    [els.levelUrlInput, els.engineUrlInput, els.userUrlInput, els.ratingUrlInput, els.progressUrlInput].forEach((input) => {
       input.addEventListener('input', () => {
         input.classList.remove('invalid');
         const service = input === els.levelUrlInput ? 'level'
           : input === els.engineUrlInput ? 'engine'
           : input === els.ratingUrlInput ? 'rating'
+          : input === els.progressUrlInput ? 'progress'
           : 'user';
         resetTestResult(service);
       });

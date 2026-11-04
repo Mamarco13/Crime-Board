@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Protocol
 
 from sqlalchemy import func, select
@@ -27,6 +28,19 @@ class RatingAggregate:
 
 
 EMPTY_AGGREGATE = RatingAggregate(average_rating=0.0, total_votes=0)
+
+
+@dataclass(frozen=True, slots=True)
+class UserRatingRecord:
+    """Voto emitido por un usuario, con su fecha de actualización."""
+
+    level_id: str
+    stars: int
+    updated_at: datetime
+
+
+def _now() -> datetime:
+    return datetime.now(UTC)
 
 
 def _aggregate(total_votes: int, stars_sum: float) -> RatingAggregate:
@@ -54,15 +68,23 @@ class RatingRepository(Protocol):
         level_ids: list[str],
     ) -> dict[str, RatingAggregate]: ...
 
+    async def list_by_user(
+        self,
+        user_id: str,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[UserRatingRecord]: ...
+
 
 class InMemoryRatingRepository:
     """Valoraciones efímeras protegidas por el propio event loop."""
 
     def __init__(self) -> None:
-        self._ratings: dict[tuple[str, str], int] = {}
+        self._ratings: dict[tuple[str, str], tuple[int, datetime]] = {}
 
     async def upsert(self, *, level_id: str, user_id: str, stars: int) -> None:
-        self._ratings[(level_id, user_id)] = stars
+        self._ratings[(level_id, user_id)] = (stars, _now())
 
     async def summary(self, level_id: str) -> RatingAggregate:
         return (await self.summaries([level_id]))[level_id]
@@ -72,7 +94,7 @@ class InMemoryRatingRepository:
         level_ids: list[str],
     ) -> dict[str, RatingAggregate]:
         totals: dict[str, tuple[int, int]] = {}
-        for (level_id, _), stars in self._ratings.items():
+        for (level_id, _), (stars, _) in self._ratings.items():
             count, stars_sum = totals.get(level_id, (0, 0))
             totals[level_id] = (count + 1, stars_sum + stars)
         result: dict[str, RatingAggregate] = {}
@@ -80,6 +102,25 @@ class InMemoryRatingRepository:
             count, stars_sum = totals.get(level_id, (0, 0))
             result[level_id] = _aggregate(count, float(stars_sum))
         return result
+
+    async def list_by_user(
+        self,
+        user_id: str,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[UserRatingRecord]:
+        rows = [
+            UserRatingRecord(
+                level_id=level_id,
+                stars=stars,
+                updated_at=updated_at,
+            )
+            for (level_id, owner), (stars, updated_at) in self._ratings.items()
+            if owner == user_id
+        ]
+        rows.sort(key=lambda row: row.updated_at, reverse=True)
+        return rows[offset : offset + limit]
 
 
 class SqlRatingRepository:
@@ -143,3 +184,28 @@ class SqlRatingRepository:
             for row in rows
         }
         return {level_id: aggregates.get(level_id, EMPTY_AGGREGATE) for level_id in level_ids}
+
+    async def list_by_user(
+        self,
+        user_id: str,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[UserRatingRecord]:
+        statement = (
+            select(RatingModel)
+            .where(RatingModel.user_id == user_id)
+            .order_by(RatingModel.updated_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        async with self._session_factory() as session:
+            rows = (await session.scalars(statement)).all()
+        return [
+            UserRatingRecord(
+                level_id=row.level_id,
+                stars=row.stars,
+                updated_at=row.updated_at,
+            )
+            for row in rows
+        ]

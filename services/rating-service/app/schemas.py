@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -26,6 +28,14 @@ class RatingSummary(BaseModel):
     level_id: str
     average_rating: float = Field(ge=0.0, le=5.0, examples=[4.5])
     total_votes: int = Field(ge=0, examples=[12])
+
+
+class UserRating(BaseModel):
+    """Voto propio devuelto por ``GET /api/ratings/me``."""
+
+    level_id: str
+    stars: int = Field(ge=1, le=5, examples=[4])
+    updated_at: datetime
 
 
 class RatingBatchRequest(BaseModel):

@@ -37,7 +37,12 @@ from .repository import (
     RatingRepository,
     SqlRatingRepository,
 )
-from .schemas import RatingBatchRequest, RatingCreate, RatingSummary
+from .schemas import (
+    RatingBatchRequest,
+    RatingCreate,
+    RatingSummary,
+    UserRating,
+)
 from .security import (
     AuthenticatedUser,
     decode_access_token,
@@ -275,6 +280,34 @@ async def create_rating(
     )
     aggregate = await repository.summary(payload.level_id)
     return _to_summary(payload.level_id, aggregate)
+
+
+@app.get(
+    "/api/ratings/me",
+    response_model=list[UserRating],
+    tags=["ratings"],
+    summary="Valoraciones emitidas por la cuenta autenticada",
+)
+async def list_my_ratings(
+    repository: RepositoryDep,
+    current_user: CurrentUserDep,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> list[UserRating]:
+    """Perfil propio: solo los votos del ``sub`` del JWT, nunca de otro usuario."""
+    rows = await repository.list_by_user(
+        current_user.user_id,
+        limit=limit,
+        offset=offset,
+    )
+    return [
+        UserRating(
+            level_id=row.level_id,
+            stars=row.stars,
+            updated_at=row.updated_at,
+        )
+        for row in rows
+    ]
 
 
 # La ruta por lotes se declara antes de /levels/{level_id}: de lo contrario

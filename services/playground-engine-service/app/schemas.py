@@ -162,6 +162,23 @@ class AccusationRequest(BaseModel):
             "validación es idéntica a la de un usuario registrado."
         ),
     )
+    session_id: str = Field(
+        default="default",
+        min_length=1,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9_-]{1,64}$",
+        description="Identificador de partida para agrupar intentos.",
+    )
+    client_attempt_id: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9_-]{1,64}$",
+        description=(
+            "UUID generado por el navegador para reintentos idempotentes. Si "
+            "falta, el motor genera uno nuevo."
+        ),
+    )
 
     @field_validator("selected_card_ids")
     @classmethod
@@ -174,6 +191,20 @@ class AccusationRequest(BaseModel):
         return cleaned
 
 
+class AttemptProgress(BaseModel):
+    """Resumen del intento registrado en Progress Service.
+
+    Se omite por completo cuando el jugador es invitado, cuando no hay token o
+    cuando el registro falla (fail-open). ``attempt_number`` es ``None`` si el
+    servicio no pudo confirmar la escritura.
+    """
+
+    recorded: bool
+    attempt_number: int | None = Field(default=None, ge=1)
+    first_solve: bool = False
+    is_replay: bool = False
+
+
 class AccusationResponse(BaseModel):
     """Veredicto del motor."""
 
@@ -182,6 +213,10 @@ class AccusationResponse(BaseModel):
         description="Felicitación o pista para continuar la investigación."
     )
     elapsed_ms: int = Field(ge=0, description="Tiempo de validación en milisegundos.")
+    progress: AttemptProgress | None = Field(
+        default=None,
+        description="Estado del intento en Progress Service (solo autenticados).",
+    )
 
 
 class LevelSnapshot(BaseModel):

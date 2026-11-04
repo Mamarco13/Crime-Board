@@ -1,8 +1,9 @@
 # =============================================================================
 # Playground Engine Service — dependencias de la lógica de negocio (MVP)
 # =============================================================================
-# * httpx: cliente asíncrono del catálogo interno de niveles.
+# * httpx: cliente asíncrono del catálogo interno y de Progress Service.
 # * redis[hiredis]: estado efímero y caché; hiredis acelera el protocolo.
+# * python-jose: verificación local de los JWT para atribuir intentos.
 #
 # Versiones fijadas para builds reproducibles. Al actualizar una versión,
 # reconstruye la imagen y ejecuta los tests/smoke tests del servicio.
@@ -13,3 +14,4 @@ uvicorn[standard]==0.54.0
 pydantic==2.14.1
 httpx==0.28.1
 redis[hiredis]==8.1.0
+python-jose[cryptography]==3.5.0

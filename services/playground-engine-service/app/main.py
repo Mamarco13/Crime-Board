@@ -24,7 +24,7 @@ import time
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -40,6 +40,7 @@ from .engine import (
     build_interrogation,
     evaluate_accusation,
 )
+from .progress import ProgressClient
 from .schemas import (
     AccusationRequest,
     AccusationResponse,
@@ -49,6 +50,12 @@ from .schemas import (
     CardType,
     InterrogationRequest,
     InterrogationResponse,
+)
+from .security import (
+    AuthenticatedUser,
+    bearer_token,
+    decode_access_token,
+    user_from_payload,
 )
 from .store import STATE_PREFIX, JsonStore, build_json_store
 
@@ -75,9 +82,29 @@ async def lifespan(app: FastAPI):
         timeout_seconds=settings.level_service_timeout_seconds,
     )
 
+    progress: ProgressClient | None = None
+    if settings.progress_enabled and settings.progress_service_url:
+        progress = ProgressClient(
+            base_url=settings.progress_service_url,
+            internal_api_key=settings.internal_api_key,
+            timeout_seconds=settings.progress_timeout_seconds,
+        )
+
     app.state.settings = settings
     app.state.store = store
     app.state.catalog = catalog
+    app.state.progress = progress
+
+    if settings.progress_enabled and progress is None:
+        logger.warning(
+            "PROGRESS_ENABLED=true sin PROGRESS_SERVICE_URL: los intentos "
+            "autenticados no se registrarán"
+        )
+    if settings.jwt_secret_key is None:
+        logger.warning(
+            "JWT_SECRET_KEY/APP_SECRET_KEY no definida: el motor no podrá "
+            "atribuir intentos a usuarios registrados"
+        )
 
     if settings.internal_api_key is None:
         logger.warning(
@@ -88,6 +115,8 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
+        if progress is not None:
+            await progress.close()
         await catalog.close()
         await store.close()
 
@@ -156,9 +185,33 @@ def get_store(request: Request) -> JsonStore:
     return request.app.state.store
 
 
+def get_progress(request: Request) -> ProgressClient | None:
+    return request.app.state.progress
+
+
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 CatalogDep = Annotated[LevelCatalog, Depends(get_catalog)]
 StoreDep = Annotated[JsonStore, Depends(get_store)]
+ProgressDep = Annotated[ProgressClient | None, Depends(get_progress)]
+
+
+def _authenticated_user(
+    settings: Settings,
+    authorization: str | None,
+) -> AuthenticatedUser | None:
+    """Identidad opcional: un token inválido se trata como invitado."""
+    if settings.jwt_secret_key is None:
+        return None
+    token = bearer_token(authorization)
+    if token is None:
+        return None
+    payload = decode_access_token(
+        token,
+        secret_key=settings.jwt_secret_key,
+        algorithm=settings.jwt_algorithm,
+        issuer=settings.jwt_issuer,
+    )
+    return user_from_payload(payload) if payload else None
 
 
 # ---------------------------------------------------------------------------
@@ -346,6 +399,12 @@ async def archive(
 async def validate_accusation(
     payload: AccusationRequest,
     catalog: CatalogDep,
+    settings: SettingsDep,
+    progress_client: ProgressDep,
+    authorization: Annotated[
+        str | None,
+        Header(description="JWT opcional emitido por el User Service"),
+    ] = None,
 ) -> AccusationResponse:
     started = time.perf_counter()
     level = await catalog.get_level(payload.level_id)
@@ -378,8 +437,25 @@ async def validate_accusation(
         elapsed_ms,
     )
 
+    progress = None
+    user = None if payload.guest else _authenticated_user(
+        settings,
+        authorization,
+    )
+    if user is not None and progress_client is not None:
+        progress = await progress_client.record_attempt(
+            user_id=user.user_id,
+            level_id=level.level_id,
+            session_key=payload.session_id,
+            client_attempt_id=payload.client_attempt_id,
+            solved=outcome.solved,
+            selected_card_ids=list(payload.selected_card_ids),
+            elapsed_ms=elapsed_ms,
+        )
+
     return AccusationResponse(
         solved=outcome.solved,
         feedback_message=outcome.feedback_message,
         elapsed_ms=elapsed_ms,
+        progress=progress,
     )

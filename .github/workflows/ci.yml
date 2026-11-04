@@ -11,6 +11,7 @@
 #   ghcr.io/<owner>/<repo>/playground-engine-service:<sha-corto|latest>
 #   ghcr.io/<owner>/<repo>/user-service:<sha-corto|latest>
 #   ghcr.io/<owner>/<repo>/rating-service:<sha-corto|latest>
+#   ghcr.io/<owner>/<repo>/progress-service:<sha-corto|latest>
 # =============================================================================
 
 name: CI
@@ -129,6 +130,7 @@ jobs:
           - playground-engine-service
           - user-service
           - rating-service
+          - progress-service
 
     steps:
       - name: Checkout del repositorio

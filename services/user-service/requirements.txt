@@ -6,6 +6,7 @@
 #
 # El hash de contraseñas usa hashlib (PBKDF2-HMAC-SHA256) de la biblioteca
 # estándar, por lo que no se necesita passlib/bcrypt ni compiladores en runtime.
+# httpx llama al endpoint interno de purga de Progress Service al borrar cuenta.
 # =============================================================================
 
 fastapi==0.162.0
@@ -14,3 +15,4 @@ pydantic==2.10.6
 sqlalchemy[asyncio]==2.1.6
 asyncpg==0.32.0
 python-jose[cryptography]==3.5.0
+httpx==0.28.1

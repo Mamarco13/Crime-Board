@@ -81,3 +81,25 @@ def test_seed_includes_a_hidden_composition_variant() -> None:
     assert HARD_DEMO_LEVEL.level_id != DEMO_LEVEL.level_id
     assert HARD_DEMO_LEVEL.difficulty is Difficulty.HARD
     assert HARD_DEMO_LEVEL.reveal_solution_composition is False
+
+
+def test_catalog_filters_by_creator_username() -> None:
+    repository = InMemoryLevelRepository()
+    asyncio.run(repository.create(DEMO_LEVEL, creator_username="alice"))
+    asyncio.run(repository.create(HARD_DEMO_LEVEL, creator_username="bob"))
+
+    alice, alice_total = asyncio.run(
+        repository.list_page(
+            limit=10,
+            offset=0,
+            creator_username="ALICE",
+        )
+    )
+    assert alice_total == 1
+    assert alice[0].level_id == DEMO_LEVEL.level_id
+
+    everyone, everyone_total = asyncio.run(
+        repository.list_page(limit=10, offset=0)
+    )
+    assert everyone_total == 2
+    assert len(everyone) == 2

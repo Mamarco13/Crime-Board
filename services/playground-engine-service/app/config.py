@@ -55,11 +55,22 @@ class Settings:
     level_cache_ttl_seconds: int
     interrogation_ttl_seconds: int
     level_service_timeout_seconds: float
+    # Clave y parámetros para verificar los JWT emitidos por User Service. Sin
+    # clave el motor sigue aceptando invitados, pero no registra progreso.
+    jwt_secret_key: str | None
+    jwt_algorithm: str
+    jwt_issuer: str
+    # Cliente del Progress Service. Sin URL o con PROGRESS_ENABLED=false el
+    # motor funciona igual y omite el bloque `progress` de la respuesta.
+    progress_service_url: str | None
+    progress_enabled: bool
+    progress_timeout_seconds: float
     # Orígenes autorizados para el frontend (CORS).
     cors_allow_origins: tuple[str, ...]
 
     @classmethod
     def from_env(cls) -> Settings:
+        progress_url = (os.getenv("PROGRESS_SERVICE_URL") or "").rstrip("/")
         return cls(
             environment=os.getenv("ENVIRONMENT", "development"),
             log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
@@ -82,6 +93,21 @@ class Settings:
             level_service_timeout_seconds=_as_float(
                 os.getenv("LEVEL_SERVICE_TIMEOUT_SECONDS"),
                 default=3.0,
+            ),
+            jwt_secret_key=os.getenv("JWT_SECRET_KEY")
+            or os.getenv("APP_SECRET_KEY")
+            or None,
+            jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256").upper(),
+            jwt_issuer=os.getenv("JWT_ISSUER", "crime-board-user-service"),
+            progress_service_url=progress_url or None,
+            progress_enabled=(
+                progress_url != ""
+                and os.getenv("PROGRESS_ENABLED", "true").strip().lower()
+                in {"1", "true", "yes", "on"}
+            ),
+            progress_timeout_seconds=_as_float(
+                os.getenv("PROGRESS_TIMEOUT_SECONDS"),
+                default=0.8,
             ),
             cors_allow_origins=_as_origins(os.getenv("CORS_ALLOW_ORIGINS")),
         )

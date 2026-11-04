@@ -26,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from .config import Settings
 from .database import init_database
 from .models import TokenResponse, UserLogin, UserPublic, UserRegister
+from .progress import purge_progress_data
 from .repository import (
     InMemoryUserRepository,
     SqlUserRepository,
@@ -282,6 +283,7 @@ async def delete_user(
     user_id: str,
     current_user: CurrentUserDep,
     repository: RepositoryDep,
+    settings: SettingsDep,
 ) -> None:
     """Un usuario solo puede borrar su propia cuenta."""
     if not secrets.compare_digest(current_user.user_id, user_id):
@@ -296,3 +298,5 @@ async def delete_user(
             detail="Cuenta no encontrada",
         )
     logger.info("Cuenta eliminada: %s", user_id)
+    # Best-effort: la cuenta ya no existe aunque Progress Service no responda.
+    await purge_progress_data(settings, user_id)
