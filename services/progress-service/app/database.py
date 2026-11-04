@@ -9,6 +9,7 @@ este es el punto de entrada para Alembic (o para migraciones idempotentes
 
 from __future__ import annotations
 
+from sqlalchemy import text
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -45,6 +46,17 @@ async def init_database(
     try:
         async with engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
+            # Migraciones idempotentes para instalaciones creadas antes de que
+            # existiera el número de intento por partida.
+            migrations = (
+                (
+                    "ALTER TABLE case_attempts "
+                    "ADD COLUMN IF NOT EXISTS attempt_number INTEGER "
+                    "NOT NULL DEFAULT 1"
+                ),
+            )
+            for statement in migrations:
+                await connection.execute(text(statement))
     except Exception:
         await engine.dispose()
         raise
