@@ -12,6 +12,8 @@
 #   ghcr.io/<owner>/<repo>/user-service:<sha-corto|latest>
 #   ghcr.io/<owner>/<repo>/rating-service:<sha-corto|latest>
 #   ghcr.io/<owner>/<repo>/progress-service:<sha-corto|latest>
+#   ghcr.io/<owner>/<repo>/postgres:<sha-corto|latest>
+#   ghcr.io/<owner>/<repo>/redis:<sha-corto|latest>
 # =============================================================================
 
 name: CI
@@ -131,6 +133,8 @@ jobs:
           - user-service
           - rating-service
           - progress-service
+          - postgres
+          - redis
 
     steps:
       - name: Checkout del repositorio

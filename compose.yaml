@@ -296,7 +296,11 @@ services:
   # y Progress Service
   # ---------------------------------------------------------------------------
   postgres:
-    image: postgres:17-alpine
+    build:
+      context: ./services/postgres
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/postgres:${IMAGE_TAG:-local}
     restart: unless-stopped
     stop_grace_period: 30s
     environment:
@@ -331,7 +335,11 @@ services:
   # Redis — caché / estado efímero de Playground Engine
   # ---------------------------------------------------------------------------
   redis:
-    image: redis:7-alpine
+    build:
+      context: ./services/redis
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/redis:${IMAGE_TAG:-local}
     restart: unless-stopped
     stop_grace_period: 15s
     environment:

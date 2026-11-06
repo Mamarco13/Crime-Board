@@ -51,10 +51,25 @@ Plataforma interactiva para resolver misterios lógicos...
 - El reinicio de un caso autenticado se coordina con `progress-service`; la primera resolución registrada es inmutable.
 
 ### Puesta en marcha local
+
+El comando por defecto levanta las imágenes de producción (`target: runtime`):
+
 ```bash
 cp .env.example .env
 docker compose up --build -d
 # Tablero: sirve frontend/ con un servidor estático, p. ej. python -m http.server 8123
 # Progress Service: http://127.0.0.1:8004/docs
 ```
+
+Para desarrollo con recarga automática de código, combina el compose base con
+el override de desarrollo:
+
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up --build -d
+```
+
+El override cambia el `build.target` de los microservicios a `development` y
+monta `./services/<servicio>:/app` desde el host, de modo que `uvicorn --reload`
+refleja los cambios sin reconstruir la imagen.
+
 Sin `DATABASE_URL`, cada servicio arranca con repositorio en memoria para desarrollo y pruebas. En producción, `docker compose` inyecta PostgreSQL y los secretos compartidos.

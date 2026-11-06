@@ -66,5 +66,6 @@ docker compose up --build -d rating-service
 curl http://127.0.0.1:8003/health
 ```
 
-La imagen se construye en dos etapas, corre como `10001:10001` y declara un
-`HEALTHCHECK` nativo contra `/health`.
+La imagen es multietapa (`builder`, `runtime`, `development`), corre como
+`10001:10001` y declara un `HEALTHCHECK` nativo contra `/health`. En CI se
+publica la etapa `runtime`.

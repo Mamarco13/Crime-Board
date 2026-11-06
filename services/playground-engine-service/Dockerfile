@@ -84,3 +84,15 @@ STOPSIGNAL SIGTERM
 # Un proceso por contenedor; el orquestador escala réplicas.
 # Ajusta app.main:app al entrypoint real del servicio.
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+
+# -----------------------------------------------------------------------------
+# Etapa 3: development
+# -----------------------------------------------------------------------------
+# Hereda todo de runtime (venv, código, usuario no-root) y activa el recarga
+# automática para iterar sin reconstruir la imagen. Se usa con
+# `docker compose -f compose.yaml -f compose.dev.yaml up --build`.
+FROM runtime AS development
+
+USER 10001:10001
+
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*", "--reload"]
