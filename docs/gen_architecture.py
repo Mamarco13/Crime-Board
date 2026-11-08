@@ -3,7 +3,7 @@
 import html
 import os
 
-W, H = 1640, 1010
+W, H = 1800, 1120
 FONT = "Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif"
 
 parts = []
@@ -83,84 +83,66 @@ add(f'<rect x="0" y="0" width="{W}" height="{H}" fill="#FFFFFF"/>')
 add(f'<text x="90" y="58" font-family="{FONT}" font-size="30" font-weight="800" '
     f'fill="{INK}">OpenCrime Cloud-Native</text>')
 add(f'<text x="90" y="90" font-family="{FONT}" font-size="15.5" fill="{MUTED}">'
-    f'Arquitectura de Microservicios — Componentes, Protocolos de Comunicación y Almacenamiento</text>')
+    f'Topología actual — SPA, cinco microservicios, PostgreSQL y Redis (Docker Compose)</text>')
 
 # leyenda
-add('<rect x="1170" y="26" width="392" height="82" rx="10" fill="#F8FAFC" stroke="#D6DEE6"/>')
-add(f'<line x1="1194" y1="54" x2="1252" y2="54" stroke="#455A64" stroke-width="2.4" marker-end="url(#arrowS)"/>')
-add(f'<text x="1264" y="58" font-family="{FONT}" font-size="13" fill="{INK}">Síncrono (REST · SQL · RESP)</text>')
-add(f'<line x1="1194" y1="88" x2="1252" y2="88" stroke="#AD1457" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrowD)"/>')
-add(f'<text x="1264" y="92" font-family="{FONT}" font-size="13" fill="{INK}">Asíncrono (eventos · mensajería)</text>')
+add('<rect x="1280" y="26" width="440" height="82" rx="10" fill="#F8FAFC" stroke="#D6DEE6"/>')
+add(f'<line x1="1304" y1="54" x2="1362" y2="54" stroke="#455A64" stroke-width="2.4" marker-end="url(#arrowS)"/>')
+add(f'<text x="1374" y="58" font-family="{FONT}" font-size="13" fill="{INK}">Comunicación HTTP / REST / SQL / RESP</text>')
+add(f'<text x="1304" y="91" font-family="{FONT}" font-size="12.5" fill="{MUTED}">Solo componentes desplegados actualmente</text>')
 
-# ---------- bandas ----------
-band(90, 122, 1470, 152, "Consumidores", "1")
-band(90, 300, 1470, 122, "Borde / Entrada (Edge)", "2")
-band(90, 448, 1470, 178, "Microservicios", "3")
-band(90, 648, 1470, 152, "Persistencia y Mensajería", "4")
-band(90, 820, 1470, 158, "Operación y Servicio Medido", "5")
+# ---------- bandas de despliegue ----------
+band(80, 125, 1640, 145, "Cliente", "1")
+band(80, 295, 1640, 405, "Servicios de aplicación · Docker Compose", "2")
+band(80, 725, 1640, 250, "Persistencia", "3")
 
-# ---------- componentes ----------
-box(430, 158, 340, 86, "Cliente Web (SPA)",
-    ["Tablero interactivo", "HTML / JavaScript"], CLIENTS)
-box(870, 158, 340, 86, "Cliente Móvil",
-    ["Navegador / dispositivo", "con acceso a la red"], CLIENTS)
+# ---------- componentes actuales ----------
+box(570, 155, 660, 92, "Frontend web (SPA)",
+    ["frontend/index.html · contenido estático", "REST/JSON directo a los puertos publicados; sin API Gateway"],
+    CLIENTS, tsize=18, ssize=13)
 
-box(430, 342, 780, 66, "API Gateway  /  Ingress  +  Balanceador de carga",
-    ["Punto único de entrada  ·  HTTPS / TLS 1.3  ·  REST + JSON"], EDGE, tsize=17, ssize=12.5)
+card_y, card_w = 375, 288
+cards = [
+    (100, "Level Management", ["Catálogo y publicación", "PostgreSQL · host :8000"]),
+    (428, "Playground Engine", ["Validación de acusaciones", "Redis · host :8001"]),
+    (756, "Progress Service", ["Libretas, sesiones e intentos", "PostgreSQL · host :8004"]),
+    (1084, "User Service", ["Registro, login y JWT", "PostgreSQL · host :8002"]),
+    (1412, "Rating Service", ["Votos y medias", "PostgreSQL · host :8003"]),
+]
+for x, title, details in cards:
+    box(x, card_y, card_w, 138, title, details, SERVICE, tsize=15, ssize=12)
 
-box(120, 490, 266, 116, "Level Management Service",
-    ["Catálogo y publicación de misterios", "POST /api/levels/ · GET /{id}"], SERVICE, tsize=15.5, ssize=12)
-box(406, 490, 266, 116, "User Service",
-    ["Registro, login y sesiones", "POST /api/users/register · /login"], SERVICE, tsize=15.5, ssize=12)
-box(692, 490, 266, 116, "Progress Service",
-    ["Progreso, sesiones y notas", "GET /api/progress/me/cases"], SERVICE, tsize=15.5, ssize=12)
-box(978, 490, 266, 116, "Playground Engine Service",
-    ["Validación del tablero", "POST /api/engine/validate"], SERVICE, tsize=15.5, ssize=12)
-box(1264, 490, 266, 116, "Rating Service",
-    ["Valoraciones de niveles", "GET /api/ratings/levels/batch"], SERVICE, tsize=15.5, ssize=12)
+# La SPA llama directamente a cada servicio; estas flechas no representan un gateway.
+for center_x in (244, 572, 900, 1228, 1556):
+    edge(900, 247, center_x, card_y)
+label(900, 325, "HTTP / REST · JSON · puertos 8000–8004", color="#455A64")
 
-box(110, 690, 330, 96, "Base de datos relacional",
-    ["PostgreSQL", "Niveles, usuarios, progreso y valoraciones"], DATA, tsize=15.5, ssize=12)
-box(480, 690, 330, 96, "Object Storage",
-    ["Assets / imágenes", "de los misterios"], DATA, tsize=15.5, ssize=12)
-box(850, 690, 330, 96, "Bus de Eventos",
-    ["Apache Kafka", "level.published · attempt.validated"], MSG, tsize=15.5, ssize=12)
-box(1220, 690, 320, 96, "Caché en memoria",
-    ["Redis", "Sesiones y estado de partida"], DATA, tsize=15.5, ssize=12)
+label(900, 555,
+      "Llamadas internas HTTP/REST: Playground → Level Management y Progress · User → Progress",
+      color="#455A64", size=12)
 
-box(430, 876, 1090, 84, "Observabilidad y Servicio Medido",
-    ["Prometheus · Grafana · Logs/Trazas  —  métricas de uso, facturación y autoescalado"], OBS, tsize=17, ssize=12.5)
+box(220, 800, 750, 130, "PostgreSQL · TCP 5432",
+    ["Datos lógicos de Level, User, Rating y Progress", "Volumen persistente: postgres_data · red db-net (internal)"],
+    DATA, tsize=17, ssize=12.5)
+box(1110, 800, 500, 130, "Redis · RESP 6379",
+    ["Caché / estado de Playground Engine", "Volumen redis_data · AOF · red cache-net (internal)"],
+    DATA, tsize=17, ssize=12.5)
 
-# ---------- conexiones ----------
-edge(600, 244, 600, 342)          # web -> gateway
-edge(1040, 244, 1040, 342)        # movil -> gateway
-label(820, 300, "HTTPS · REST (JSON)", color="#455A64")
+# Conexiones de datos: la base relacional la comparten cuatro servicios lógicos.
+edge(244, 513, 430, 800)
+edge(900, 513, 760, 800)
+edge(1228, 513, 850, 800)
+edge(1556, 513, 900, 800)
+edge(572, 513, 1250, 800)
+label(470, 695, "SQL · cuatro servicios", color="#6A1B9A", size=12)
+label(1270, 695, "Playground Engine", color="#6A1B9A", size=12)
 
-edge(820, 408, 253, 490)   # gateway -> level
-edge(820, 408, 539, 490)   # gateway -> user
-edge(820, 408, 825, 490)   # gateway -> progress
-edge(820, 408, 1111, 490)  # gateway -> engine
-edge(820, 408, 1397, 490)  # gateway -> rating
-label(820, 452, "HTTP / REST (JSON) interno", color="#455A64")
-
-edge(253, 606, 160, 690)    # level -> postgres
-edge(539, 606, 240, 690)    # user -> postgres
-edge(825, 606, 320, 690)    # progress -> postgres
-edge(1397, 606, 400, 690)   # rating -> postgres
-label(204, 650, "SQL · TCP:5432", color="#6A1B9A")
-
-edge(1111, 606, 1380, 690)  # engine -> redis
-label(1360, 650, "RESP · 6379", color="#6A1B9A")
-
-edge(379, 606, 645, 690)    # level -> object storage
-label(530, 650, "HTTPS · S3 API", color="#6A1B9A")
-
-edge(386, 606, 960, 690, text="publicar eventos", dashed=True, color="#AD1457",
-     ty=632, tx=564)
-edge(1244, 606, 1070, 690, text="eventos de validación", dashed=True, color="#AD1457",
-     ty=648, tx=1157)
-edge(1015, 786, 1015, 876, text="métricas · eventos", dashed=True, color="#AD1457",
-     ty=836, tx=1042, anchor="start")
+label(900, 1010,
+      "Red backend-net: servicios · db-net: PostgreSQL y clientes DB · cache-net: Redis y Playground Engine",
+      color="#455A64", size=12)
+label(900, 1050,
+      "No incluidos: API Gateway, Kafka, S3/Object Storage, Prometheus/Grafana y cliente móvil",
+      color="#8A4B08", size=12)
 
 add('</svg>')
 

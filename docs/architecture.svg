@@ -1,103 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1640" height="1010" viewBox="0 0 1640 1010" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif">
 <defs><marker id="arrowS" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L9,3.5 L0,7 z" fill="#455A64"/></marker><marker id="arrowD" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L9,3.5 L0,7 z" fill="#AD1457"/></marker></defs>
-<rect x="0" y="0" width="1640" height="1010" fill="#FFFFFF"/>
+<rect x="0" y="0" width="1800" height="1120" fill="#FFFFFF"/>
 <text x="90" y="58" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#22313F">OpenCrime Cloud-Native</text>
-<text x="90" y="90" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" fill="#5A6B7B">Arquitectura de Microservicios — Componentes, Protocolos de Comunicación y Almacenamiento</text>
-<rect x="1170" y="26" width="392" height="82" rx="10" fill="#F8FAFC" stroke="#D6DEE6"/>
-<line x1="1194" y1="54" x2="1252" y2="54" stroke="#455A64" stroke-width="2.4" marker-end="url(#arrowS)"/>
-<text x="1264" y="58" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="13" fill="#22313F">Síncrono (REST · SQL · RESP)</text>
-<line x1="1194" y1="88" x2="1252" y2="88" stroke="#AD1457" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrowD)"/>
-<text x="1264" y="92" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="13" fill="#22313F">Asíncrono (eventos · mensajería)</text>
-<rect x="90" y="122" width="1470" height="152" rx="14" ry="14" fill="#FFFFFF" stroke="#D6DEE6" stroke-width="1.4" stroke-dasharray="7 5"/>
-<text x="106" y="145" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#8A9AA8" letter-spacing="1.4">1 · CONSUMIDORES</text>
-<rect x="90" y="300" width="1470" height="122" rx="14" ry="14" fill="#FFFFFF" stroke="#D6DEE6" stroke-width="1.4" stroke-dasharray="7 5"/>
-<text x="106" y="323" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#8A9AA8" letter-spacing="1.4">2 · BORDE / ENTRADA (EDGE)</text>
-<rect x="90" y="448" width="1470" height="178" rx="14" ry="14" fill="#FFFFFF" stroke="#D6DEE6" stroke-width="1.4" stroke-dasharray="7 5"/>
-<text x="106" y="471" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#8A9AA8" letter-spacing="1.4">3 · MICROSERVICIOS</text>
-<rect x="90" y="648" width="1470" height="152" rx="14" ry="14" fill="#FFFFFF" stroke="#D6DEE6" stroke-width="1.4" stroke-dasharray="7 5"/>
-<text x="106" y="671" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#8A9AA8" letter-spacing="1.4">4 · PERSISTENCIA Y MENSAJERÍA</text>
-<rect x="90" y="820" width="1470" height="158" rx="14" ry="14" fill="#FFFFFF" stroke="#D6DEE6" stroke-width="1.4" stroke-dasharray="7 5"/>
-<text x="106" y="843" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#8A9AA8" letter-spacing="1.4">5 · OPERACIÓN Y SERVICIO MEDIDO</text>
-<rect x="430" y="158" width="340" height="86" rx="10" ry="10" fill="#E8F1FC" stroke="#1565C0" stroke-width="2"/>
-<text x="600.0" y="189.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#22313F">Cliente Web (SPA)</text>
-<text x="600.0" y="216.3" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Tablero interactivo</text>
-<text x="600.0" y="233.8" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">HTML / JavaScript</text>
-<rect x="870" y="158" width="340" height="86" rx="10" ry="10" fill="#E8F1FC" stroke="#1565C0" stroke-width="2"/>
-<text x="1040.0" y="189.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#22313F">Cliente Móvil</text>
-<text x="1040.0" y="216.3" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Navegador / dispositivo</text>
-<text x="1040.0" y="233.8" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">con acceso a la red</text>
-<rect x="430" y="342" width="780" height="66" rx="10" ry="10" fill="#FFF4E5" stroke="#E65100" stroke-width="2"/>
-<text x="820.0" y="372.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#22313F">API Gateway  /  Ingress  +  Balanceador de carga</text>
-<text x="820.0" y="399.1" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Punto único de entrada  ·  HTTPS / TLS 1.3  ·  REST + JSON</text>
-<rect x="120" y="490" width="266" height="116" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
-<text x="253.0" y="536.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">Level Management Service</text>
-<text x="253.0" y="561.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Catálogo y publicación de misterios</text>
-<text x="253.0" y="578.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">POST /api/levels/ · GET /{id}</text>
-<rect x="406" y="490" width="266" height="116" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
-<text x="539.0" y="536.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">User Service</text>
-<text x="539.0" y="561.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Registro, login y sesiones</text>
-<text x="539.0" y="578.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">POST /api/users/register · /login</text>
-<rect x="692" y="490" width="266" height="116" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
-<text x="825.0" y="536.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">Progress Service</text>
-<text x="825.0" y="561.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Progreso, sesiones y notas</text>
-<text x="825.0" y="578.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">GET /api/progress/me/cases</text>
-<rect x="978" y="490" width="266" height="116" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
-<text x="1111.0" y="536.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">Playground Engine Service</text>
-<text x="1111.0" y="561.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Validación del tablero</text>
-<text x="1111.0" y="578.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">POST /api/engine/validate</text>
-<rect x="1264" y="490" width="266" height="116" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
-<text x="1397.0" y="536.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">Rating Service</text>
-<text x="1397.0" y="561.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Valoraciones de niveles</text>
-<text x="1397.0" y="578.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">GET /api/ratings/levels/batch</text>
-<rect x="110" y="690" width="330" height="96" rx="10" ry="10" fill="#F6EAF8" stroke="#6A1B9A" stroke-width="2"/>
-<text x="275.0" y="726.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">Base de datos relacional</text>
-<text x="275.0" y="751.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">PostgreSQL</text>
-<text x="275.0" y="768.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Niveles, usuarios, progreso y valoraciones</text>
-<rect x="480" y="690" width="330" height="96" rx="10" ry="10" fill="#F6EAF8" stroke="#6A1B9A" stroke-width="2"/>
-<text x="645.0" y="726.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">Object Storage</text>
-<text x="645.0" y="751.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Assets / imágenes</text>
-<text x="645.0" y="768.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">de los misterios</text>
-<rect x="850" y="690" width="330" height="96" rx="10" ry="10" fill="#FDECF2" stroke="#AD1457" stroke-width="2"/>
-<text x="1015.0" y="726.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">Bus de Eventos</text>
-<text x="1015.0" y="751.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Apache Kafka</text>
-<text x="1015.0" y="768.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">level.published · attempt.validated</text>
-<rect x="1220" y="690" width="320" height="96" rx="10" ry="10" fill="#F6EAF8" stroke="#6A1B9A" stroke-width="2"/>
-<text x="1380.0" y="726.4" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" font-weight="700" fill="#22313F">Caché en memoria</text>
-<text x="1380.0" y="751.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Redis</text>
-<text x="1380.0" y="768.9" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Sesiones y estado de partida</text>
-<rect x="430" y="876" width="1090" height="84" rx="10" ry="10" fill="#ECEFF1" stroke="#455A64" stroke-width="2"/>
-<text x="975.0" y="915.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#22313F">Observabilidad y Servicio Medido</text>
-<text x="975.0" y="942.1" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Prometheus · Grafana · Logs/Trazas  —  métricas de uso, facturación y autoescalado</text>
-<line x1="600" y1="244" x2="600" y2="342" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<line x1="1040" y1="244" x2="1040" y2="342" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<rect x="748.5" y="288.1" width="143.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
-<text x="820" y="300" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#455A64">HTTPS · REST (JSON)</text>
-<line x1="820" y1="408" x2="253" y2="490" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<line x1="820" y1="408" x2="539" y2="490" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<line x1="820" y1="408" x2="825" y2="490" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<line x1="820" y1="408" x2="1111" y2="490" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<line x1="820" y1="408" x2="1397" y2="490" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<rect x="724.0" y="440.1" width="192.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
-<text x="820" y="452" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#455A64">HTTP / REST (JSON) interno</text>
-<line x1="253" y1="606" x2="160" y2="690" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<line x1="539" y1="606" x2="240" y2="690" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<line x1="825" y1="606" x2="320" y2="690" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<line x1="1397" y1="606" x2="400" y2="690" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<rect x="150.0" y="638.1" width="108.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
-<text x="204" y="650" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#6A1B9A">SQL · TCP:5432</text>
-<line x1="1111" y1="606" x2="1380" y2="690" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<rect x="1316.5" y="638.1" width="87.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
-<text x="1360" y="650" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#6A1B9A">RESP · 6379</text>
-<line x1="379" y1="606" x2="645" y2="690" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
-<rect x="476.0" y="638.1" width="108.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
-<text x="530" y="650" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#6A1B9A">HTTPS · S3 API</text>
-<line x1="386" y1="606" x2="960" y2="690" stroke="#AD1457" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#arrowD)"/>
-<rect x="503.0" y="620.1" width="122.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
-<text x="564" y="632" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#AD1457">publicar eventos</text>
-<line x1="1244" y1="606" x2="1070" y2="690" stroke="#AD1457" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#arrowD)"/>
-<rect x="1078.5" y="636.1" width="157.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
-<text x="1157" y="648" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#AD1457">eventos de validación</text>
-<line x1="1015" y1="786" x2="1015" y2="876" stroke="#AD1457" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#arrowD)"/>
-<rect x="1037.0" y="824.1" width="136.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
-<text x="1042" y="836" text-anchor="start" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#AD1457">métricas · eventos</text>
+<text x="90" y="90" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15.5" fill="#5A6B7B">Topología actual — SPA, cinco microservicios, PostgreSQL y Redis (Docker Compose)</text>
+<rect x="1280" y="26" width="440" height="82" rx="10" fill="#F8FAFC" stroke="#D6DEE6"/>
+<line x1="1304" y1="54" x2="1362" y2="54" stroke="#455A64" stroke-width="2.4" marker-end="url(#arrowS)"/>
+<text x="1374" y="58" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="13" fill="#22313F">Comunicación HTTP / REST / SQL / RESP</text>
+<text x="1304" y="91" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Solo componentes desplegados actualmente</text>
+<rect x="80" y="125" width="1640" height="145" rx="14" ry="14" fill="#FFFFFF" stroke="#D6DEE6" stroke-width="1.4" stroke-dasharray="7 5"/>
+<text x="96" y="148" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#8A9AA8" letter-spacing="1.4">1 · CLIENTE</text>
+<rect x="80" y="295" width="1640" height="405" rx="14" ry="14" fill="#FFFFFF" stroke="#D6DEE6" stroke-width="1.4" stroke-dasharray="7 5"/>
+<text x="96" y="318" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#8A9AA8" letter-spacing="1.4">2 · SERVICIOS DE APLICACIÓN · DOCKER COMPOSE</text>
+<rect x="80" y="725" width="1640" height="250" rx="14" ry="14" fill="#FFFFFF" stroke="#D6DEE6" stroke-width="1.4" stroke-dasharray="7 5"/>
+<text x="96" y="748" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#8A9AA8" letter-spacing="1.4">3 · PERSISTENCIA</text>
+<rect x="570" y="155" width="660" height="92" rx="10" ry="10" fill="#E8F1FC" stroke="#1565C0" stroke-width="2"/>
+<text x="900.0" y="189.3" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#22313F">Frontend web (SPA)</text>
+<text x="900.0" y="217.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="13" fill="#5A6B7B">frontend/index.html · contenido estático</text>
+<text x="900.0" y="235.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="13" fill="#5A6B7B">REST/JSON directo a los puertos publicados; sin API Gateway</text>
+<rect x="100" y="375" width="288" height="138" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
+<text x="244.0" y="432.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#22313F">Level Management</text>
+<text x="244.0" y="457.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Catálogo y publicación</text>
+<text x="244.0" y="474.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">PostgreSQL · host :8000</text>
+<rect x="428" y="375" width="288" height="138" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
+<text x="572.0" y="432.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#22313F">Playground Engine</text>
+<text x="572.0" y="457.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Validación de acusaciones</text>
+<text x="572.0" y="474.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Redis · host :8001</text>
+<rect x="756" y="375" width="288" height="138" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
+<text x="900.0" y="432.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#22313F">Progress Service</text>
+<text x="900.0" y="457.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Libretas, sesiones e intentos</text>
+<text x="900.0" y="474.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">PostgreSQL · host :8004</text>
+<rect x="1084" y="375" width="288" height="138" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
+<text x="1228.0" y="432.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#22313F">User Service</text>
+<text x="1228.0" y="457.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Registro, login y JWT</text>
+<text x="1228.0" y="474.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">PostgreSQL · host :8002</text>
+<rect x="1412" y="375" width="288" height="138" rx="10" ry="10" fill="#E7F6EC" stroke="#2E7D32" stroke-width="2"/>
+<text x="1556.0" y="432.2" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#22313F">Rating Service</text>
+<text x="1556.0" y="457.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">Votos y medias</text>
+<text x="1556.0" y="474.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" fill="#5A6B7B">PostgreSQL · host :8003</text>
+<line x1="900" y1="247" x2="244" y2="375" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<line x1="900" y1="247" x2="572" y2="375" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<line x1="900" y1="247" x2="900" y2="375" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<line x1="900" y1="247" x2="1228" y2="375" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<line x1="900" y1="247" x2="1556" y2="375" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<rect x="762.0" y="313.1" width="276.0" height="18.8" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
+<text x="900" y="325" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#455A64">HTTP / REST · JSON · puertos 8000–8004</text>
+<rect x="602.7" y="543.6" width="594.6" height="18.0" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
+<text x="900" y="555" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#455A64">Llamadas internas HTTP/REST: Playground → Level Management y Progress · User → Progress</text>
+<rect x="220" y="800" width="750" height="130" rx="10" ry="10" fill="#F6EAF8" stroke="#6A1B9A" stroke-width="2"/>
+<text x="595.0" y="853.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#22313F">PostgreSQL · TCP 5432</text>
+<text x="595.0" y="880.3" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Datos lógicos de Level, User, Rating y Progress</text>
+<text x="595.0" y="897.8" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Volumen persistente: postgres_data · red db-net (internal)</text>
+<rect x="1110" y="800" width="500" height="130" rx="10" ry="10" fill="#F6EAF8" stroke="#6A1B9A" stroke-width="2"/>
+<text x="1360.0" y="853.5" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#22313F">Redis · RESP 6379</text>
+<text x="1360.0" y="880.3" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Caché / estado de Playground Engine</text>
+<text x="1360.0" y="897.8" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12.5" fill="#5A6B7B">Volumen redis_data · AOF · red cache-net (internal)</text>
+<line x1="244" y1="513" x2="430" y2="800" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<line x1="900" y1="513" x2="760" y2="800" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<line x1="1228" y1="513" x2="850" y2="800" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<line x1="1556" y1="513" x2="900" y2="800" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<line x1="572" y1="513" x2="1250" y2="800" stroke="#455A64" stroke-width="2" marker-end="url(#arrowS)"/>
+<rect x="391.1" y="683.6" width="157.8" height="18.0" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
+<text x="470" y="695" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#6A1B9A">SQL · cuatro servicios</text>
+<rect x="1207.9" y="683.6" width="124.2" height="18.0" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
+<text x="1270" y="695" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#6A1B9A">Playground Engine</text>
+<rect x="559.0" y="998.6" width="682.0" height="18.0" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
+<text x="900" y="1010" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#455A64">Red backend-net: servicios · db-net: PostgreSQL y clientes DB · cache-net: Redis y Playground Engine</text>
+<rect x="602.7" y="1038.6" width="594.6" height="18.0" rx="4" fill="#FFFFFF" fill-opacity="0.92"/>
+<text x="900" y="1050" text-anchor="middle" font-family="Segoe UI, Segoe UI Emoji, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#8A4B08">No incluidos: API Gateway, Kafka, S3/Object Storage, Prometheus/Grafana y cliente móvil</text>
 </svg>
