@@ -1,5 +1,9 @@
 # OpenCrime Cloud-Native
 
+![Arquitectura actual de OpenCrime: SPA, cinco microservicios, PostgreSQL y Redis](docs/architecture.png)
+
+> **Figura 1.** Arquitectura desplegada actualmente con Docker Compose. La SPA llama directamente a los microservicios; no hay API Gateway en el entorno actual.
+
 ## 1. Descripción del Dominio y Casos de Uso
 
 ### 1.1 Problema de Negocio
@@ -19,68 +23,68 @@ La aplicación se plantea como **Cloud-Native** precisamente para atacar esas li
 
 | # | Caso de uso | Actor | Descripción |
 |---|-------------|-------|-------------|
-| CU-01 | **Crear y publicar un misterio** | Autor / Creador | Un miembro de la comunidad diseña un nivel (título, pistas/clues y las conexiones correctas) y lo publica mediante `POST /api/levels/` para que otros jugadores lo resuelvan. |
-| CU-02 | **Explorar el catálogo de misterios** | Jugador | El jugador consulta los niveles disponibles, filtrando por dificultad, popularidad o autor, para elegir qué misterio resolver. |
-| CU-03 | **Jugar un misterio (renderizar el tablero)** | Jugador | El jugador abre un nivel y el sistema recupera sus datos (`GET /api/levels/{level_id}`) para pintar el tablón con pistas y conexiones en HTML/JS. |
-| CU-04 | **Validar la solución del tablero** | Jugador | El jugador traza los "hilos" entre pistas y envía sus conexiones a `POST /api/engine/validate`; el motor responde si el misterio está resuelto y una pista de retroalimentación. |
-| CU-05 | **Registrar progreso y métricas de dificultad** | Sistema / Analista | El backend almacena intentos, tiempo y tasa de acierto para puntuar la dificultad de cada nivel y alimentar recomendaciones y clasificaciones. |
-| CU-06 | **Moderar contenido** | Administrador / Moderador | Un operador revisa, aprueba, oculta o destaca los niveles publicados por la comunidad para garantizar calidad y evitar contenido inapropiado. |
+| CU-01 | **Crear y publicar un misterio** | Autor / Creador | Un miembro de la comunidad diseña un nivel con título, descripción, dificultad, tarjetas y composición de solución y lo publica mediante `POST /api/levels/`. |
+| CU-02 | **Explorar el catálogo de misterios** | Jugador | El jugador consulta el catálogo paginado; actualmente puede filtrar por autor y elegir un caso. |
+| CU-03 | **Jugar un misterio (renderizar el tablero)** | Jugador | El jugador abre un nivel y el sistema recupera sus tarjetas (`GET /api/levels/{level_id}`) para pintar el tablón en HTML/JS. |
+| CU-04 | **Validar la solución del tablero** | Jugador | El jugador prepara una acusación seleccionando tarjetas y la envía a `POST /api/engine/validate`; el motor devuelve el resultado y retroalimentación. |
+| CU-05 | **Registrar progreso** | Sistema | Para usuarios autenticados, Progress Service almacena intentos, sesiones y estadísticas personales por caso. No hay actualmente cálculo global de dificultad ni medición de consumo cloud. |
+| CU-06 | **Moderar contenido** | Administrador / Moderador | Caso de uso previsto; la API actual no implementa todavía operaciones de moderación. |
 
-**Actores principales:** Jugador (consumidor del contenido), Autor/Creador (productor de contenido), Administrador/Moderador (moderación) y el propio Sistema (métricas y validación). El detalle de su mapeo a roles NIST SP 500-292 se desarrolla en la [sección 3](#3-mapeo-de-actores-nist-sp-500-292).
+**Actores principales actuales:** Jugador y Autor/Creador. Administrador/Moderador es un rol previsto, pero la API todavía no expone operaciones de moderación. El mapeo conceptual a roles NIST SP 500-292 se desarrolla en la [sección 3](#3-mapeo-de-actores-nist-sp-500-292).
 
 ## 2. Justificación NIST SP 800-145
 
 La arquitectura de **Crime Board Cloud-Native** se alinea con las cinco características esenciales del modelo Cloud definidas en el documento NIST SP 800-145 (*The NIST Definition of Cloud Computing*). A continuación se analiza cómo cada una de ellas se materializa en la aplicación.
 
+> **Alcance actual:** esta sección justifica el diseño y su posible evolución en la nube; no afirma que todas las capacidades de una plataforma cloud estén desplegadas. El entorno implementado es Docker Compose local: no incluye autoescalado, medición de consumo para facturación ni alta disponibilidad.
+
 ### 2.1 Autoservicio bajo demanda (*On-demand self-service*)
 
 El consumidor aprovisiona capacidades de cómputo de forma unilateral, sin interacción humana con el proveedor del servicio.
 
-- Un **Autor** puede registrarse y publicar un misterio (`POST /api/levels/`) en cualquier momento, sin que un administrador tenga que desplegar nada manualmente: el servicio de niveles recibe la petición y aprovisiona los recursos necesarios (nuevo registro, almacenamiento de pistas y conexiones) de forma automática.
-- Un **Jugador** solicita un misterio (`GET /api/levels/{level_id}`) y comienza a jugar de inmediato, y el motor de validación (`POST /api/engine/validate`) escala o se aprovisiona bajo demanda cuando llegan nuevas peticiones, sin tickets ni intervención operativa.
-- Los recursos (instancias de servicio, almacenamiento) se crean y consumen bajo petición del usuario, no por una planificación previa del equipo de operaciones.
+- Un **Autor** puede registrarse y publicar un misterio (`POST /api/levels/`) desde la aplicación, sin intervención manual del operador para cada caso.
+- Un **Jugador** puede consultar un misterio (`GET /api/levels/{level_id}`) y enviar una acusación al motor (`POST /api/engine/validate`) bajo demanda.
+- Esto representa autoservicio a nivel de funcionalidad de la aplicación; el aprovisionamiento de infraestructura sigue siendo responsabilidad del operador y no se realiza automáticamente por cada petición.
 
 ### 2.2 Acceso amplio a la red (*Broad network access*)
 
 Las capacidades están disponibles a través de la red mediante mecanismos estándar, accesibles desde clientes heterogéneos (navegadores de escritorio, móviles, tablets).
 
-- Toda la funcionalidad se expone mediante **API REST sobre HTTP/HTTPS**, consumible desde cualquier dispositivo con navegador web.
-- El tablero se renderiza como HTML/JS en el cliente ([sección 5](#5-especificación-api-rest)), de modo que el juego no exige instalar una aplicación nativa: cualquier cliente conectado a la red puede jugar, crear o moderar misterios.
-- El acceso está estandarizado (JSON sobre HTTPS), lo que permite integraciones futuras (por ejemplo, clientes móviles o aplicaciones de terceros) sin cambiar el backend.
+- La SPA consume **API REST con JSON sobre HTTP**. En el Compose local los servicios se publican en `127.0.0.1`; HTTPS requeriría un proxy o ingress con TLS, que no forma parte del despliegue actual.
+- El tablero se renderiza como HTML/JS en el cliente ([sección 5](#5-especificación-api-rest)), de modo que no hace falta instalar una aplicación nativa para consultar y jugar casos.
+- El formato REST/JSON permite integrar otros clientes en el futuro. HTTPS requerirá terminar TLS en un proxy o ingress, no incluido en el despliegue local.
 
 ### 2.3 Asignación común de recursos (*Resource pooling*)
 
-Los recursos del proveedor se agrupan para servir a múltiples consumidores mediante un modelo *multi-tenant*, con asignación dinámica y reasignación según la demanda.
+El modelo cloud permite agrupar recursos para servir a múltiples consumidores. En el prototipo, los servicios y la base de datos son compartidos; el aislamiento lógico depende de la autenticación y de las reglas de cada servicio.
 
-- Todos los jugadores y autores comparten la misma infraestructura: el **Level Management Service**, el **Playground Engine Service** y el almacenamiento se ejecutan como servicios compartidos que atienden a muchos usuarios simultáneamente.
-- Los recursos son **agnósticos de la ubicación**: el usuario no sabe ni controla en qué nodo se ejecuta su petición; el orquestador (por ejemplo, un contenedor gestionado) la enruta al recurso libre.
-- El aislamiento lógico se garantiza a nivel de datos (cada nivel pertenece a su autor, cada partida a su jugador) aunque el hardware y los procesos sean comunes, permitiendo además exponer los niveles compartidos de la comunidad a todos los jugadores.
+- El Compose local levanta instancias compartidas de los cinco microservicios, PostgreSQL y Redis para todos los usuarios de la instalación.
+- La asignación de recursos entre nodos y el aislamiento físico dependen de la futura plataforma de despliegue; no los proporciona Docker Compose.
+- Las APIs autentican las operaciones de cuenta y progreso con JWT y protegen algunas llamadas internas con `X-Internal-Api-Key`.
 
 ### 2.4 Rápida elasticidad (*Rapid elasticity*)
 
 Las capacidades pueden escalar de forma elástica, incluso automática, hacia arriba y hacia abajo según la demanda, de modo que los recursos disponibles aparenten ser ilimitados.
 
-- **Escalado horizontal independiente:** El motor de validación **Playground Engine Service**, que es el componente con mayor carga por ser el que procesa cada intento del tablero, puede replicarse automáticamente cuando aumenta el número de jugadores y reducirse cuando la demanda baja.
-- El **Level Management Service**, con carga mucho menor y más estable, puede mantener un número de réplicas distinto, evitando gastar capacidad innecesaria.
-- Este escalado granular responde a la estacionalidad natural del juego (lanzamientos, campañas, horas punta) sin sobreaprovisionar en horas valle.
+- La separación de servicios permite plantear escalado independiente: por ejemplo, replicar **Playground Engine Service** con un orquestador cloud si aumenta la demanda.
+- **Ese escalado no está implementado en el Compose actual**, que levanta una instancia de cada servicio y no configura autoescalado ni balanceo.
 
 ### 2.5 Servicio medido (*Measured service*)
 
 Los sistemas cloud controlan y optimizan automáticamente el uso de recursos mediante capacidades de medición, proporcionando transparencia al proveedor y al consumidor.
 
-- Cada petición a la API (publicar un nivel, recuperarlo, validar un tablero) es **medible**: número de niveles publicados, número de partidas iniciadas, número de validaciones, tiempo de cómputo del motor.
-- El backend registra estos intentos y métricas de dificultad (CU-05, [sección 1](#1-descripción-del-dominio-y-casos-de-uso)) para puntuar niveles, alimentar clasificaciones y recomendar misterios.
-- Las métricas de uso (**peticiones, CPU, memoria, almacenamiento**) permiten facturar y optimizar recursos, y sirven de base para el autoescalado definido en [2.4](#24-rápida-elasticidad-rapid-elasticity).
+- `Progress Service` registra intentos autenticados y estadísticas **por jugador y caso** (intentos, resolución y tiempo), útiles para el perfil y el seguimiento del juego.
+- No hay actualmente instrumentación de consumo de CPU, memoria o almacenamiento, métricas Prometheus ni facturación por uso. Por tanto, el servicio medido de NIST es una **posible evolución**, no una capacidad operativa ya desplegada.
 
 ### 2.6 Síntesis
 
 | Característica NIST SP 800-145 | Cómo se materializa en Crime Board Cloud-Native |
 |-------------------------------|------------------------------------------------|
-| Autoservicio bajo demanda | Publicación de niveles y partidas iniciadas por el propio usuario vía API, sin intervención del operador. |
-| Acceso amplio a la red | API REST/HTTPS y tablero HTML/JS accesibles desde cualquier navegador o dispositivo. |
-| Asignación común de recursos | Servicios compartidos multi-tenant con recursos agnósticos de ubicación y aislamiento lógico por autor/jugador. |
-| Rápida elasticidad | Escalado horizontal automático y independiente del motor de validación frente al servicio de niveles. |
-| Servicio medido | Medición de peticiones, cómputo y almacenamiento para métricas, facturación y autoescalado. |
+| Autoservicio bajo demanda | Los usuarios pueden publicar y jugar mediante la API; no aprovisionan infraestructura. |
+| Acceso amplio a la red | SPA y APIs REST/JSON; HTTP en Compose y HTTPS pendiente de un proxy/ingress. |
+| Asignación común de recursos | Servicios y persistencia compartidos en la instalación local; aislamiento lógico en las APIs. |
+| Rápida elasticidad | Posible al desplegar en un orquestador cloud; no implementada por Compose. |
+| Servicio medido | Progress mide actividad de juego por usuario; no hay métricas de consumo cloud ni facturación. |
 
 ## 3. Mapeo de Actores NIST SP 500-292
 
@@ -108,13 +112,13 @@ Es quien utiliza los servicios de la plataforma. En Crime Board se distinguen do
 
 ### 3.2 Proveedor (*Cloud Provider*)
 
-Es el equipo/propietario que crea, despliega y mantiene los servicios: el **Level Management Service**, el **Playground Engine Service** y el almacenamiento asociado.
+Es el equipo/propietario que crea, despliega y mantiene los cinco servicios de aplicación (Level Management, Playground Engine, User, Rating y Progress) y su persistencia.
 
 **Impacto económico:**
 - El proveedor convierte **costes fijos (CAPEX)** de servidores propios en **costes operativos variables (OPEX)** ligados al consumo real de la nube.
-- La arquitectura de microservicios escalable ([sección 2.4](#24-rápida-elasticidad-rapid-elasticity)) permite **maximizar el margen** al no dimensionar la infraestructura para el pico permanente.
+- En una futura plataforma con escalado automático, la arquitectura de microservicios podría reducir el sobreaprovisionamiento; el Compose actual no escala automáticamente.
 - El contenido de la comunidad **reduce el coste de producción de niveles** (cada autor financia con su tiempo parte del catálogo), mejorando la relación entre catálogo ofrecido y coste de creación.
-- El servicio medido ([sección 2.5](#25-servicio-medido-measured-service)) habilita **fuentes de ingreso diversificadas**: suscripción, niveles premium/destacados, publicidad o venta de datos agregados de dificultad.
+- Si en el futuro se añade medición de consumo, esta podría habilitar modelos de pago por uso; el servicio medido y la facturación no están implementados actualmente.
 
 ### 3.3 Intermediario (*Cloud Broker*)
 
@@ -131,7 +135,7 @@ Evaluador independiente del rendimiento, la seguridad y el cumplimiento. En Crim
 
 - Que la validación de soluciones ocurre en el servidor (`POST /api/engine/validate`) y no es manipulable por el cliente.
 - El correcto aislamiento de datos entre autores y jugadores (*multi-tenant*, [sección 2.3](#23-asignación-común-de-recursos-resource-pooling)).
-- La exactitud de las métricas usadas para facturación ([sección 2.5](#25-servicio-medido-measured-service)).
+- La exactitud de las métricas para facturación, si se incorporan en una futura plataforma cloud; actualmente no hay medición de consumo ni facturación.
 
 **Impacto económico:**
 - Una auditoría favorable reduce el **riesgo financiero** asociado a incidentes de seguridad, sanciones por incumplimiento (p. ej. RGPD) e interrupciones del servicio.
@@ -143,7 +147,7 @@ Evaluador independiente del rendimiento, la seguridad y el cumplimiento. En Crim
 Gestiona la infraestructura y transporta la red. Correspondría al **equipo DevOps** de la plataforma y a los **proveedores de red/CDN** que distribuyen el tráfico hacia los clientes ([sección 2.2](#22-acceso-amplio-a-la-red-broad-network-access)).
 
 **Impacto económico:**
-- La automatización operativa (despliegue continuo, autoescalado, observabilidad) **reduce el coste humano** de mantener el servicio y los errores que generan caídas costosas.
+- La automatización operativa (despliegue continuo, autoescalado y observabilidad) podría reducir el coste de operación en una futura plataforma cloud; solo la integración continua está configurada en el repositorio actual.
 - El uso de CDN y transporte de red optimizado **disminuye la latencia y el consumo de ancho de banda**, mejorando la experiencia y reduciendo el abandono (impacto directo en ingreso recurrente).
 - La operación elástica evita el **sobreaprovisionamiento**, alineando el gasto de infraestructura con la demanda real.
 
@@ -157,58 +161,56 @@ Gestiona la infraestructura y transporta la red. Correspondría al **equipo DevO
 | Auditor | Reducción de riesgo y confianza | Menos sanciones, ingresos protegidos y acceso a clientes premium. |
 | Operador | Automatización y eficiencia de red | Menor coste operativo y menor abandono de usuarios. |
 
-## 4. Arquitectura de Microservicios
+## 4. Arquitectura actual de microservicios
 
-La aplicación se despliega como un conjunto de microservicios independientes y desacoplados, detrás de un gateway único, cada uno con su propio almacenamiento y comunicándose mediante protocolos estándar (REST síncrono y mensajería asíncrona).
+El entorno local se orquesta con Docker Compose. La SPA es un archivo estático (`frontend/index.html`) y **no está contenerizada**: el navegador llama directamente a los puertos publicados de los cinco servicios. No existe API Gateway/Ingress en el Compose actual.
 
 ### 4.1 Diagrama de arquitectura
 
-La **[Figura 1](docs/architecture.png)** (al inicio del documento) muestra la vista general. Las flechas continuas representan comunicación síncrona (REST/SQL/RESP) y las discontinuas, comunicación asíncrona por eventos. A continuación se detalla cada elemento.
+La [Figura 1](docs/architecture.png) muestra los componentes que sí están en el repositorio y en `compose.yaml`. Las comunicaciones entre servicios son síncronas mediante HTTP/REST; PostgreSQL y Redis se alcanzan por redes Docker internas.
 
 ### 4.2 Componentes
 
-| Capa | Componente | Responsabilidad |
-|------|------------|-----------------|
-| Clientes | **Cliente Web (SPA)** y **Cliente Móvil** | Renderizan el tablero en HTML/JS y consumen la API. |
-| Borde | **API Gateway / Ingress + Balanceador** | Punto único de entrada, terminación TLS y enrutado hacia los servicios. |
-| Microservicios | **Level Management Service** | Gestiona el catálogo: crea y publica niveles, los sirve para renderizar el tablero. |
-| Microservicios | **Playground Engine Service** | Valida el estado del tablero del jugador y devuelve si está resuelto. |
-| Persistencia | **PostgreSQL** | Datos relacionales: niveles, pistas, conexiones correctas y usuarios. |
-| Persistencia | **Object Storage (S3)** | Assets binarios (imágenes/recursos de los misterios). |
-| Persistencia | **Redis** | Caché y estado efímero de las partidas en curso. |
-| Mensajería | **Apache Kafka** | Bus de eventos asíncronos (`level.published`, `attempt.validated`). |
-| Operación | **Observabilidad y Servicio Medido** | Métricas, logs y trazas para medición, facturación y autoescalado. |
+| Capa | Componente | Responsabilidad y conexión actual |
+|------|------------|----------------------------------|
+| Cliente | **SPA web** (`frontend/index.html`) | Interfaz estática; llama directamente a los servicios por HTTP/JSON. Se puede abrir localmente o servir con un servidor estático. |
+| Microservicio | **Level Management Service** (`:8000`) | Catálogo, creación y lectura de casos; usa PostgreSQL. |
+| Microservicio | **Playground Engine Service** (`:8001`) | Obtiene el caso desde Level Management, valida acusaciones y registra intentos autenticados en Progress; usa Redis para caché/estado. |
+| Microservicio | **User Service** (`:8002`) | Registro, login, emisión/verificación de JWT y gestión de cuentas; usa PostgreSQL. |
+| Microservicio | **Rating Service** (`:8003`) | Guarda y consulta valoraciones; usa PostgreSQL y JWT para votar. |
+| Microservicio | **Progress Service** (`:8004`) | Libretas, sesiones, workspace, intentos e historial por usuario; usa PostgreSQL. |
+| Persistencia | **PostgreSQL** (`5432`) | Una instancia compartida en Compose; cada servicio mantiene sus propias tablas/datos lógicos. Volumen `postgres_data`. |
+| Caché | **Redis** (`6379`) | Caché/estado usado por Playground Engine; volumen `redis_data` y AOF habilitado. |
+
+Los servicios de aplicación se conectan por `backend-net`. PostgreSQL está aislado en `db-net` y Redis en `cache-net` (ambas redes internas). Los puertos de los servicios se enlazan a loopback por defecto. La autenticación JWT es verificada localmente por los servicios que la necesitan; las llamadas internas protegidas usan `X-Internal-Api-Key`.
 
 ### 4.3 Protocolos de comunicación
 
 | Tramo | Protocolo | Formato / Notas |
 |-------|-----------|-----------------|
-| Cliente → API Gateway | **HTTPS (TLS 1.3) · REST** | Peticiones JSON sobre HTTP. |
-| API Gateway → Microservicios | **HTTP/REST interno** | JSON; enrutado interno (alternativa: gRPC para mayor rendimiento). |
-| Level Management → PostgreSQL | **SQL sobre TCP** | Puerto 5432. |
-| Playground Engine → Redis | **RESP** | Puerto 6379. |
-| Microservicios → Object Storage | **HTTPS · S3 API** | Acceso a assets binarios. |
-| Microservicios → Kafka | **Protocolo Kafka (TCP)** | Publicación **asíncrona** de eventos. |
-| Kafka → Observabilidad | **Protocolo Kafka (TCP)** | Consumo de eventos para métricas y servicio medido. |
+| SPA → microservicios | **HTTP · REST/JSON** | Llamadas directas desde el navegador a `127.0.0.1:8000`–`:8004` en Compose; no hay gateway ni TLS local. |
+| Playground Engine → Level Management | **HTTP · REST/JSON** | Obtiene los datos del caso por la red interna de Compose. |
+| Playground Engine / User Service → Progress Service | **HTTP · REST/JSON** | Registro de intentos y purga de progreso mediante endpoints internos protegidos. |
+| Servicios de datos → PostgreSQL | **SQL sobre TCP** | Puerto interno `5432`, accesible por `db-net`. |
+| Playground Engine → Redis | **RESP** | Puerto interno `6379`, accesible por `cache-net`. |
 
-Se combinan por tanto **dos estilos de comunicación**: síncrona (REST para peticiones del cliente y acceso a datos) y **asíncrona orientada a eventos** (Kafka), que desacopla la validación de las partidas de la generación de métricas y del autoescalado.
+La comunicación implementada es síncrona. Kafka, S3/Object Storage, un API Gateway/Ingress, un cliente móvil y Prometheus/Grafana **no están incluidos** en el repositorio desplegable actual.
 
 ### 4.4 Almacenamiento y persistencia
 
-- **PostgreSQL (persistente, ACID):** fuente de verdad del catálogo de niveles y de los usuarios.
-- **Object Storage (persistente, escalable):** almacena los recursos binarios de cada nivel.
-- **Redis (en memoria, efímero):** acelera la lectura del catálogo y mantiene el estado de las partidas activas.
-- **Kafka (log de eventos, retención configurable):** buffer duradero que desacopla productores y consumidores.
-- **Observabilidad (series temporales):** conserva las métricas de uso para dificultad, facturación y autoescalado.
+- **PostgreSQL:** almacenamiento relacional persistente compartido por Level Management, User, Rating y Progress; los datos se separan lógicamente por servicio.
+- **Redis:** caché/estado usado por Playground Engine; Compose habilita AOF y monta el volumen persistente `redis_data`.
+- **Navegador:** algunos datos locales de la SPA se guardan en `localStorage`; la cuenta autenticada sincroniza el progreso con Progress Service.
 
-Cada microservicio es dueño de sus propios datos (*database per service*): el `Level Management Service` usa PostgreSQL y Object Storage, mientras que el `Playground Engine Service` usa Redis para el estado de juego, lo que permite escalarlos y desplegarlos de forma independiente ([sección 2.4](#24-rápida-elasticidad-rapid-elasticity)).
+No hay almacenamiento S3, Kafka ni base de métricas en el despliegue actual. La arquitectura cloud con almacenamiento, mensajería y observabilidad gestionados queda como posible evolución, no como componente implementado.
 
 ## 5. Especificación API REST
 
 ### Level Management Service
+- `GET /api/levels/`: catálogo paginado (`limit`, `offset`) y filtro por autor (`creator_username`).
 - `POST /api/levels/`
   - **Descripción:** Publica un nuevo nivel de la comunidad.
-  - **Payload:** JSON con `title`, `creator_id`, `clues` y `correct_connections`.
+  - **Payload:** JSON con `title`, `description`, `difficulty`, `cards` y `solution_card_ids`; el autor se obtiene del JWT.
 - `GET /api/levels/{level_id}`
   - **Descripción:** Obtiene los datos de un misterio para renderizar el tablero en HTML/JS.
 
@@ -219,11 +221,22 @@ Cada microservicio es dueño de sus propios datos (*database per service*): el `
   - **Respuesta:** JSON con `{"solved": boolean, "feedback_message": string, "progress": {...} | null}`.
   - Si llega un JWT válido, el intento se registra en `progress-service` con timeout corto y **fail-open**: una avería del progreso nunca bloquea el veredicto.
 
+### User Service
+- `POST /api/users/register` y `POST /api/users/login`: registro y emisión de JWT.
+- `GET /api/users/me`: cuenta asociada al token actual.
+- `DELETE /api/users/{user_id}`: eliminación de la propia cuenta.
+
+### Rating Service
+- `POST /api/ratings/`: crea o actualiza la valoración autenticada.
+- `GET /api/ratings/levels/{level_id}`: resumen de un nivel.
+- `GET/POST /api/ratings/levels/batch`: resúmenes de varios niveles.
+- `GET /api/ratings/me`: valoraciones de la cuenta actual.
+
 ### Progress Service
 - `GET/PUT /api/progress/notes/{scope}`: libreta general (`general`) o por caso, con versión optimista y `409` en conflicto.
 - `POST /api/progress/cases/{level_id}/sessions`: inicia o reanuda la partida activa.
 - `POST /api/progress/cases/{level_id}/restart`: cierra la partida y abre una repetición.
-- `GET/PUT /api/progress/cases/{level_id}/state` y `/workspace`: sesión, tachados y selección de acusación.
+- `GET /api/progress/cases/{level_id}/state` y `PUT /api/progress/cases/{level_id}/workspace`: sesión, tachados y selección de acusación.
 - `GET /api/progress/me/summary` y `/api/progress/me/cases`: KPIs e historial del perfil.
 - Endpoints internos con `X-Internal-Api-Key`: registro idempotente de intentos y purga al borrar cuenta.
 

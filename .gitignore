@@ -370,8 +370,15 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Diagrama de arquitectura: solo se versiona el PNG que muestra el README.
-# Las fuentes (script generador, render y SVG) no son necesarias para visualizarlo.
-docs/gen_architecture.py
-docs/render.js
-docs/architecture.svg
+# El generador, el SVG fuente y el PNG del diagrama se versionan juntos.
+
+# Notas y artefactos de trabajo local asistidos por IA; no son documentación entregable.
+/docs/analisis-arquitectura-cloud.md
+/docs/analisis-frontend-crime-board.md
+/docs/hito2-fase1-docker.md
+/docs/hito2-fase2-compose.md
+/docs/hito2-fase3-ci.md
+/docs/hito2-task-1.1-dockerfiles.md
+/docs/implementacion-propuestas-usuario.md
+/docs/plan-propuestas-usuario.md
+/docs/recomendaciones.txt
