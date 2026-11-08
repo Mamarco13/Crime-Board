@@ -4,23 +4,16 @@
 # =============================================================================
 # Topología:
 #
-#   host :8000 ──> level-management-service ──┐
-#   host :8001 ──> playground-engine-service ─┼── backend-net (inter-servicios)
-#   host :8002 ──> user-service ──────────────┤
-#   host :8003 ──> rating-service ────────────┤
-#   host :8004 ──> progress-service ──────────┘
-#
-#   level-management-service ── db-net (internal) ──> postgres
-#   user-service ───────────── db-net (internal) ──> postgres
-#   rating-service ─────────── db-net (internal) ──> postgres
-#   progress-service ───────── db-net (internal) ──> postgres
-#   playground-engine-service ─ cache-net (internal) ──> redis
+#   host :8000 ──> level-management-service
+#   host :8001 ──> playground-engine-service
+#   host :8002 ──> user-service
+#   host :8003 ──> rating-service
+#   host :8004 ──> progress-service
 #
 # Autenticación: user-service emite los JWT (login/registro). Level Management
 # y Rating Service los verifican con la misma clave compartida
 # (JWT_SECRET_KEY): el primero para atribuir la autoría de cada caso y el
-# segundo para aceptar votos. Los invitados pueden jugar y leer valoraciones
-# sin cuenta.
+# segundo para aceptar votos.
 #
 # Uso:
 #   cp .env.example .env
@@ -44,9 +37,6 @@ x-logging: &default-logging
     max-size: "10m"
     max-file: "3"
 
-# Endurecimiento común de los microservicios. No se aplica a PostgreSQL/Redis
-# porque sus entrypoints oficiales necesitan privilegios para hacer chown y
-# cambiar de usuario al arrancar.
 x-app-hardening: &app-hardening
   init: true
   restart: unless-stopped
@@ -319,7 +309,7 @@ services:
       # -h 127.0.0.1 fuerza TCP: durante la inicialización el entrypoint
       # levanta un servidor temporal solo por socket Unix y no debe contarse
       # como "listo".
-      test: ["CMD-SHELL", 'pg_isready -h 127.0.0.1 -p 5432 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      test: [ "CMD-SHELL", 'pg_isready -h 127.0.0.1 -p 5432 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -331,9 +321,9 @@ services:
     # ports:
     #   - "${BIND_ADDRESS:-127.0.0.1}:${POSTGRES_HOST_PORT:-5432}:5432"
 
-  # ---------------------------------------------------------------------------
-  # Redis — caché / estado efímero de Playground Engine
-  # ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
+    # Redis — caché / estado efímero de Playground Engine
+    # ---------------------------------------------------------------------------
   redis:
     build:
       context: ./services/redis
@@ -363,7 +353,7 @@ services:
     networks:
       - cache-net
     healthcheck:
-      test: ["CMD-SHELL", 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG']
+      test: [ "CMD-SHELL", 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG' ]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -373,9 +363,9 @@ services:
     # ports:
     #   - "${BIND_ADDRESS:-127.0.0.1}:${REDIS_HOST_PORT:-6379}:6379"
 
-# -----------------------------------------------------------------------------
-# Redes
-# -----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
+    # Redes
+    # -----------------------------------------------------------------------------
 networks:
   # Plano de comunicación entre microservicios. No es `internal` para permitir
   # salida a Internet si en el futuro se integran S3/Kafka u otras APIs.

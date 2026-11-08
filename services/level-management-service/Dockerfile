@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 # =============================================================================
 # OpenCrime — Level Management Service
 # Stack asumido: Python 3.12 + FastAPI + Uvicorn
@@ -8,7 +8,7 @@
 # -----------------------------------------------------------------------------
 # Etapa 1: builder
 # -----------------------------------------------------------------------------
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -45,7 +45,7 @@ RUN python -m pip install --no-cache-dir --upgrade "pip==26.2.2" \
 # -----------------------------------------------------------------------------
 # Etapa 2: runtime
 # -----------------------------------------------------------------------------
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
