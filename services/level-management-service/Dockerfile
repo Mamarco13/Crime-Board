@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 # =============================================================================
-# Crime Board — Level Management Service
+# OpenCrime — Level Management Service
 # Stack asumido: Python 3.12 + FastAPI + Uvicorn
 # Build context: services/level-management-service
 # =============================================================================
@@ -8,7 +8,7 @@
 # -----------------------------------------------------------------------------
 # Etapa 1: builder
 # -----------------------------------------------------------------------------
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -45,7 +45,7 @@ RUN python -m pip install --no-cache-dir --upgrade "pip==26.2.2" \
 # -----------------------------------------------------------------------------
 # Etapa 2: runtime
 # -----------------------------------------------------------------------------
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -54,9 +54,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME=/home/app \
     APP_HOME=/app
 
-LABEL org.opencontainers.image.title="crime-board-level-management-service" \
-      org.opencontainers.image.description="Level Management Service de Crime Board" \
-      org.opencontainers.image.vendor="Crime Board"
+LABEL org.opencontainers.image.title="open-crime-level-management-service" \
+      org.opencontainers.image.description="Level Management Service de OpenCrime" \
+      org.opencontainers.image.vendor="OpenCrime"
 
 # Solo librerías de sistema necesarias en ejecución (cliente libpq para PostgreSQL)
 #
@@ -92,3 +92,15 @@ STOPSIGNAL SIGTERM
 # Un proceso por contenedor; el orquestador escala réplicas.
 # Ajusta app.main:app al entrypoint real del servicio.
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+
+# -----------------------------------------------------------------------------
+# Etapa 3: development
+# -----------------------------------------------------------------------------
+# Hereda todo de runtime (venv, código, usuario no-root) y activa el recarga
+# automática para iterar sin reconstruir la imagen. Se usa con
+# `docker compose -f compose.yaml -f compose.dev.yaml up --build`.
+FROM runtime AS development
+
+USER 10001:10001
+
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*", "--reload"]

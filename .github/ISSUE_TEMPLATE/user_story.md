@@ -1,6 +1,6 @@
 ---
 name: Historia de Usuario
-about: Plantilla para nuevas funcionalidades del Tablón del Crimen
+about: Plantilla para nuevas funcionalidades de OpenCrime
 title: 'US: [Resumen corto]'
 labels: 'user-story'
 ---

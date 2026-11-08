@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Genera el diagrama de arquitectura (SVG) del proyecto Crime Board Cloud-Native."""
+"""Genera el diagrama de arquitectura (SVG) del proyecto OpenCrime Cloud-Native."""
 import html
 import os
 
@@ -81,7 +81,7 @@ add(f'<rect x="0" y="0" width="{W}" height="{H}" fill="#FFFFFF"/>')
 
 # título
 add(f'<text x="90" y="58" font-family="{FONT}" font-size="30" font-weight="800" '
-    f'fill="{INK}">Crime Board Cloud-Native</text>')
+    f'fill="{INK}">OpenCrime Cloud-Native</text>')
 add(f'<text x="90" y="90" font-family="{FONT}" font-size="15.5" fill="{MUTED}">'
     f'Arquitectura de Microservicios — Componentes, Protocolos de Comunicación y Almacenamiento</text>')
 
@@ -108,13 +108,19 @@ box(870, 158, 340, 86, "Cliente Móvil",
 box(430, 342, 780, 66, "API Gateway  /  Ingress  +  Balanceador de carga",
     ["Punto único de entrada  ·  HTTPS / TLS 1.3  ·  REST + JSON"], EDGE, tsize=17, ssize=12.5)
 
-box(230, 490, 520, 116, "Level Management Service",
-    ["Catálogo y publicación de misterios", "POST /api/levels/  ·  GET /api/levels/{id}"], SERVICE)
-box(890, 490, 520, 116, "Playground Engine Service",
-    ["Validación del tablero del jugador", "POST /api/engine/validate"], SERVICE)
+box(120, 490, 266, 116, "Level Management Service",
+    ["Catálogo y publicación de misterios", "POST /api/levels/ · GET /{id}"], SERVICE, tsize=15.5, ssize=12)
+box(406, 490, 266, 116, "User Service",
+    ["Registro, login y sesiones", "POST /api/users/register · /login"], SERVICE, tsize=15.5, ssize=12)
+box(692, 490, 266, 116, "Progress Service",
+    ["Progreso, sesiones y notas", "GET /api/progress/me/cases"], SERVICE, tsize=15.5, ssize=12)
+box(978, 490, 266, 116, "Playground Engine Service",
+    ["Validación del tablero", "POST /api/engine/validate"], SERVICE, tsize=15.5, ssize=12)
+box(1264, 490, 266, 116, "Rating Service",
+    ["Valoraciones de niveles", "GET /api/ratings/levels/batch"], SERVICE, tsize=15.5, ssize=12)
 
 box(110, 690, 330, 96, "Base de datos relacional",
-    ["PostgreSQL", "Niveles, pistas y usuarios"], DATA, tsize=15.5, ssize=12)
+    ["PostgreSQL", "Niveles, usuarios, progreso y valoraciones"], DATA, tsize=15.5, ssize=12)
 box(480, 690, 330, 96, "Object Storage",
     ["Assets / imágenes", "de los misterios"], DATA, tsize=15.5, ssize=12)
 box(850, 690, 330, 96, "Bus de Eventos",
@@ -130,22 +136,29 @@ edge(600, 244, 600, 342)          # web -> gateway
 edge(1040, 244, 1040, 342)        # movil -> gateway
 label(820, 300, "HTTPS · REST (JSON)", color="#455A64")
 
-edge(600, 408, 490, 490, ty=452, tx=505)     # gateway -> level
-edge(1040, 408, 1150, 490, ty=452, tx=1130)  # gateway -> engine
+edge(820, 408, 253, 490)   # gateway -> level
+edge(820, 408, 539, 490)   # gateway -> user
+edge(820, 408, 825, 490)   # gateway -> progress
+edge(820, 408, 1111, 490)  # gateway -> engine
+edge(820, 408, 1397, 490)  # gateway -> rating
 label(820, 452, "HTTP / REST (JSON) interno", color="#455A64")
 
-edge(400, 606, 275, 690)                                     # level -> postgres
-label(285, 650, "SQL · TCP:5432", color="#6A1B9A")
-edge(645, 606, 645, 690)                                     # level -> object storage
-label(645, 650, "HTTPS · S3 API", color="#6A1B9A")
+edge(253, 606, 160, 690)    # level -> postgres
+edge(539, 606, 240, 690)    # user -> postgres
+edge(825, 606, 320, 690)    # progress -> postgres
+edge(1397, 606, 400, 690)   # rating -> postgres
+label(204, 650, "SQL · TCP:5432", color="#6A1B9A")
 
-edge(1300, 606, 1380, 690)                                   # engine -> redis
+edge(1111, 606, 1380, 690)  # engine -> redis
 label(1360, 650, "RESP · 6379", color="#6A1B9A")
 
-edge(700, 606, 940, 690, text="publicar eventos", dashed=True, color="#AD1457",
-     ty=632, tx=815)
-edge(1150, 606, 1090, 690, text="eventos de validación", dashed=True, color="#AD1457",
-     ty=648, tx=1120)
+edge(379, 606, 645, 690)    # level -> object storage
+label(530, 650, "HTTPS · S3 API", color="#6A1B9A")
+
+edge(386, 606, 960, 690, text="publicar eventos", dashed=True, color="#AD1457",
+     ty=632, tx=564)
+edge(1244, 606, 1070, 690, text="eventos de validación", dashed=True, color="#AD1457",
+     ty=648, tx=1157)
 edge(1015, 786, 1015, 876, text="métricas · eventos", dashed=True, color="#AD1457",
      ty=836, tx=1042, anchor="start")
 

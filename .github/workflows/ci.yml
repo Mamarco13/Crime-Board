@@ -1,14 +1,9 @@
 # =============================================================================
-# Crime Board — Integración Continua (CI)
-# Hito 2 · Fase 3
+# OpenCrime — Integración Continua (CI)
 # =============================================================================
 # Pipeline:
 #   1. lint-and-test  → Hadolint + Ruff + pytest  (push y pull_request)
 #   2. build-and-push → imágenes en GHCR          (solo push a main/master)
-#
-# Imágenes publicadas:
-#   ghcr.io/<owner>/<repo>/level-management-service:<sha-corto|latest>
-#   ghcr.io/<owner>/<repo>/playground-engine-service:<sha-corto|latest>
 # =============================================================================
 
 name: CI
@@ -125,6 +120,11 @@ jobs:
         service:
           - level-management-service
           - playground-engine-service
+          - user-service
+          - rating-service
+          - progress-service
+          - postgres
+          - redis
 
     steps:
       - name: Checkout del repositorio
@@ -157,8 +157,8 @@ jobs:
             type=raw,value=latest
           labels: |
             org.opencontainers.image.title=${{ matrix.service }}
-            org.opencontainers.image.description=Crime Board — ${{ matrix.service }}
-            org.opencontainers.image.vendor=Crime Board
+            org.opencontainers.image.description=OpenCrime — ${{ matrix.service }}
+            org.opencontainers.image.vendor=OpenCrime
 
       - name: Construir y publicar imagen
         uses: docker/build-push-action@v5
