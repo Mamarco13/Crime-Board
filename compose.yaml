@@ -1,0 +1,392 @@
+# =============================================================================
+# OpenCrime — Orquestación del entorno local reproducible
+# Hito 2 · Fase 2
+# =============================================================================
+# Topología:
+#
+#   host :8000 ──> level-management-service
+#   host :8001 ──> playground-engine-service
+#   host :8002 ──> user-service
+#   host :8003 ──> rating-service
+#   host :8004 ──> progress-service
+#
+# Autenticación: user-service emite los JWT (login/registro). Level Management
+# y Rating Service los verifican con la misma clave compartida
+# (JWT_SECRET_KEY): el primero para atribuir la autoría de cada caso y el
+# segundo para aceptar votos.
+#
+# Uso:
+#   cp .env.example .env
+#   docker compose up --build -d
+#   docker compose ps
+#   docker compose logs -f
+#   docker compose down          # conserva los volúmenes
+#   docker compose down -v       # elimina también los datos
+#
+# Compose carga automáticamente el archivo .env del directorio del proyecto.
+# =============================================================================
+
+name: ${COMPOSE_PROJECT_NAME:-open-crime}
+
+# -----------------------------------------------------------------------------
+# Extensiones reutilizables (anclas YAML)
+# -----------------------------------------------------------------------------
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-app-hardening: &app-hardening
+  init: true
+  restart: unless-stopped
+  stop_grace_period: 30s
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging: *default-logging
+
+# Mismo criterio que el HEALTHCHECK del Dockerfile, pero declarado aquí para
+# que la orquestación sea autocontenida. Ajusta /health si cambia la ruta.
+x-app-healthcheck: &app-healthcheck
+  test:
+    - CMD
+    - python
+    - -c
+    - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+  interval: 30s
+  timeout: 5s
+  start_period: 30s
+  retries: 3
+
+services:
+  # ---------------------------------------------------------------------------
+  # Microservicio de catálogo y publicación de niveles
+  # ---------------------------------------------------------------------------
+  level-management-service:
+    <<: *app-hardening
+    build:
+      context: ./services/level-management-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/level-management-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: level-management-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      # Componentes de conexión (útiles si la app los lee por separado)
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # URL canónica construida a partir de las variables anteriores.
+      # Usa una contraseña con caracteres seguros para URL ([A-Za-z0-9_-]).
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
+      PLAYGROUND_ENGINE_SERVICE_URL: ${PLAYGROUND_ENGINE_SERVICE_URL:-http://playground-engine-service:8000}
+      USER_SERVICE_URL: ${USER_SERVICE_URL:-http://user-service:8000}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}
+      # Verificación local de los JWT emitidos por user-service. Comparten
+      # secreto, algoritmo e issuer; no hay llamada síncrona entre servicios.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+    ports:
+      # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
+      # En producción, elimina este mapeo y expón el servicio vía Ingress/API Gateway.
+      - "${BIND_ADDRESS:-127.0.0.1}:${LEVEL_MANAGEMENT_HOST_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - db-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # Motor de validación del tablero
+  # ---------------------------------------------------------------------------
+  playground-engine-service:
+    <<: *app-hardening
+    build:
+      context: ./services/playground-engine-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/playground-engine-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: playground-engine-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD no definido en .env}
+      # URL canónica construida a partir de las variables anteriores.
+      REDIS_URL: "redis://:${REDIS_PASSWORD:?}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/${REDIS_DB:-0}"
+      LEVEL_MANAGEMENT_SERVICE_URL: ${LEVEL_MANAGEMENT_SERVICE_URL:-http://level-management-service:8000}
+      # Registro fail-open de intentos autenticados en Progress Service.
+      PROGRESS_SERVICE_URL: ${PROGRESS_SERVICE_URL:-http://progress-service:8000}
+      PROGRESS_ENABLED: ${PROGRESS_ENABLED:-true}
+      PROGRESS_TIMEOUT_SECONDS: ${PROGRESS_TIMEOUT_SECONDS:-0.8}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      # Verificación local de los JWT para atribuir intentos al detective.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PLAYGROUND_ENGINE_HOST_PORT:-8001}:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - cache-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # Microservicio de cuentas, login y emisión de JWT
+  # ---------------------------------------------------------------------------
+  user-service:
+    <<: *app-hardening
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/user-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: user-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # Misma instancia que el catálogo, pero con su propia tabla `users`.
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
+      # Firma de los JWT. Level Management verifica con estos mismos valores.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-720}
+      # Purga best-effort del progreso al eliminar la cuenta (GDPR).
+      PROGRESS_SERVICE_URL: ${PROGRESS_SERVICE_URL:-http://progress-service:8000}
+      PROGRESS_TIMEOUT_SECONDS: ${PROGRESS_TIMEOUT_SECONDS:-0.8}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+    ports:
+      # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
+      - "${BIND_ADDRESS:-127.0.0.1}:${USER_SERVICE_HOST_PORT:-8002}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - db-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # Microservicio de valoraciones (1-5 estrellas) de los niveles
+  # ---------------------------------------------------------------------------
+  rating-service:
+    <<: *app-hardening
+    build:
+      context: ./services/rating-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/rating-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: rating-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # Tabla `level_ratings` propia; el servicio no toca esquemas ajenos.
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
+      # Verificación local de los JWT emitidos por user-service. Los invitados
+      # pueden leer medias, pero necesitan sesión para votar.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+    ports:
+      # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
+      - "${BIND_ADDRESS:-127.0.0.1}:${RATING_SERVICE_HOST_PORT:-8003}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - db-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # Microservicio de progreso: libreta, sesiones, intentos y estadísticas
+  # ---------------------------------------------------------------------------
+  progress-service:
+    <<: *app-hardening
+    build:
+      context: ./services/progress-service
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/progress-service:${IMAGE_TAG:-local}
+    environment:
+      SERVICE_NAME: progress-service
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_PORT: "8000"
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # Tablas propias de progreso; no toca esquemas de otros servicios.
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?}"
+      # Los endpoints públicos exigen un JWT de User Service; los internos usan
+      # la clave compartida con Playground Engine y User Service.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ISSUER: ${JWT_ISSUER:-crime-board-user-service}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-${APP_SECRET_KEY:?APP_SECRET_KEY no definido en .env}}
+      # Orígenes permitidos para la SPA (CORS). Por defecto cualquiera en local.
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+    ports:
+      # Publicado solo en loopback por defecto (BIND_ADDRESS en .env).
+      - "${BIND_ADDRESS:-127.0.0.1}:${PROGRESS_SERVICE_HOST_PORT:-8004}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - backend-net
+      - db-net
+    healthcheck: *app-healthcheck
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — persistencia de Level Management, User Service, Rating Service
+  # y Progress Service
+  # ---------------------------------------------------------------------------
+  postgres:
+    build:
+      context: ./services/postgres
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/postgres:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB no definido en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER no definido en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD no definido en .env}
+      # Subdirectorio dentro del volumen: evita problemas si algún día se
+      # sustituye el volumen nombrado por un bind mount.
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - db-net
+    healthcheck:
+      # -h 127.0.0.1 fuerza TCP: durante la inicialización el entrypoint
+      # levanta un servidor temporal solo por socket Unix y no debe contarse
+      # como "listo".
+      test: [ "CMD-SHELL", 'pg_isready -h 127.0.0.1 -p 5432 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    shm_size: 256mb
+    logging: *default-logging
+    # La BD no se publica al host por defecto: solo es alcanzable desde db-net.
+    # Para depurar con un cliente local, descomenta y mantén el bind en loopback:
+    # ports:
+    #   - "${BIND_ADDRESS:-127.0.0.1}:${POSTGRES_HOST_PORT:-5432}:5432"
+
+    # ---------------------------------------------------------------------------
+    # Redis — caché / estado efímero de Playground Engine
+    # ---------------------------------------------------------------------------
+  redis:
+    build:
+      context: ./services/redis
+      dockerfile: Dockerfile
+      target: runtime
+    image: open-crime/redis:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    stop_grace_period: 15s
+    environment:
+      # Necesaria para que el healthcheck se autentique sin exponer la clave
+      # en la línea de comandos de `redis-cli`.
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD no definido en .env}
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD no definido en .env}
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-256mb}
+      - --maxmemory-policy
+      - allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - cache-net
+    healthcheck:
+      test: [ "CMD-SHELL", 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG' ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    logging: *default-logging
+    # Igual que PostgreSQL: sin publicación al host por defecto.
+    # ports:
+    #   - "${BIND_ADDRESS:-127.0.0.1}:${REDIS_HOST_PORT:-6379}:6379"
+
+    # -----------------------------------------------------------------------------
+    # Redes
+    # -----------------------------------------------------------------------------
+networks:
+  # Plano de comunicación entre microservicios. No es `internal` para permitir
+  # salida a Internet si en el futuro se integran S3/Kafka u otras APIs.
+  backend-net:
+    driver: bridge
+
+  # Aísla PostgreSQL: solo level-management-service, user-service y
+  # rating-service pueden alcanzarlo. `internal: true` elimina la puerta de
+  # enlace (sin egress).
+  db-net:
+    driver: bridge
+    internal: true
+
+  # Aísla Redis: solo playground-engine-service puede alcanzarlo.
+  cache-net:
+    driver: bridge
+    internal: true
+
+# -----------------------------------------------------------------------------
+# Volúmenes persistentes gestionados por Docker
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,42 @@
+# =============================================================================
+# OpenCrime — Override de desarrollo para recarga en caliente
+# =============================================================================
+# Uso:
+#   docker compose -f compose.yaml -f compose.dev.yaml up --build -d
+#
+# Este archivo no modifica la configuración de producción. Solo cambia el
+# target de build de los microservicios a `development` y monta el código
+# fuente del host para que uvicorn --reload lo detecte sin reconstruir
+# imágenes.
+# =============================================================================
+
+services:
+  level-management-service:
+    build:
+      target: development
+    volumes:
+      - ./services/level-management-service:/app
+
+  playground-engine-service:
+    build:
+      target: development
+    volumes:
+      - ./services/playground-engine-service:/app
+
+  user-service:
+    build:
+      target: development
+    volumes:
+      - ./services/user-service:/app
+
+  rating-service:
+    build:
+      target: development
+    volumes:
+      - ./services/rating-service:/app
+
+  progress-service:
+    build:
+      target: development
+    volumes:
+      - ./services/progress-service:/app

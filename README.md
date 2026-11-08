@@ -1,43 +1,4 @@
-# Crime Board Cloud-Native
-##### Por Manuel Martínez Cobos
-
-Actividad realizada durante la asignatura **Cloud Computing: Fundamentos e Infraestructuras**, perteneciente al Master de Ingeniería Informática de la UGR
-
-Plataforma interactiva *cloud-native* para **crear, compartir y resolver misterios lógicos** sobre un tablero de pistas y conexiones (un "crime board" digital).
-
-![Arquitectura de microservicios de Crime Board Cloud-Native: clientes, API Gateway, Level Management Service, Playground Engine Service, PostgreSQL, Object Storage, Redis, Kafka y observabilidad](docs/architecture.png)
-
-> *[Figura 1](docs/architecture.png). Vista general de la arquitectura (detalle en la [sección 4](#4-arquitectura-de-microservicios)).*
-
-## Índice
-
-- [1. Descripción del Dominio y Casos de Uso](#1-descripción-del-dominio-y-casos-de-uso)
-  - [1.1 Problema de Negocio](#11-problema-de-negocio)
-  - [1.2 Casos de Uso Principales](#12-casos-de-uso-principales)
-- [2. Justificación NIST SP 800-145](#2-justificación-nist-sp-800-145)
-  - [2.1 Autoservicio bajo demanda (*On-demand self-service*)](#21-autoservicio-bajo-demanda-on-demand-self-service)
-  - [2.2 Acceso amplio a la red (*Broad network access*)](#22-acceso-amplio-a-la-red-broad-network-access)
-  - [2.3 Asignación común de recursos (*Resource pooling*)](#23-asignación-común-de-recursos-resource-pooling)
-  - [2.4 Rápida elasticidad (*Rapid elasticity*)](#24-rápida-elasticidad-rapid-elasticity)
-  - [2.5 Servicio medido (*Measured service*)](#25-servicio-medido-measured-service)
-  - [2.6 Síntesis](#26-síntesis)
-- [3. Mapeo de Actores NIST SP 500-292](#3-mapeo-de-actores-nist-sp-500-292)
-  - [3.1 Consumidor (*Cloud Consumer*)](#31-consumidor-cloud-consumer)
-  - [3.2 Proveedor (*Cloud Provider*)](#32-proveedor-cloud-provider)
-  - [3.3 Intermediario (*Cloud Broker*)](#33-intermediario-cloud-broker)
-  - [3.4 Auditor (*Cloud Auditor*)](#34-auditor-cloud-auditor)
-  - [3.5 Operador (*Cloud Operator / Cloud Carrier*)](#35-operador-cloud-operator--cloud-carrier)
-  - [3.6 Síntesis del impacto económico](#36-síntesis-del-impacto-económico)
-- [4. Arquitectura de Microservicios](#4-arquitectura-de-microservicios)
-  - [4.1 Diagrama de arquitectura](#41-diagrama-de-arquitectura)
-  - [4.2 Componentes](#42-componentes)
-  - [4.3 Protocolos de comunicación](#43-protocolos-de-comunicación)
-  - [4.4 Almacenamiento y persistencia](#44-almacenamiento-y-persistencia)
-- [5. Especificación API REST](#5-especificación-api-rest)
-  - [5.1 Convenciones](#51-convenciones)
-  - [5.2 Level Management Service](#52-level-management-service)
-  - [5.3 Playground Engine Service](#53-playground-engine-service)
-  - [5.4 Errores](#54-errores)
+# OpenCrime Cloud-Native
 
 ## 1. Descripción del Dominio y Casos de Uso
 
@@ -244,146 +205,54 @@ Cada microservicio es dueño de sus propios datos (*database per service*): el `
 
 ## 5. Especificación API REST
 
-Documentación sintética de los endpoints principales expuestos a través del **API Gateway** ([sección 4](#4-arquitectura-de-microservicios)).
+### Level Management Service
+- `POST /api/levels/`
+  - **Descripción:** Publica un nuevo nivel de la comunidad.
+  - **Payload:** JSON con `title`, `creator_id`, `clues` y `correct_connections`.
+- `GET /api/levels/{level_id}`
+  - **Descripción:** Obtiene los datos de un misterio para renderizar el tablero en HTML/JS.
 
-### 5.1 Convenciones
+### Playground Engine Service
+- `POST /api/engine/validate`
+  - **Descripción:** Evalúa el estado actual del tablero del jugador.
+  - **Payload:** JSON con `level_id`, `selected_card_ids`, `session_id` y `client_attempt_id` opcionales.
+  - **Respuesta:** JSON con `{"solved": boolean, "feedback_message": string, "progress": {...} | null}`.
+  - Si llega un JWT válido, el intento se registra en `progress-service` con timeout corto y **fail-open**: una avería del progreso nunca bloquea el veredicto.
 
-- **URL base:** `https://api.crimeboard.example/v1`
-- **Formato:** `Content-Type: application/json` (peticiones y respuestas).
-- **Autenticación:** cabecera `Authorization: Bearer <JWT>`.
-- **Verbos:** `GET` (lectura), `POST` (creación/acciones), `PATCH` (modificación parcial), `DELETE` (borrado).
-- **Códigos de estado:** `200 OK`, `201 Created`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `422 Unprocessable Entity`, `500 Internal Server Error`.
+### Progress Service
+- `GET/PUT /api/progress/notes/{scope}`: libreta general (`general`) o por caso, con versión optimista y `409` en conflicto.
+- `POST /api/progress/cases/{level_id}/sessions`: inicia o reanuda la partida activa.
+- `POST /api/progress/cases/{level_id}/restart`: cierra la partida y abre una repetición.
+- `GET/PUT /api/progress/cases/{level_id}/state` y `/workspace`: sesión, tachados y selección de acusación.
+- `GET /api/progress/me/summary` y `/api/progress/me/cases`: KPIs e historial del perfil.
+- Endpoints internos con `X-Internal-Api-Key`: registro idempotente de intentos y purga al borrar cuenta.
 
-### 5.2 Level Management Service
+### Perfil y libreta en la SPA
+- La SPA sigue siendo un único `frontend/index.html`, sin build ni framework.
+- El perfil agrega datos con `Promise.allSettled`: progreso, valoraciones propias y casos diseñados.
+- La libreta funciona en local sin sesión y se sincroniza por versión al iniciar sesión. Los conflictos muestran ambas versiones y nunca borran texto sin confirmación.
+- El reinicio de un caso autenticado se coordina con `progress-service`; la primera resolución registrada es inmutable.
 
-| Verbo | Ruta | Descripción |
-|-------|------|-------------|
-| `GET` | `/api/levels/` | Lista el catálogo de misterios (filtros y paginación). |
-| `POST` | `/api/levels/` | Publica un nuevo nivel de la comunidad. |
-| `GET` | `/api/levels/{level_id}` | Obtiene los datos de un misterio para renderizar el tablero. |
-| `PATCH` | `/api/levels/{level_id}` | Actualiza estado/metadatos (moderación y destacados). |
-| `DELETE` | `/api/levels/{level_id}` | Elimina un nivel (autor o moderador). |
+### Puesta en marcha local
 
-**`POST /api/levels/`** — publica un nuevo nivel.
+El comando por defecto levanta las imágenes de producción (`target: runtime`):
 
-```json
-{
-  "title": "El caso del reloj roto",
-  "creator_id": "u_1024",
-  "clues": [
-    { "id": "c1", "text": "La ventana estaba rota desde dentro", "x": 120, "y": 80 },
-    { "id": "c2", "text": "El mayordomo mintió sobre la hora", "x": 340, "y": 210 }
-  ],
-  "correct_connections": [
-    { "from": "c1", "to": "c2" }
-  ]
-}
+```bash
+cp .env.example .env
+docker compose up --build -d
+# Tablero: sirve frontend/ con un servidor estático, p. ej. python -m http.server 8123
+# Progress Service: http://127.0.0.1:8004/docs
 ```
 
-Respuesta `201 Created`:
+Para desarrollo con recarga automática de código, combina el compose base con
+el override de desarrollo:
 
-```json
-{
-  "level_id": "lvl_7f3a91",
-  "title": "El caso del reloj roto",
-  "creator_id": "u_1024",
-  "status": "published",
-  "created_at": "2026-10-15T09:12:00Z"
-}
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up --build -d
 ```
 
-**`GET /api/levels/`** — catálogo paginado. Parámetros de consulta: `difficulty`, `creator_id`, `sort` (`recent`\|`popular`), `page`, `limit`.
+El override cambia el `build.target` de los microservicios a `development` y
+monta `./services/<servicio>:/app` desde el host, de modo que `uvicorn --reload`
+refleja los cambios sin reconstruir la imagen.
 
-Respuesta `200 OK`:
-
-```json
-{
-  "items": [
-    { "level_id": "lvl_7f3a91", "title": "El caso del reloj roto", "difficulty": "tutorial", "plays": 318 }
-  ],
-  "page": 1,
-  "limit": 20,
-  "total": 57
-}
-```
-
-**`GET /api/levels/{level_id}`** — datos del misterio para renderizar el tablero.
-
-Respuesta `200 OK`:
-
-```json
-{
-  "level_id": "lvl_7f3a91",
-  "title": "El caso del reloj roto",
-  "creator_id": "u_1024",
-  "clues": [
-    { "id": "c1", "text": "La ventana estaba rota desde dentro", "x": 120, "y": 80 },
-    { "id": "c2", "text": "El mayordomo mintió sobre la hora", "x": 340, "y": 210 }
-  ],
-  "connection_count": 1,
-  "difficulty": "medium"
-}
-```
-
-> Por seguridad, la respuesta **no incluye** `correct_connections`: la solución se valida en el servidor (ver [5.3](#53-playground-engine-service)), evitando que el cliente pueda descubrirla o manipularla.
-
-**`PATCH /api/levels/{level_id}`** — moderación / destacados.
-
-```json
-{ "status": "hidden", "featured": true }
-```
-
-### 5.3 Playground Engine Service
-
-| Verbo | Ruta | Descripción |
-|-------|------|-------------|
-| `POST` | `/api/engine/validate` | Evalúa el estado actual del tablero del jugador. |
-| `GET` | `/api/engine/levels/{level_id}/stats` | Métricas de dificultad agregadas (intentos y aciertos). |
-
-**`POST /api/engine/validate`** — valida las conexiones trazadas por el usuario.
-
-```json
-{
-  "level_id": "lvl_7f3a91",
-  "current_connections": [
-    { "from": "c1", "to": "c2" }
-  ]
-}
-```
-
-Respuesta `200 OK`:
-
-```json
-{
-  "solved": true,
-  "feedback_message": "¡Correcto! Has resuelto el misterio.",
-  "attempt_id": "att_9d21",
-  "elapsed_ms": 4200
-}
-```
-
-**`GET /api/engine/levels/{level_id}/stats`** — métricas agregadas para el servicio medido ([sección 2.5](#25-servicio-medido-measured-service)).
-
-Respuesta `200 OK`:
-
-```json
-{
-  "level_id": "lvl_7f3a91",
-  "attempts": 412,
-  "solved_rate": 0.38,
-  "avg_time_seconds": 214,
-  "difficulty_score": 7.2
-}
-```
-
-### 5.4 Errores
-
-Formato uniforme de error en todas las respuestas no exitosas:
-
-```json
-{
-  "error": "level_not_found",
-  "message": "No existe un nivel con id 'lvl_0000'.",
-  "status": 404
-}
-```
+Sin `DATABASE_URL`, cada servicio arranca con repositorio en memoria para desarrollo y pruebas. En producción, `docker compose` inyecta PostgreSQL y los secretos compartidos.

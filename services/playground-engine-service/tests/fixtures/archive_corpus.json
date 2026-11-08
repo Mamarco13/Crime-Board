@@ -1,0 +1,32 @@
+{
+  "cards": [
+    {
+      "id": "location-casa",
+      "aliases": ["calle falsa 123", "casa del dentista", "consultorio", "dr saenz"]
+    },
+    {
+      "id": "weapon-copa",
+      "aliases": ["copa", "copa de cristal", "champan"]
+    },
+    {
+      "id": "location-invernadero",
+      "aliases": ["invernadero", "macetas", "turba"]
+    },
+    {
+      "id": "clue-reloj",
+      "aliases": ["reloj", "23:15"]
+    }
+  ],
+  "cases": [
+    {"input": "calle falsa 123", "expected": "location-casa", "score": 1.0},
+    {"input": "Calle Falsa, 123.", "expected": "location-casa", "score": 1.0},
+    {"input": "creo que fue en la casa del dentista", "expected": "location-casa", "score": 0.95},
+    {"input": "dentista", "expected": "location-casa", "score": 0.85},
+    {"input": "calle falsa 132", "expected": "location-casa", "score": 0.933},
+    {"input": "champán", "expected": "weapon-copa", "score": 1.0},
+    {"input": "invernadro", "expected": "location-invernadero", "score": 0.952},
+    {"input": "reloj", "expected": "clue-reloj", "score": 1.0},
+    {"input": "la cocina", "expected": null},
+    {"input": "1234", "expected": null}
+  ]
+}
